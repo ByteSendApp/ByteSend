@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.2] - 2026-10-19
+
+### Added
+- **[Open stats](https://bytesend.cloud/stats)** — a public page (Cloud only) with aggregate emails sent, delivery rate, 30-day daily volume, bounce and complaint rates against AWS limits, active sending regions and uptime from the status page. Numbers are cached for an hour and contain no per-team data
+- **Status page component locations** — status components can carry an optional location (e.g. `us-east-1` or "N. Virginia"), shown as a badge on the public status page, component pages and the admin component list
+
+### Fixed
+- Status page Open Graph cards for incidents and maintenance now show times in UTC (previously the server's local time, unlabelled) and use brand colours for the Monitoring, Resolved, Scheduled, In Progress and Completed states
+
+---
+
 ## [0.4.1] - 2026-10-19
 
 ### Added

@@ -20,6 +20,7 @@ export function SiteFooter() {
             <nav className="flex items-center gap-4 text-[13px] text-muted-foreground">
               <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
               {isCloud && <Link href="/changelog" className="hover:text-foreground transition-colors">Changelog</Link>}
+              {isCloud && <Link href="/stats" className="hover:text-foreground transition-colors">Stats</Link>}
               {isCloud && <Link href="/legal" className="hover:text-foreground transition-colors">Legal</Link>}
               {isCloud && <a href="https://status.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Status</a>}
             </nav>

@@ -21,6 +21,7 @@ const {
         pendingEmailChange: {
             findUnique: vi.fn(),
             upsert: vi.fn(),
+            update: vi.fn(),
             delete: vi.fn(),
         },
         twoFactorRecoveryCode: {
@@ -80,32 +81,20 @@ describe("userRouter.requestEmailChange", () => {
     beforeEach(() => {
         mockDb.user.findUnique.mockReset();
         mockDb.user.findFirst.mockReset();
-        mockDb.account.findMany.mockReset();
         mockDb.pendingEmailChange.upsert.mockReset();
         mockSendEmailChangeVerificationEmail.mockReset();
     });
 
     it("rejects when new email same as current", async () => {
         mockDb.user.findUnique.mockResolvedValue({ id: 1, email: "user@example.com" });
-        mockDb.account.findMany.mockResolvedValue([]);
         const caller = createCaller(getCtx());
         await expect(caller.requestEmailChange({ email: "user@example.com" })).rejects.toMatchObject({
             code: "BAD_REQUEST",
         });
     });
 
-    it("rejects OAuth users", async () => {
-        mockDb.user.findUnique.mockResolvedValue({ id: 1, email: "user@example.com" });
-        mockDb.account.findMany.mockResolvedValue([{ provider: "github" }]);
-        const caller = createCaller(getCtx());
-        await expect(caller.requestEmailChange({ email: "new@example.com" })).rejects.toMatchObject({
-            code: "FORBIDDEN",
-        });
-    });
-
     it("rejects email already in use by another account", async () => {
         mockDb.user.findUnique.mockResolvedValue({ id: 1, email: "user@example.com" });
-        mockDb.account.findMany.mockResolvedValue([]);
         mockDb.user.findFirst.mockResolvedValue({ id: 2 });
         const caller = createCaller(getCtx());
         await expect(caller.requestEmailChange({ email: "taken@example.com" })).rejects.toMatchObject({
@@ -113,59 +102,110 @@ describe("userRouter.requestEmailChange", () => {
         });
     });
 
-    it("sends verification code for valid new email", async () => {
+    it("sends a code to both the current and the new address", async () => {
         mockDb.user.findUnique.mockResolvedValue({ id: 1, email: "user@example.com" });
-        mockDb.account.findMany.mockResolvedValue([]);
         mockDb.user.findFirst.mockResolvedValue(null);
         mockDb.pendingEmailChange.upsert.mockResolvedValue({});
         mockSendEmailChangeVerificationEmail.mockResolvedValue(undefined);
         const caller = createCaller(getCtx());
+
         const result = await caller.requestEmailChange({ email: "new@example.com" });
-        expect(result.sent).toBe(true);
-        expect(mockSendEmailChangeVerificationEmail).toHaveBeenCalledWith("new@example.com", expect.any(String));
+
+        expect(result).toMatchObject({ step: "verify_old", currentEmail: "user@example.com", newEmail: "new@example.com" });
+        expect(mockSendEmailChangeVerificationEmail).toHaveBeenCalledWith("user@example.com", expect.any(String), expect.any(String));
+        expect(mockSendEmailChangeVerificationEmail).toHaveBeenCalledWith("new@example.com", expect.any(String), expect.any(String));
+    });
+
+    it("allows accounts linked to OAuth providers to change email", async () => {
+        mockDb.user.findUnique.mockResolvedValue({ id: 1, email: "user@example.com" });
+        mockDb.user.findFirst.mockResolvedValue(null);
+        mockDb.pendingEmailChange.upsert.mockResolvedValue({});
+        mockSendEmailChangeVerificationEmail.mockResolvedValue(undefined);
+        const caller = createCaller(getCtx());
+
+        await expect(caller.requestEmailChange({ email: "provider@example.com" })).resolves.toMatchObject({
+            step: "verify_old",
+        });
     });
 });
 
-describe("userRouter.confirmEmailChange", () => {
+const pending = (overrides: Record<string, unknown> = {}) => ({
+    id: "p1",
+    codeOld: "OLD123",
+    codeNew: "NEW456",
+    verifiedOld: false,
+    expiresAt: new Date(Date.now() + 60_000),
+    ...overrides,
+});
+
+describe("userRouter.confirmOldEmail", () => {
     beforeEach(() => {
         mockDb.pendingEmailChange.findUnique.mockReset();
-        mockDb.user.findFirst.mockReset();
-        mockDb.user.update.mockReset();
+        mockDb.pendingEmailChange.update.mockReset();
         mockDb.pendingEmailChange.delete.mockReset();
     });
 
-    it("rejects invalid or expired code", async () => {
+    it("rejects when no change is pending", async () => {
         mockDb.pendingEmailChange.findUnique.mockResolvedValue(null);
         const caller = createCaller(getCtx());
-        await expect(
-            caller.confirmEmailChange({ email: "new@example.com", code: "ABC123" })
-        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        await expect(caller.confirmOldEmail({ email: "new@example.com", code: "OLD123" })).rejects.toMatchObject({
+            code: "BAD_REQUEST",
+        });
     });
 
-    it("rejects expired code", async () => {
-        mockDb.pendingEmailChange.findUnique.mockResolvedValue({
-            id: "p1",
-            code: "ABC123",
-            expiresAt: new Date(Date.now() - 1000),
-        });
+    it("rejects and clears an expired request", async () => {
+        mockDb.pendingEmailChange.findUnique.mockResolvedValue(pending({ expiresAt: new Date(Date.now() - 1000) }));
         const caller = createCaller(getCtx());
-        await expect(
-            caller.confirmEmailChange({ email: "new@example.com", code: "ABC123" })
-        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        await expect(caller.confirmOldEmail({ email: "new@example.com", code: "OLD123" })).rejects.toMatchObject({
+            code: "BAD_REQUEST",
+        });
+        expect(mockDb.pendingEmailChange.delete).toHaveBeenCalledWith({ where: { id: "p1" } });
     });
 
-    it("updates email on valid code", async () => {
-        mockDb.pendingEmailChange.findUnique.mockResolvedValue({
-            id: "p1",
-            code: "ABC123",
-            expiresAt: new Date(Date.now() + 60000),
+    it("rejects the new address's code", async () => {
+        mockDb.pendingEmailChange.findUnique.mockResolvedValue(pending());
+        const caller = createCaller(getCtx());
+        await expect(caller.confirmOldEmail({ email: "new@example.com", code: "NEW456" })).rejects.toMatchObject({
+            code: "BAD_REQUEST",
         });
+    });
+
+    it("marks the current address verified", async () => {
+        mockDb.pendingEmailChange.findUnique.mockResolvedValue(pending());
+        mockDb.pendingEmailChange.update.mockResolvedValue({});
+        const caller = createCaller(getCtx());
+        const result = await caller.confirmOldEmail({ email: "new@example.com", code: "old123" });
+        expect(result.step).toBe("verify_new");
+        expect(mockDb.pendingEmailChange.update).toHaveBeenCalledWith({ where: { id: "p1" }, data: { verifiedOld: true } });
+    });
+});
+
+describe("userRouter.confirmNewEmail", () => {
+    beforeEach(() => {
+        mockDb.pendingEmailChange.findUnique.mockReset();
+        mockDb.pendingEmailChange.delete.mockReset();
+        mockDb.user.findFirst.mockReset();
+        mockDb.user.update.mockReset();
+    });
+
+    it("requires the current address to be verified first", async () => {
+        mockDb.pendingEmailChange.findUnique.mockResolvedValue(pending());
+        const caller = createCaller(getCtx());
+        await expect(caller.confirmNewEmail({ email: "new@example.com", code: "NEW456" })).rejects.toMatchObject({
+            code: "BAD_REQUEST",
+        });
+        expect(mockDb.user.update).not.toHaveBeenCalled();
+    });
+
+    it("updates the email once both codes are confirmed", async () => {
+        mockDb.pendingEmailChange.findUnique.mockResolvedValue(pending({ verifiedOld: true }));
         mockDb.user.findFirst.mockResolvedValue(null);
         mockDb.user.update.mockResolvedValue({ id: 1, email: "new@example.com", emailVerified: new Date() });
         mockDb.pendingEmailChange.delete.mockResolvedValue({});
         const caller = createCaller(getCtx());
-        const result = await caller.confirmEmailChange({ email: "new@example.com", code: "ABC123" });
+        const result = await caller.confirmNewEmail({ email: "new@example.com", code: "NEW456" });
         expect(result.email).toBe("new@example.com");
+        expect(mockDb.pendingEmailChange.delete).toHaveBeenCalledWith({ where: { id: "p1" } });
     });
 });
 

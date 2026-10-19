@@ -1,33 +1,28 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
 import { Button } from "@bytesend/ui/src/button";
+import { BrandMark } from "~/lib/brand";
+import { Reveal } from "./Reveal";
+
+const APP_URL = "/login";
 
 export function CallToAction() {
-
-    const APP_URL = "/login";
-
     return (
-        <section className="py-20 sm:py-28 border-t border-border/30 bg-muted/20">
-            <div className="mx-auto max-w-4xl px-6 text-center">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-4 py-1.5 text-xs text-muted-foreground mb-8">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    Free tier available no credit card required
-                </div>
+        <section className="relative overflow-hidden border-t border-border/30 bg-muted/20">
+            <div aria-hidden className="pointer-events-none absolute -left-40 bottom-0 hidden opacity-[0.06] dark:opacity-[0.09] md:block">
+                <BrandMark size={360} detail="full" />
+            </div>
 
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-                    Start sending today.
-                </h2>
-                <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-                    Create your free account in seconds. 12,500 emails per month, forever.
+            <Reveal className="relative mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Start sending today.</h2>
+                <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+                    Create a free account in seconds and send 12,500 transactional emails a month, free, for as long as you like.
                 </p>
 
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <Button size="lg" className="w-full sm:w-auto px-8 h-12 text-base rounded-xl" asChild>
-                        <Link href={APP_URL}>Get started free</Link>
+                <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    <Button size="lg" className="h-12 w-full rounded-xl px-8 text-base sm:w-auto" asChild>
+                        <Link href={APP_URL}>Start sending free</Link>
                     </Button>
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto px-8 h-12 text-base rounded-xl" asChild>
+                    <Button variant="outline" size="lg" className="h-12 w-full rounded-xl px-8 text-base sm:w-auto" asChild>
                         <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer">
                             Read the docs
                         </a>
@@ -35,11 +30,23 @@ export function CallToAction() {
                 </div>
 
                 <p className="mt-5 text-xs text-muted-foreground">
-                    Also available as a Docker container for self-hosting.{" "}
-                    <a href="https://docs.bytesend.cloud/self-hosting/overview" className="underline underline-offset-2 hover:text-foreground" target="_blank" rel="noopener noreferrer">
-                        Learn more →
+                    Prefer to run it yourself?{" "}
+                    <a
+                        href="https://docs.bytesend.cloud/self-hosting/overview"
+                        className="underline underline-offset-2 hover:text-foreground"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Self-host ByteSend with Docker →
                     </a>
                 </p>
+            </Reveal>
+
+            <div aria-hidden className="flex h-1.5">
+                <span className="flex-1 bg-brand-ice" />
+                <span className="flex-1 bg-brand-teal" />
+                <span className="flex-1 bg-brand-sky" />
+                <span className="flex-1 bg-brand-blue" />
             </div>
         </section>
     );

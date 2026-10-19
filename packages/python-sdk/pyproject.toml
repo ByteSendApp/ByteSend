@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bytesend"
-version = "0.1.0"
+version = "0.1.2"
 description = "Python SDK for the ByteSend API"
 authors = ["NodeByte LTD"]
 license = "AGPL-3.0"

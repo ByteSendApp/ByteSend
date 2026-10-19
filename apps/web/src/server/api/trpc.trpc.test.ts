@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
+    user: {
+      // authedProcedure re-checks the ban flag on every call.
+      findUnique: async () => ({ isBanned: false }),
+    },
     teamUser: {
       findFirst: vi.fn(),
     },

@@ -9,6 +9,7 @@ import {
   CreateConfigurationSetEventDestinationCommand,
   CreateConfigurationSetCommand,
   GetConfigurationSetEventDestinationsCommand,
+  UpdateConfigurationSetEventDestinationCommand,
   EventType,
   GetAccountCommand,
   CreateTenantResourceAssociationCommand,
@@ -364,6 +365,50 @@ export async function getConfigurationSetEventDestinations(configName: string, r
     topicArn: destination.SnsDestination?.TopicArn ?? null,
     eventTypes: destination.MatchingEventTypes ?? [],
   }));
+}
+
+/**
+ * Makes the ByteSend event destination on a configuration set enabled, pointed at `topicArn` and
+ * publishing `eventTypes`, creating the destination (or the whole configuration set) if it's gone.
+ */
+export async function repairConfigurationSetEventDestination(
+  configName: string,
+  topicArn: string,
+  eventTypes: EventType[],
+  region: string,
+) {
+  const sesClient = getSesClient(region);
+  const eventDestination = {
+    Enabled: true,
+    MatchingEventTypes: eventTypes,
+    SnsDestination: { TopicArn: topicArn },
+  };
+
+  try {
+    await sesClient.send(
+      new UpdateConfigurationSetEventDestinationCommand({
+        ConfigurationSetName: configName,
+        EventDestinationName: "bytesend_destination",
+        EventDestination: eventDestination,
+      }),
+    );
+    return;
+  } catch (error) {
+    if ((error as { name?: string }).name !== "NotFoundException") throw error;
+  }
+
+  try {
+    await sesClient.send(
+      new CreateConfigurationSetEventDestinationCommand({
+        ConfigurationSetName: configName,
+        EventDestinationName: "bytesend_destination",
+        EventDestination: eventDestination,
+      }),
+    );
+  } catch (error) {
+    if ((error as { name?: string }).name !== "NotFoundException") throw error;
+    await addWebhookConfiguration(configName, topicArn, eventTypes, region);
+  }
 }
 
 export async function deleteFromSesSuppressionList(

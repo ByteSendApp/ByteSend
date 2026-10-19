@@ -1,11 +1,12 @@
 import type { SesSetting } from "@prisma/client";
 import { env } from "~/env";
 import { db } from "../db";
-import { getConfigurationSetEventDestinations } from "../aws/ses";
+import type { EventType } from "@aws-sdk/client-sesv2";
+import { getConfigurationSetEventDestinations, repairConfigurationSetEventDestination } from "../aws/ses";
 import { listTopicSubscriptions, subscribeEndpoint } from "../aws/sns";
 import { logger } from "../logger/log";
 import { SesCallbackTracker, type RejectedCallback } from "./ses-callback-tracker";
-import { SesSettingsService } from "./ses-settings-service";
+import { GENERAL_EVENTS, SesSettingsService } from "./ses-settings-service";
 
 export type SubscriptionState = "confirmed" | "pending" | "missing" | "error";
 
@@ -36,10 +37,16 @@ function expectedCallbackUrl() {
   return `${env.NEXTAUTH_URL.replace(/\/$/, "")}/api/ses_callback`;
 }
 
-function configSetNames(setting: SesSetting) {
-  return [setting.configGeneral, setting.configClick, setting.configOpen, setting.configFull].filter(
-    (name): name is string => Boolean(name),
-  );
+type ConfigSet = { name: string; eventTypes: EventType[] };
+
+// Mirrors the event types each configuration set is created with in SesSettingsService.
+function configSetsFor(setting: SesSetting): ConfigSet[] {
+  return [
+    { name: setting.configGeneral, eventTypes: GENERAL_EVENTS },
+    { name: setting.configClick, eventTypes: [...GENERAL_EVENTS, "CLICK"] },
+    { name: setting.configOpen, eventTypes: [...GENERAL_EVENTS, "OPEN"] },
+    { name: setting.configFull, eventTypes: [...GENERAL_EVENTS, "CLICK", "OPEN"] },
+  ].filter((configSet): configSet is ConfigSet => Boolean(configSet.name));
 }
 
 async function diagnoseSubscription(setting: SesSetting): Promise<RegionCallbackDiagnosis["subscription"]> {
@@ -77,7 +84,7 @@ async function diagnoseSubscription(setting: SesSetting): Promise<RegionCallback
   }
 }
 
-async function diagnoseConfigSet(setting: SesSetting, name: string): Promise<ConfigSetDiagnosis> {
+async function diagnoseConfigSet(setting: SesSetting, { name, eventTypes }: ConfigSet): Promise<ConfigSetDiagnosis> {
   try {
     const destinations = await getConfigurationSetEventDestinations(name, setting.region);
     const destination = destinations.find((candidate) => candidate.topicArn === setting.topicArn);
@@ -87,8 +94,9 @@ async function diagnoseConfigSet(setting: SesSetting, name: string): Promise<Con
     if (!destination.enabled) {
       return { name, ok: false, detail: "The event destination is disabled" };
     }
-    if (!destination.eventTypes.includes("DELIVERY")) {
-      return { name, ok: false, detail: "The event destination doesn't publish DELIVERY events" };
+    const missing = eventTypes.filter((eventType) => !destination.eventTypes.includes(eventType));
+    if (missing.length > 0) {
+      return { name, ok: false, detail: `The event destination doesn't publish ${missing.join(", ")}` };
     }
     return { name, ok: true, detail: destination.eventTypes.join(", ") };
   } catch (error) {
@@ -100,7 +108,7 @@ async function diagnoseRegion(setting: SesSetting): Promise<RegionCallbackDiagno
   const expected = expectedCallbackUrl();
   const [subscription, configSets, lastReceivedAt] = await Promise.all([
     diagnoseSubscription(setting),
-    Promise.all(configSetNames(setting).map((name) => diagnoseConfigSet(setting, name))),
+    Promise.all(configSetsFor(setting).map((configSet) => diagnoseConfigSet(setting, configSet))),
     setting.topicArn ? SesCallbackTracker.lastReceived(setting.topicArn) : Promise.resolve(null),
   ]);
 
@@ -138,23 +146,39 @@ export const SesCallbackDiagnosticsService = {
   },
 
   /**
-   * Points the region's callback at this site's URL and (re)subscribes it to the SNS topic.
-   * SNS then sends a SubscriptionConfirmation, which /api/ses_callback confirms automatically.
+   * Fixes whatever diagnose() flags for a region: points the callback at this site and resubscribes
+   * it (SNS then sends a SubscriptionConfirmation that /api/ses_callback confirms), and re-enables or
+   * re-points any configuration set event destination that isn't publishing to the region's topic.
    */
-  async resubscribe(settingId: string) {
+  async repair(settingId: string) {
     const setting = await db.sesSetting.findUnique({ where: { id: settingId } });
     if (!setting?.topicArn) throw new Error("SES setting or SNS topic not found");
 
     const callbackUrl = expectedCallbackUrl();
+    const actions: string[] = [];
+
     if (setting.callbackUrl !== callbackUrl) {
       await db.sesSetting.update({
         where: { id: setting.id },
         data: { callbackUrl, callbackSuccess: false },
       });
       await SesSettingsService.invalidateCache();
+      actions.push(`Callback URL changed from ${setting.callbackUrl} to ${callbackUrl}`);
     }
 
-    const subscriptionArn = await subscribeEndpoint(setting.topicArn, callbackUrl, setting.region);
-    return { previousCallbackUrl: setting.callbackUrl, callbackUrl, subscriptionArn: subscriptionArn ?? null };
+    const subscription = await diagnoseSubscription({ ...setting, callbackUrl });
+    if (subscription.state !== "confirmed") {
+      await subscribeEndpoint(setting.topicArn, callbackUrl, setting.region);
+      actions.push(`Subscribed ${callbackUrl} to the SNS topic`);
+    }
+
+    for (const configSet of configSetsFor(setting)) {
+      const diagnosis = await diagnoseConfigSet(setting, configSet);
+      if (diagnosis.ok) continue;
+      await repairConfigurationSetEventDestination(configSet.name, setting.topicArn, configSet.eventTypes, setting.region);
+      actions.push(`Repaired ${configSet.name} (${diagnosis.detail})`);
+    }
+
+    return { actions };
   },
 };

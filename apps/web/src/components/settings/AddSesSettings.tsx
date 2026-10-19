@@ -147,10 +147,10 @@ export const AddSesSettingsForm: React.FC<SesSettingsProps> = ({
           name="bytesendUrl"
           render={({ field, formState }) => (
             <FormItem>
-              <FormLabel>Callback URL</FormLabel>
+              <FormLabel>Site URL</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="https://example.com"
+                  placeholder="https://bytesend.cloud"
                   className="w-full"
                   {...field}
                 />
@@ -159,8 +159,8 @@ export const AddSesSettingsForm: React.FC<SesSettingsProps> = ({
                 <FormMessage />
               ) : (
                 <FormDescription>
-                  This url should be accessible from the internet. Will be
-                  called from SES
+                  The public URL of this ByteSend site. SES events are sent to
+                  /api/ses_callback on it.
                 </FormDescription>
               )}
             </FormItem>

@@ -20,14 +20,16 @@ export default function CallbackDiagnostics() {
   const diagnosticsQuery = api.admin.getSesCallbackDiagnostics.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
-  const resubscribe = api.admin.resubscribeSesCallback.useMutation({
+  const repair = api.admin.repairSesCallbacks.useMutation({
     onSuccess: async (result) => {
-      toast.success("Resubscribed", {
-        description: `AWS will send a confirmation to ${result.callbackUrl}. Re-check in a few seconds.`,
+      toast.success(result.actions.length ? "Repaired" : "Nothing to repair", {
+        description: result.actions.length
+          ? `${result.actions.join(". ")}. Re-check in a few seconds.`
+          : "Everything already looks correct in AWS.",
       });
       await Promise.all([utils.admin.getSesCallbackDiagnostics.invalidate(), utils.admin.getSesSettings.invalidate()]);
     },
-    onError: (error) => toast.error("Resubscribe failed", { description: error.message }),
+    onError: (error) => toast.error("Repair failed", { description: error.message }),
   });
 
   const data = diagnosticsQuery.data;
@@ -123,18 +125,16 @@ export default function CallbackDiagnostics() {
                   </ul>
                 )}
 
-                {region.subscription.state !== "confirmed" || region.callbackUrl !== region.expectedCallbackUrl ? (
+                {!healthy && (
                   <Button
                     size="sm"
                     className="mt-4 w-full"
-                    onClick={() => resubscribe.mutate({ settingsId: region.settingId })}
-                    disabled={resubscribe.isPending}
+                    onClick={() => repair.mutate({ settingsId: region.settingId })}
+                    disabled={repair.isPending}
                   >
-                    {resubscribe.isPending && resubscribe.variables?.settingsId === region.settingId
-                      ? "Resubscribing…"
-                      : `Resubscribe ${region.expectedCallbackUrl}`}
+                    {repair.isPending && repair.variables?.settingsId === region.settingId ? "Repairing…" : "Repair"}
                   </Button>
-                ) : null}
+                )}
               </div>
             );
           })}

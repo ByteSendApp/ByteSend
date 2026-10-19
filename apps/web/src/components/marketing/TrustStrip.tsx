@@ -1,27 +1,24 @@
-"use client";
+import { Reveal } from "./Reveal";
 
-import React from "react";
+const facts = [
+    { value: "12,500", label: "Free transactional emails a month" },
+    { value: "AGPL-3.0", label: "Open source, every line" },
+    { value: "REST · SMTP", label: "Plus TypeScript, Python and Go SDKs" },
+    { value: "Docker", label: "Self-host on your own AWS account" },
+];
 
 export function TrustStrip() {
-
-    const stats = [
-        { value: "12,500", label: "Free emails/month" },
-        { value: "96.6%", label: "Uptime SLA" },
-        { value: "<2s", label: "Avg. delivery" },
-        { value: "24/7", label: "Monitoring" },
-    ];
-
     return (
-        <div className="border-y border-border/30">
+        <div className="border-y border-border/30 bg-muted/10">
             <div className="mx-auto max-w-5xl px-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border/30">
-                    {stats.map((s) => (
-                        <div key={s.label} className="py-8 px-4 text-center">
-                            <div className="text-2xl sm:text-3xl font-bold tabular-nums">{s.value}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">{s.label}</div>
-                        </div>
+                <ul className="grid grid-cols-2 divide-border/30 sm:grid-cols-4 sm:divide-x">
+                    {facts.map((fact, index) => (
+                        <Reveal as="li" key={fact.label} delay={index * 80} className="px-4 py-8 text-center">
+                            <div className="text-xl font-bold tracking-tight sm:text-2xl">{fact.value}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">{fact.label}</div>
+                        </Reveal>
                     ))}
-                </div>
+                </ul>
             </div>
         </div>
     );

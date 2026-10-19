@@ -4,16 +4,19 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@bytesend/ui/src/button";
 
+// Competitor details as published on their pricing and docs pages; re-check before changing claims.
+const COMPARISON_CHECKED = "October 2026";
+
 const comparisonRows: { feature: string; bs: string | boolean; resend: string | boolean; sendgrid: string | boolean; postmark: string | boolean; ses: string | boolean }[] = [
-    { feature: "Free tier", bs: "12,500/mo", resend: "3,000 tx/mo", sendgrid: "100/day", postmark: "100 test/mo", ses: "Pay-per-use" },
-    { feature: "Marketing campaigns", bs: true, resend: true, sendgrid: true, postmark: false, ses: false },
-    { feature: "Visual email editor", bs: true, resend: false, sendgrid: "Basic", postmark: false, ses: false },
+    { feature: "Free tier", bs: "12,500/mo", resend: "3,000/mo (100/day)", sendgrid: "60-day trial", postmark: "100/mo", ses: "Pay-per-use" },
+    { feature: "Marketing campaigns", bs: true, resend: true, sendgrid: true, postmark: "Broadcast API", ses: false },
+    { feature: "Visual email editor", bs: true, resend: true, sendgrid: true, postmark: false, ses: false },
     { feature: "Self-hostable", bs: true, resend: false, sendgrid: false, postmark: false, ses: false },
-    { feature: "Contact management", bs: true, resend: true, sendgrid: true, postmark: "Lists only", ses: false },
-    { feature: "Webhooks", bs: true, resend: true, sendgrid: true, postmark: true, ses: false },
+    { feature: "Contact management", bs: true, resend: true, sendgrid: true, postmark: false, ses: "Basic" },
+    { feature: "Webhooks", bs: true, resend: true, sendgrid: true, postmark: true, ses: "Via SNS" },
     { feature: "SMTP relay", bs: true, resend: true, sendgrid: true, postmark: true, ses: true },
-    { feature: "Analytics dashboard", bs: true, resend: "Basic", sendgrid: true, postmark: "Basic", ses: false },
-    { feature: "Custom plans", bs: true, resend: true, sendgrid: true, postmark: true, ses: false },
+    { feature: "Analytics dashboard", bs: true, resend: true, sendgrid: true, postmark: true, ses: "Basic" },
+    { feature: "Open source", bs: true, resend: false, sendgrid: false, postmark: false, ses: false },
 ];
 
 const APP_URL = "/login";
@@ -27,7 +30,7 @@ export function ComparisonTable() {
         <section className="py-20 sm:py-28 border-t border-border/30">
             <div className="mx-auto max-w-6xl px-6">
                 <div className="text-center max-w-2xl mx-auto mb-12">
-                    <p className="text-sm font-medium uppercase tracking-wider text-primary mb-3">Compare</p>
+                    <p className="text-sm font-medium uppercase tracking-wider text-brand-blue dark:text-brand-sky mb-3">Compare</p>
                     <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Why teams choose ByteSend</h2>
                     <p className="mt-4 text-muted-foreground">
                         See how we stack up against Resend, SendGrid, Postmark, and AWS SES.
@@ -70,6 +73,11 @@ export function ComparisonTable() {
                     </table>
                 </div>
 
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Based on each provider&apos;s published plans, checked {COMPARISON_CHECKED}. Free tiers for ByteSend and
+                    Resend are for transactional email.
+                </p>
+
                 <div className="mt-10 text-center">
                     <p className="text-sm text-muted-foreground mb-4">Ready to switch? Migration takes minutes.</p>
                     <Button size="lg" className="px-8 h-12 text-base rounded-xl" asChild>
@@ -83,8 +91,8 @@ export function ComparisonTable() {
 }
 
 function CompCell({ val }: { val: string | boolean }) {
-    if (val === true) return <span className="text-emerald-500 font-semibold">✓</span>;
-    if (val === false) return <span className="text-muted-foreground/40">—</span>;
+    if (val === true) return <span className="font-semibold text-brand-teal" aria-label="Yes">✓</span>;
+    if (val === false) return <span className="text-muted-foreground/40" aria-label="No">—</span>;
     return <span>{val}</span>;
 }
 

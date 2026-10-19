@@ -60,6 +60,7 @@ vi.mock("~/server/service/webhook-service", () => ({
 vi.mock("~/server/redis", () => ({
   getRedis: () => mockRedis,
   redisKey: (key: string) => key,
+  BULL_PREFIX: "bull",
 }));
 
 vi.mock("~/server/mailer", () => ({

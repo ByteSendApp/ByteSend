@@ -90,8 +90,8 @@ export function BrandMark({
       style={style}
       aria-hidden="true"
     >
-      {elements.map((props, index) => (
-        <path key={index} strokeLinejoin="miter" {...props} />
+      {elements.map((props) => (
+        <path key={props.d} strokeLinejoin="miter" {...props} />
       ))}
     </svg>
   );

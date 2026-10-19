@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   BookUser,
   Code,
   Cog,
@@ -302,6 +303,16 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isCloud() ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Service status">
+                    <Link href="https://status.bytesend.cloud" target="_blank">
+                      <Activity className="size-4 shrink-0" />
+                      <span>Status</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Discord">
                   <Link href="https://discord.gg/C2Q4GHXKQA" target="_blank">

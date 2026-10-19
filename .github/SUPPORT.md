@@ -4,8 +4,9 @@ Need help with ByteSend?
 
 ## Community Support
 
-- Discord: https://https://discord.gg/C2Q4GHXKQA
+- Discord: https://discord.gg/C2Q4GHXKQA
 - Docs: https://docs.bytesend.cloud
+- Service status: https://status.bytesend.cloud
 
 ## Commercial / Cloud Support
 
@@ -16,4 +17,4 @@ Need help with ByteSend?
 Do not open public issues for vulnerabilities.
 
 - See `SECURITY.md`
-- Email: support@nodebyte.co.uk
+- Email: security@nodebyte.co.uk

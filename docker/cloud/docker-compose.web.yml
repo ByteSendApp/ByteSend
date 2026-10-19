@@ -50,6 +50,7 @@ services:
 
       # Deliverability
       - SPAMHAUS_DQS_KEY=${SPAMHAUS_DQS_KEY}
+      - HEALTH_CHECK_TOKEN=${HEALTH_CHECK_TOKEN}
       
       # Admin
       - ADMIN_EMAIL=${ADMIN_EMAIL}

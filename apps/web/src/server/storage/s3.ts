@@ -14,7 +14,7 @@ function getS3Client(): S3Client | null {
 
   return new S3Client({
     endpoint: env.S3_COMPATIBLE_API_URL,
-    region: "auto",
+    region: env.S3_COMPATIBLE_REGION,
     credentials: {
       accessKeyId: env.S3_COMPATIBLE_ACCESS_KEY,
       secretAccessKey: env.S3_COMPATIBLE_SECRET_KEY,

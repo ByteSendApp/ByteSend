@@ -30,7 +30,7 @@ type Release = {
    Data fetching: GitLab (custom instance) → GitHub (private)
 ───────────────────────────────────────────────────────────── */
 
-const GITHUB_REPO = "NodeByteLTD/ByteSend";
+const GITHUB_REPO = "ByteSendApp/ByteSend";
 
 async function fetchFromGitLab(): Promise<Release[] | null> {
   const base = process.env.GITLAB_URL;

@@ -47,9 +47,50 @@ Campaigns are different from **transactional emails** (which go to a single reci
 
 ### Via the API
 
-```bash
+<Tip>
+The examples assume a client set up as in the [Node.js](/get-started/nodejs), [Python](/get-started/python) or [Go](/get-started/go) guide. Every SDK reads `BYTESEND_API_KEY` from the environment.
+</Tip>
+
+<CodeGroup>
+
+```ts Node.js
+const { data, error } = await bytesend.campaigns.create({
+  name: "June Newsletter",
+  subject: "What's new in June",
+  from: "hello@example.com",
+  contactBookId: "clzeydgeygff",
+});
+
+if (error) throw new Error(error.message);
+console.log("Created campaign", data?.id);
+```
+
+```python Python
+campaign, _ = client.campaigns.create({
+    "name": "June Newsletter",
+    "subject": "What's new in June",
+    "from": "hello@example.com",
+    "contactBookId": "clzeydgeygff",
+})
+print("Created campaign", campaign["id"])
+```
+
+```go Go
+campaign, err := client.Campaigns.Create(ctx, bytesend.CreateCampaignPayload{
+    Name:          "June Newsletter",
+    Subject:       "What's new in June",
+    From:          "hello@example.com",
+    ContactBookID: "clzeydgeygff",
+})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Created campaign", campaign.ID)
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/campaigns \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "June Newsletter",
@@ -58,6 +99,8 @@ curl -X POST https://bytesend.cloud/api/v1/campaigns \
     "contactBookId": "clzeydgeygff"
   }'
 ```
+
+</CodeGroup>
 
 ---
 
@@ -78,21 +121,57 @@ curl -X POST https://bytesend.cloud/api/v1/campaigns \
 
 Schedule a campaign to send at a future time:
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+await bytesend.campaigns.schedule(campaignId, {
+  scheduledAt: "2026-07-01T09:00:00Z",
+});
+```
+
+```python Python
+client.campaigns.schedule(campaign_id, {"scheduledAt": "2026-07-01T09:00:00Z"})
+```
+
+```go Go
+_, err := client.Campaigns.Schedule(ctx, campaignID, bytesend.ScheduleCampaignPayload{
+    ScheduledAt: "2026-07-01T09:00:00Z",
+})
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/campaigns/{campaignId}/schedule \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"scheduledAt": "2026-07-01T09:00:00Z"}'
 ```
+
+</CodeGroup>
 
 Campaigns can be re-scheduled or cancelled at any time before the send starts.
 
 ### Cancelling a scheduled campaign
 
-```bash
-curl -X DELETE https://bytesend.cloud/api/v1/campaigns/{campaignId} \
-  -H "Authorization: Bearer bs_your_api_key"
+<CodeGroup>
+
+```ts Node.js
+await bytesend.campaigns.delete(campaignId);
 ```
+
+```python Python
+client.campaigns.delete(campaign_id)
+```
+
+```go Go
+_, err := client.Campaigns.Delete(ctx, campaignID)
+```
+
+```bash cURL
+curl -X DELETE https://bytesend.cloud/api/v1/campaigns/{campaignId} \
+  -H "Authorization: Bearer $BYTESEND_API_KEY"
+```
+
+</CodeGroup>
 
 ---
 
@@ -100,15 +179,40 @@ curl -X DELETE https://bytesend.cloud/api/v1/campaigns/{campaignId} \
 
 If a campaign is in progress and you need to stop it (for example, you spotted a typo), you can pause it:
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+await bytesend.campaigns.pause(campaignId);
+
+// Later, once the issue is fixed
+await bytesend.campaigns.resume(campaignId);
+```
+
+```python Python
+client.campaigns.pause(campaign_id)
+
+# Later, once the issue is fixed
+client.campaigns.resume(campaign_id)
+```
+
+```go Go
+_, err := client.Campaigns.Pause(ctx, campaignID)
+
+// Later, once the issue is fixed
+_, err = client.Campaigns.Resume(ctx, campaignID)
+```
+
+```bash cURL
 # Pause
 curl -X POST https://bytesend.cloud/api/v1/campaigns/{campaignId}/pause \
-  -H "Authorization: Bearer bs_your_api_key"
+  -H "Authorization: Bearer $BYTESEND_API_KEY"
 
 # Resume
 curl -X POST https://bytesend.cloud/api/v1/campaigns/{campaignId}/resume \
-  -H "Authorization: Bearer bs_your_api_key"
+  -H "Authorization: Bearer $BYTESEND_API_KEY"
 ```
+
+</CodeGroup>
 
 <Note>
 Emails already sent before the pause are not recalled. Pausing stops further sends to remaining recipients.

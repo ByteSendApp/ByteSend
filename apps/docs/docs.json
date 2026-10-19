@@ -202,7 +202,7 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/NodeByteLTD/ByteSend",
+          "href": "https://github.com/ByteSendApp/ByteSend",
           "icon": "github"
         },
         {
@@ -253,7 +253,7 @@
   "footer": {
     "socials": {
       "x": "https://x.com/TryByteSend",
-      "github": "https://github.com/NodeByteLTD/ByteSend",
+      "github": "https://github.com/ByteSendApp/ByteSend",
       "discord": "https://discord.gg/C2Q4GHXKQA"
     }
   },

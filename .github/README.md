@@ -15,14 +15,14 @@
   <a href="https://bytesend.cloud">Website</a> ·
   <a href="https://docs.bytesend.cloud">Docs</a> ·
   <a href="https://docs.bytesend.cloud/api-reference/introduction">API reference</a> ·
-  <a href="https://github.com/NodeByteLTD/ByteSend/releases">Releases</a> ·
+  <a href="https://github.com/ByteSendApp/ByteSend/releases">Releases</a> ·
   <a href="https://status.bytesend.cloud">Status</a> ·
   <a href="https://discord.gg/C2Q4GHXKQA">Discord</a>
 </p>
 
 <p align="center">
   <a href="../LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-0057ff"></a>
-  <a href="https://github.com/NodeByteLTD/ByteSend/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/NodeByteLTD/ByteSend?color=1fb5ff"></a>
+  <a href="https://github.com/ByteSendApp/ByteSend/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/ByteSendApp/ByteSend?color=1fb5ff"></a>
   <a href="https://discord.gg/C2Q4GHXKQA"><img alt="Discord" src="https://img.shields.io/badge/chat-discord-00c3d6"></a>
 </p>
 
@@ -78,7 +78,7 @@ Prefer another language or no code at all? Use the [Python](../packages/python-s
 **Self-hosted**: ByteSend is free to self-host under AGPL-3.0. You bring PostgreSQL, Redis and an AWS account with SES.
 
 ```bash
-git clone https://github.com/NodeByteLTD/ByteSend.git
+git clone https://github.com/ByteSendApp/ByteSend.git
 cd ByteSend
 cp docker/prod/.env.example docker/prod/.env   # fill in your values
 docker compose -f docker/prod/compose.yml --env-file docker/prod/.env up -d
@@ -120,7 +120,7 @@ The [local setup guide](https://docs.bytesend.cloud/get-started/local) walks thr
 | [`apps/docs`](../apps/docs) | Documentation site |
 | [`packages/sdk`](../packages/sdk) | TypeScript SDK (`bytesend-js`) |
 | [`packages/python-sdk`](../packages/python-sdk) | Python SDK (`bytesend`) |
-| [`packages/go-sdk`](../packages/go-sdk) | Go SDK (`github.com/nodebyteltd/bytesend-go`) |
+| [`packages/go-sdk`](../packages/go-sdk) | Go SDK (`github.com/ByteSendApp/ByteSend/packages/go-sdk`) |
 | [`packages/ui`](../packages/ui) | Shared UI components |
 | [`packages/email-editor`](../packages/email-editor) | Visual email template editor |
 

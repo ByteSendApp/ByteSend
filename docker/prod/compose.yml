@@ -84,6 +84,7 @@ services:
       - S3_COMPATIBLE_API_URL=${S3_COMPATIBLE_API_URL:-http://minio:9002}
       - S3_COMPATIBLE_PUBLIC_URL=${S3_COMPATIBLE_PUBLIC_URL:-http://localhost:9002/bytesend}
       - S3_COMPATIBLE_BUCKET=${S3_COMPATIBLE_BUCKET:-bytesend}
+      - S3_COMPATIBLE_REGION=${S3_COMPATIBLE_REGION:-auto}
 
       # ── Rate limiting ────────────────────────────────────────────────────────
       - API_RATE_LIMIT=${API_RATE_LIMIT:-1}

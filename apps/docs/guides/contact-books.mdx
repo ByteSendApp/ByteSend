@@ -27,19 +27,44 @@ Contact books are the foundation of ByteSend's marketing features. You need at l
 
 ### Via the API
 
-```bash
+<Tip>
+The examples assume a client set up as in the [Node.js](/get-started/nodejs), [Python](/get-started/python) or [Go](/get-started/go) guide. Every SDK reads `BYTESEND_API_KEY` from the environment.
+</Tip>
+
+<CodeGroup>
+
+```ts Node.js
+const { data: book, error } = await bytesend.contactBooks.create({
+  name: "Newsletter Subscribers",
+});
+
+if (error) throw new Error(error.message);
+console.log(book?.id); // keep this id for adding contacts
+```
+
+```python Python
+book, _ = client.contact_books.create({"name": "Newsletter Subscribers"})
+print(book["id"])  # keep this id for adding contacts
+```
+
+```go Go
+book, err := client.ContactBooks.Create(ctx, bytesend.CreateContactBookPayload{
+    Name: "Newsletter Subscribers",
+})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(book.ID) // keep this id for adding contacts
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/contactBooks \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "Newsletter Subscribers"}'
 ```
 
-```typescript
-const book = await bytesend.contactBooks.create({
-  name: "Newsletter Subscribers",
-});
-console.log(book.id); // keep this id for adding contacts
-```
+</CodeGroup>
 
 ---
 
@@ -49,7 +74,9 @@ Contacts can be added one at a time, in bulk, or imported from a CSV.
 
 ### Single contact
 
-```typescript
+<CodeGroup>
+
+```ts Node.js
 await bytesend.contacts.create(contactBookId, {
   email: "jane@example.com",
   firstName: "Jane",
@@ -57,17 +84,73 @@ await bytesend.contacts.create(contactBookId, {
 });
 ```
 
+```python Python
+client.contacts.create(contact_book_id, {
+    "email": "jane@example.com",
+    "firstName": "Jane",
+    "lastName": "Smith",
+})
+```
+
+```go Go
+_, err := client.Contacts.Create(ctx, contactBookID, bytesend.CreateContactPayload{
+    Email:     "jane@example.com",
+    FirstName: "Jane",
+    LastName:  "Smith",
+})
+```
+
+```bash cURL
+curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "jane@example.com", "firstName": "Jane", "lastName": "Smith"}'
+```
+
+</CodeGroup>
+
 ### Bulk import (API)
 
 Use the bulk create endpoint to add up to 1,000 contacts in one request:
 
-```typescript
+<CodeGroup>
+
+```ts Node.js
 await bytesend.contacts.bulkCreate(contactBookId, [
   { email: "alice@example.com", firstName: "Alice" },
   { email: "bob@example.com", firstName: "Bob" },
   { email: "carol@example.com", firstName: "Carol" },
 ]);
 ```
+
+```python Python
+client.contacts.bulk_create(contact_book_id, [
+    {"email": "alice@example.com", "firstName": "Alice"},
+    {"email": "bob@example.com", "firstName": "Bob"},
+    {"email": "carol@example.com", "firstName": "Carol"},
+])
+```
+
+```go Go
+_, err := client.Contacts.BulkCreate(ctx, contactBookID, []bytesend.CreateContactPayload{
+    {Email: "alice@example.com", FirstName: "Alice"},
+    {Email: "bob@example.com", FirstName: "Bob"},
+    {Email: "carol@example.com", FirstName: "Carol"},
+})
+```
+
+```bash cURL
+curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts/bulk \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"email": "alice@example.com", "firstName": "Alice"},
+    {"email": "bob@example.com", "firstName": "Bob"},
+    {"email": "carol@example.com", "firstName": "Carol"}
+  ]'
+```
+
+</CodeGroup>
 
 ### CSV import (dashboard)
 
@@ -98,7 +181,9 @@ Contacts with **Pending** or **Unsubscribed** status are excluded from campaign 
 
 Beyond the standard `email`, `firstName`, and `lastName` fields, contacts support custom key-value properties for anything relevant to your audience: plan tier, signup source, account ID, etc.
 
-```typescript
+<CodeGroup>
+
+```ts Node.js
 await bytesend.contacts.create(contactBookId, {
   email: "alice@example.com",
   firstName: "Alice",
@@ -110,21 +195,85 @@ await bytesend.contacts.create(contactBookId, {
 });
 ```
 
+```python Python
+client.contacts.create(contact_book_id, {
+    "email": "alice@example.com",
+    "firstName": "Alice",
+    "properties": {
+        "plan": "pro",
+        "signupSource": "landing-page",
+        "userId": "usr_abc123",
+    },
+})
+```
+
+```go Go
+_, err := client.Contacts.Create(ctx, contactBookID, bytesend.CreateContactPayload{
+    Email:     "alice@example.com",
+    FirstName: "Alice",
+    Properties: map[string]string{
+        "plan":         "pro",
+        "signupSource": "landing-page",
+        "userId":       "usr_abc123",
+    },
+})
+```
+
+```bash cURL
+curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alice@example.com",
+    "firstName": "Alice",
+    "properties": {"plan": "pro", "signupSource": "landing-page", "userId": "usr_abc123"}
+  }'
+```
+
+</CodeGroup>
+
 Custom properties can then be used in [campaign personalization](/guides/campaign-personalization) via `{{plan}}`, `{{signupSource}}`, etc.
 
 ---
 
 ## Upserting Contacts
 
-The upsert endpoint creates a contact if they don't exist, or updates their record if they do. This is ideal for syncing contacts from your app on signup or profile update:
+Contacts are matched by email address within a contact book, so creating a contact that already exists updates their record instead of failing. Call it on every signup or profile change to keep the book in sync:
 
-```typescript
-await bytesend.contacts.upsert(contactBookId, {
+<CodeGroup>
+
+```ts Node.js
+await bytesend.contacts.create(contactBookId, {
   email: "alice@example.com",
   firstName: "Alice",
   properties: { plan: "pro" },
 });
 ```
+
+```python Python
+client.contacts.create(contact_book_id, {
+    "email": "alice@example.com",
+    "firstName": "Alice",
+    "properties": {"plan": "pro"},
+})
+```
+
+```go Go
+_, err := client.Contacts.Create(ctx, contactBookID, bytesend.CreateContactPayload{
+    Email:      "alice@example.com",
+    FirstName:  "Alice",
+    Properties: map[string]string{"plan": "pro"},
+})
+```
+
+```bash cURL
+curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "alice@example.com", "firstName": "Alice", "properties": {"plan": "pro"}}'
+```
+
+</CodeGroup>
 
 ---
 
@@ -132,11 +281,33 @@ await bytesend.contacts.upsert(contactBookId, {
 
 When a recipient unsubscribes, update their status immediately:
 
-```typescript
+<CodeGroup>
+
+```ts Node.js
 await bytesend.contacts.update(contactBookId, contactId, {
   subscribed: false,
 });
 ```
+
+```python Python
+client.contacts.update(contact_book_id, contact_id, {"subscribed": False})
+```
+
+```go Go
+subscribed := false
+_, err := client.Contacts.Update(ctx, contactBookID, contactID, bytesend.UpdateContactPayload{
+    Subscribed: &subscribed,
+})
+```
+
+```bash cURL
+curl -X PATCH https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts/{contactId} \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"subscribed": false}'
+```
+
+</CodeGroup>
 
 If you handle unsubscribes via webhooks (e.g., reading from `email.complained`), do this automatically in your webhook handler so your list stays clean.
 

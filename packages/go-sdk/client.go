@@ -13,7 +13,7 @@ import (
 )
 
 const defaultBaseURL = "https://bytesend.cloud/api/v1"
-const userAgent = "bytesend-go/0.3.2"
+const userAgent = "bytesend-go/0.3.3"
 const maxResponseBodyBytes int64 = 10 * 1024 * 1024 // 10 MB
 
 type Client struct {
@@ -124,7 +124,13 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any, v
 	}
 
 	errResp := &ErrorResponse{Message: resp.Status, Code: "INTERNAL_SERVER_ERROR"}
-	_ = json.NewDecoder(limited).Decode(errResp)
+	var envelope struct {
+		Error *ErrorResponse `json:"error"`
+	}
+	if err := json.NewDecoder(limited).Decode(&envelope); err == nil && envelope.Error != nil && envelope.Error.Code != "" {
+		errResp = envelope.Error
+	}
+	errResp.StatusCode = resp.StatusCode
 	return errResp
 }
 

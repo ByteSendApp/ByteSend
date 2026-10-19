@@ -28,7 +28,7 @@ export function SiteFooter() {
 
           {/* Right: social icons */}
           <div className="flex items-center gap-3">
-            <a href="https://github.com/NodeByteLTD/ByteSend" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
+            <a href="https://github.com/ByteSendApp/ByteSend" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
               <FaGithub className="size-4.5" />
             </a>
             <a href="https://discord.gg/C2Q4GHXKQA" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">

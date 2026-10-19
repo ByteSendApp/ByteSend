@@ -15,7 +15,7 @@ icon: golang
 Install the ByteSend Go SDK:
 
 ```bash
-go get github.com/nodebyteltd/bytesend-go
+go get github.com/ByteSendApp/ByteSend/packages/go-sdk
 ```
 
 ## Quick Start
@@ -28,7 +28,7 @@ import (
     "fmt"
     "log"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 func main() {
@@ -80,7 +80,7 @@ import (
     "net/http"
     "time"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 client, err := bytesend.NewClient(
@@ -104,7 +104,7 @@ The default base URL is `https://bytesend.cloud/api/v1`. For self-hosted deploym
 
 ## Error Handling
 
-All service methods return a single `error`. API errors are returned as `*ErrorResponse`. Use `errors.As` to distinguish API errors from network or encoding errors:
+All service methods return a single `error`. API errors are returned as `*ErrorResponse`, with the API's error `Code` (such as `RATE_LIMITED`), `Message` and HTTP `StatusCode`. Use `errors.As` to distinguish API errors from network or encoding errors:
 
 ```go
 import "errors"
@@ -114,7 +114,7 @@ if err != nil {
     var apiErr *bytesend.ErrorResponse
     if errors.As(err, &apiErr) {
         // API error (validation, auth, rate limit, etc.)
-        fmt.Printf("API error %s: %s\n", apiErr.Code, apiErr.Message)
+        fmt.Printf("API error %d %s: %s\n", apiErr.StatusCode, apiErr.Code, apiErr.Message)
     } else {
         // Network, timeout, or encoding error
         log.Fatal(err)
@@ -426,4 +426,4 @@ fmt.Printf("Complaint rate: %.2f%%\n", resp.ComplaintRate*100)
 
 ## More Information
 
-For complete SDK documentation and examples, see the [GitHub repository](https://github.com/nodebyteltd/bytesend-go).
+For complete SDK documentation and examples, see the [GitHub repository](https://github.com/ByteSendApp/ByteSend/tree/main/packages/go-sdk).

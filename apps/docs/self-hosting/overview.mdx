@@ -40,7 +40,7 @@ newgrp docker
 ### 2. Clone the repository
 
 ```bash
-git clone https://github.com/NodeByteLTD/ByteSend.git
+git clone https://github.com/ByteSendApp/ByteSend.git
 cd ByteSend
 ```
 
@@ -154,7 +154,7 @@ sudo systemctl start redis-server
 ### 4. Clone and install
 
 ```bash
-git clone https://github.com/NodeByteLTD/ByteSend.git
+git clone https://github.com/ByteSendApp/ByteSend.git
 cd bytesend
 pnpm install
 ```
@@ -270,6 +270,7 @@ sudo journalctl -u bytesend -f
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | No | Discord OAuth credentials |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Google OAuth credentials |
 | `S3_COMPATIBLE_*` | No | S3-compatible storage (defaults to bundled MinIO) |
+| `S3_COMPATIBLE_REGION` | No | Bucket region. AWS S3 needs the real region (e.g. `us-east-1`); R2 and MinIO use the default `auto` |
 | `SMTP_HOST` / `SMTP_USER` | No | External SMTP relay for account emails |
 | `ADMIN_EMAIL` | No | Grants admin panel access to this address |
 | `DISCORD_WEBHOOK_URL` | No | Discord webhook for platform alerts (signups, blocked teams, blocklisted domains) |

@@ -103,7 +103,7 @@ It is published as `bytesend` on PyPI.
 - **ContactBooks**: `client.contact_books.list()`, `client.contact_books.create()`, `client.contact_books.get()`, `client.contact_books.update()`
 - **Contacts**: `client.contacts.create()`, `client.contacts.list()`, `client.contacts.get()`, `client.contacts.bulk_create()`, `client.contacts.bulk_delete()`
 - **Domains**: `client.domains.create()`, `client.domains.get()`, `client.domains.verify()`
-- **Campaigns**: `client.campaigns.create()`, `client.campaigns.get()`, `client.campaigns.schedule()`, `client.campaigns.pause()`, `client.campaigns.resume()`
+- **Campaigns**: `client.campaigns.create()`, `client.campaigns.get()`, `client.campaigns.schedule()`, `client.campaigns.pause()`, `client.campaigns.resume()`, `client.campaigns.delete()`
 
 Notes
 

@@ -93,12 +93,13 @@ jobs:
             APP_VERSION="develop"
           fi
 
+          GHCR="ghcr.io/$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
           IMAGE_TAG_ARGS=""
           for TAG in $TAGS; do
-            IMAGE_TAG_ARGS="$IMAGE_TAG_ARGS -t bytesend/$APP-$BUILD_PLATFORM:$TAG -t ghcr.io/bytesend/$APP-$BUILD_PLATFORM:$TAG"
+            IMAGE_TAG_ARGS="$IMAGE_TAG_ARGS -t bytesend/$APP-$BUILD_PLATFORM:$TAG -t $GHCR/$APP-$BUILD_PLATFORM:$TAG"
             # Remove remote tags (single image or manifest list) so re-runs can safely republish.
             docker buildx imagetools rm bytesend/$APP-$BUILD_PLATFORM:$TAG 2>/dev/null || true
-            docker buildx imagetools rm ghcr.io/bytesend/$APP-$BUILD_PLATFORM:$TAG 2>/dev/null || true
+            docker buildx imagetools rm $GHCR/$APP-$BUILD_PLATFORM:$TAG 2>/dev/null || true
           done
 
           docker buildx build \
@@ -231,16 +232,17 @@ jobs:
             TAGS="$TAGS develop"
           fi
 
+          GHCR="ghcr.io/$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
           for APP_NAME in bytesend smtp-proxy; do
             for TAG in $TAGS; do
               # Wait for both platform images to be available before creating manifest
-              wait_for_remote_image "ghcr.io/bytesend/$APP_NAME-amd64:$TAG" || exit 1
-              wait_for_remote_image "ghcr.io/bytesend/$APP_NAME-arm64:$TAG" || exit 1
+              wait_for_remote_image "$GHCR/$APP_NAME-amd64:$TAG" || exit 1
+              wait_for_remote_image "$GHCR/$APP_NAME-arm64:$TAG" || exit 1
               
               # buildx imagetools create is idempotent and updates the target tag in-place.
               docker buildx imagetools create \
-                --tag ghcr.io/bytesend/$APP_NAME:$TAG \
-                ghcr.io/bytesend/$APP_NAME-amd64:$TAG \
-                ghcr.io/bytesend/$APP_NAME-arm64:$TAG
+                --tag $GHCR/$APP_NAME:$TAG \
+                $GHCR/$APP_NAME-amd64:$TAG \
+                $GHCR/$APP_NAME-arm64:$TAG
             done
           done

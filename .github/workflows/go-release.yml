@@ -1,0 +1,72 @@
+name: Release Go SDK
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/go-sdk/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/go-sdk
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: packages/go-sdk/go.mod
+          cache: false
+
+      - name: Build and vet
+        run: |
+          go build ./...
+          go vet ./...
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^const userAgent = "bytesend-go\/\(.*\)"$/\1/p' client.go)
+          if [ -z "$VERSION" ]; then
+            echo "Could not read the SDK version from client.go" >&2
+            exit 1
+          fi
+          # Go only resolves a module in a subdirectory from tags prefixed with that directory.
+          TAG="packages/go-sdk/v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$TAG already exists, skipping release"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tag release
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Publish to the Go module proxy
+        if: steps.version.outputs.exists == 'false'
+        env:
+          GOPROXY: https://proxy.golang.org
+        run: |
+          MODULE=$(go list -m)
+          cd "$RUNNER_TEMP"
+          go list -m "$MODULE@v${{ steps.version.outputs.version }}"

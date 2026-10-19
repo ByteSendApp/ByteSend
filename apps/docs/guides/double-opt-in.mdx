@@ -49,11 +49,45 @@ Double opt-in requires new contacts to confirm their email address before they b
 
 ### Via the API
 
+<Tip>
+The examples assume a client set up as in the [Node.js](/get-started/nodejs), [Python](/get-started/python) or [Go](/get-started/go) guide. Every SDK reads `BYTESEND_API_KEY` from the environment.
+</Tip>
+
 Create a contact book with double opt-in enabled:
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+await bytesend.contactBooks.create({
+  name: "Newsletter Subscribers",
+  doubleOptInEnabled: true,
+  doubleOptInFrom: "Newsletter <hello@yourdomain.com>",
+  doubleOptInSubject: "Please confirm your subscription",
+});
+```
+
+```python Python
+client.contact_books.create({
+    "name": "Newsletter Subscribers",
+    "doubleOptInEnabled": True,
+    "doubleOptInFrom": "Newsletter <hello@yourdomain.com>",
+    "doubleOptInSubject": "Please confirm your subscription",
+})
+```
+
+```go Go
+enabled := true
+_, err := client.ContactBooks.Create(ctx, bytesend.CreateContactBookPayload{
+    Name:               "Newsletter Subscribers",
+    DoubleOptInEnabled: &enabled,
+    DoubleOptInFrom:    "Newsletter <hello@yourdomain.com>",
+    DoubleOptInSubject: "Please confirm your subscription",
+})
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/contactBooks \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Newsletter Subscribers",
@@ -63,16 +97,37 @@ curl -X POST https://bytesend.cloud/api/v1/contactBooks \
   }'
 ```
 
+</CodeGroup>
+
 Or enable it on an existing contact book:
 
-```bash
-curl -X PATCH https://bytesend.cloud/api/v1/contactBooks/{contactBookId} \
-  -H "Authorization: Bearer bs_your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "doubleOptInEnabled": true
-  }'
+<CodeGroup>
+
+```ts Node.js
+await bytesend.contactBooks.update(contactBookId, {
+  doubleOptInEnabled: true,
+});
 ```
+
+```python Python
+client.contact_books.update(contact_book_id, {"doubleOptInEnabled": True})
+```
+
+```go Go
+enabled := true
+_, err := client.ContactBooks.Update(ctx, contactBookID, bytesend.UpdateContactBookPayload{
+    DoubleOptInEnabled: &enabled,
+})
+```
+
+```bash cURL
+curl -X PATCH https://bytesend.cloud/api/v1/contactBooks/{contactBookId} \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"doubleOptInEnabled": true}'
+```
+
+</CodeGroup>
 
 ## Contact statuses
 

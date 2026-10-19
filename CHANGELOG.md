@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.3] - 2026-10-19
+
+### Added
+- `S3_COMPATIBLE_REGION` sets the storage bucket's region. AWS S3 needs the bucket's real region (e.g. `us-east-1`); R2 and MinIO keep working with the default `auto`
+
+### Changed
+- ByteSend now lives at [github.com/ByteSendApp/ByteSend](https://github.com/ByteSendApp/ByteSend); docs, READMEs, the site, the status page and package metadata link there
+- **Go SDK module path** is now `github.com/ByteSendApp/ByteSend/packages/go-sdk`, matching where the code lives. Update imports from `github.com/nodebyteltd/bytesend-go`. A new workflow tags `packages/go-sdk/v<version>` and publishes to the Go module proxy whenever the SDK version changes on `main`
+- Docker images publish to the GitHub Container Registry under the repository owner's namespace (`ghcr.io/bytesendapp/…`) instead of a hard-coded `ghcr.io/bytesend/…` the workflow token couldn't push to
+
+### Fixed
+- Changelog links render as links instead of raw Markdown
+- Open stats shows exact email counts instead of rounded figures that looked inconsistent with the totals beneath them
+- Em-dashes removed from site, dashboard, status page and docs copy
+
+---
+
 ## [0.4.2] - 2026-10-19
 
 ### Added
@@ -880,12 +897,19 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/nodebyte/bytesend/compare/v0.2.6...HEAD
-[0.2.6]: https://github.com/nodebyte/bytesend/compare/v0.2.5...v0.2.6
-[0.2.5]: https://github.com/nodebyte/bytesend/compare/v0.2.4...v0.2.5
-[0.2.4]: https://github.com/nodebyte/bytesend/compare/v0.2.3...v0.2.4
-[0.2.3]: https://github.com/nodebyte/bytesend/compare/v0.2.2...v0.2.3
-[0.2.2]: https://github.com/nodebyte/bytesend/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/nodebyte/bytesend/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/nodebyte/bytesend/compare/v1.0.0-beta.1...v0.2.0
-[1.0.0-beta.1]: https://github.com/nodebyte/bytesend/releases/tag/v1.0.0-beta.1
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.3.2...v0.4.0
+[0.3.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.6...v0.3.0
+[0.2.6]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.5...v0.2.6
+[0.2.5]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/ByteSendApp/ByteSend/compare/v1.0.0-beta.1...v0.2.0
+[1.0.0-beta.1]: https://github.com/ByteSendApp/ByteSend/releases/tag/v1.0.0-beta.1

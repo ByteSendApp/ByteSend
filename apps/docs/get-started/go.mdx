@@ -15,7 +15,7 @@ icon: golang
 Install the ByteSend Go SDK:
 
 ```bash
-go get github.com/nodebyteltd/bytesend-go
+go get github.com/ByteSendApp/ByteSend/packages/go-sdk
 ```
 
 ## Quick Start
@@ -28,7 +28,7 @@ import (
     "fmt"
     "log"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 func main() {
@@ -80,7 +80,7 @@ import (
     "net/http"
     "time"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 client, err := bytesend.NewClient(
@@ -426,4 +426,4 @@ fmt.Printf("Complaint rate: %.2f%%\n", resp.ComplaintRate*100)
 
 ## More Information
 
-For complete SDK documentation and examples, see the [GitHub repository](https://github.com/nodebyteltd/bytesend-go).
+For complete SDK documentation and examples, see the [GitHub repository](https://github.com/ByteSendApp/ByteSend/tree/main/packages/go-sdk).

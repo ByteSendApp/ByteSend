@@ -23,7 +23,7 @@ const getClient = () => {
     env.S3_COMPATIBLE_SECRET_KEY
   ) {
     S3 = new S3Client({
-      region: "auto",
+      region: env.S3_COMPATIBLE_REGION,
       endpoint: env.S3_COMPATIBLE_API_URL,
       credentials: {
         accessKeyId: env.S3_COMPATIBLE_ACCESS_KEY,

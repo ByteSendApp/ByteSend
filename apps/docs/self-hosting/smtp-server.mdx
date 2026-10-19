@@ -5,7 +5,7 @@ description: "An end-to-end guide on how to self-host the ByteSend SMTP Server."
 
 The ByteSend SMTP Server is a lightweight Node.js application inside the ByteSend monorepo that forwards incoming SMTP connections to the ByteSend API. It can be deployed on the same host as ByteSend or on a separate machine.
 
-**Source path:** [`apps/smtp-server`](https://github.com/NodeByteLTD/ByteSend/tree/main/apps/smtp-server)
+**Source path:** [`apps/smtp-server`](https://github.com/ByteSendApp/ByteSend/tree/main/apps/smtp-server)
 
 ---
 
@@ -110,7 +110,7 @@ If you prefer to build the image locally:
 
 1. **Clone the ByteSend repository:**
    ```bash
-   git clone https://github.com/NodeByteLTD/ByteSend.git
+   git clone https://github.com/ByteSendApp/ByteSend.git
    cd ByteSend/apps/smtp-server
    ```
 
@@ -143,7 +143,7 @@ If you prefer to build the image locally:
 
 1. **Clone and install:**
    ```bash
-   git clone https://github.com/NodeByteLTD/ByteSend.git
+   git clone https://github.com/ByteSendApp/ByteSend.git
    cd ByteSend/apps/smtp-server
    npm install
    ```
@@ -301,7 +301,7 @@ Save as `/etc/systemd/system/bytesend-smtp.service`:
 ```ini
 [Unit]
 Description=ByteSend SMTP Server
-Documentation=https://github.com/NodeByteLTD/ByteSend/tree/main/apps/smtp-server
+Documentation=https://github.com/ByteSendApp/ByteSend/tree/main/apps/smtp-server
 After=network.target
 
 [Service]
@@ -352,7 +352,7 @@ sudo chown smtp:smtp /opt/bytesend-smtp/logs
 
 # Clone and build
 cd /opt/bytesend-smtp
-sudo -u smtp HOME=/opt/bytesend-smtp git clone https://github.com/NodeByteLTD/ByteSend.git .
+sudo -u smtp HOME=/opt/bytesend-smtp git clone https://github.com/ByteSendApp/ByteSend.git .
 sudo -u smtp HOME=/opt/bytesend-smtp bash -lc "cd /opt/bytesend-smtp/apps/smtp-server && npm install && npm run build"
 
 # (Optional) Copy and configure .env file
@@ -484,7 +484,7 @@ For high-volume deployments, consider:
 ## Support & Issues
 
 For bugs, feature requests, or questions:
-- **GitHub Issues:** [github.com/NodeByteLTD/ByteSend/issues](https://github.com/NodeByteLTD/ByteSend/issues)
+- **GitHub Issues:** [github.com/ByteSendApp/ByteSend/issues](https://github.com/ByteSendApp/ByteSend/issues)
 - **ByteSend Support:** [Contact us](https://bytesend.cloud/support)
 
 

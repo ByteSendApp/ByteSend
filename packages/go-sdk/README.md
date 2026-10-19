@@ -19,7 +19,7 @@ The official Go SDK for [ByteSend](https://bytesend.cloud): a transactional emai
 ## Installation
 
 ```sh
-go get github.com/nodebyteltd/bytesend-go
+go get github.com/ByteSendApp/ByteSend/packages/go-sdk
 ```
 
 Requires Go 1.21+.
@@ -34,7 +34,7 @@ import (
     "fmt"
     "log"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 func main() {

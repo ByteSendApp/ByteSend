@@ -2,7 +2,7 @@
 
 A lightweight, production-ready SMTP server that forwards incoming email to the ByteSend API. Deploy it standalone or behind a reverse proxy to accept SMTP connections and integrate with ByteSend's email delivery platform.
 
-[![GitHub](https://img.shields.io/badge/GitHub-ByteSend-181717?logo=github)](https://github.com/NodeByteLTD/ByteSend/tree/main/apps/smtp-server)
+[![GitHub](https://img.shields.io/badge/GitHub-ByteSend-181717?logo=github)](https://github.com/ByteSendApp/ByteSend/tree/main/apps/smtp-server)
 [![License](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
 
@@ -27,7 +27,7 @@ A lightweight, production-ready SMTP server that forwards incoming email to the 
 
 ```bash
 # Clone the repository
-git clone https://github.com/NodeByteLTD/ByteSend.git
+git clone https://github.com/ByteSendApp/ByteSend.git
 cd ByteSend/apps/smtp-server
 
 # Configure docker-compose.yml
@@ -44,7 +44,7 @@ docker compose logs -f smtp
 
 ```bash
 # Clone and install
-git clone https://github.com/NodeByteLTD/ByteSend.git
+git clone https://github.com/ByteSendApp/ByteSend.git
 cd ByteSend/apps/smtp-server
 npm install
 npm run build
@@ -186,16 +186,16 @@ smtp.example.com:587  bytesend:your_api_key_here
 ## Deployment
 
 ### Docker Compose
-See [docs/self-hosting/smtp-server.mdx](https://github.com/NodeByteLTD/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#option-1-docker-recommended)
+See [docs/self-hosting/smtp-server.mdx](https://github.com/ByteSendApp/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#option-1-docker-recommended)
 
 ### Kubernetes
 See [contrib/k8s/deployment.yaml](contrib/k8s/deployment.yaml)
 
 ### Systemd
-See [docs/self-hosting/smtp-server.mdx](https://github.com/NodeByteLTD/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#systemd-service-setup)
+See [docs/self-hosting/smtp-server.mdx](https://github.com/ByteSendApp/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#systemd-service-setup)
 
 ### Nginx Reverse Proxy
-See [docs/self-hosting/smtp-server.mdx](https://github.com/NodeByteLTD/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#reverse-proxy-setup)
+See [docs/self-hosting/smtp-server.mdx](https://github.com/ByteSendApp/ByteSend/blob/main/apps/docs/self-hosting/smtp-server.mdx#reverse-proxy-setup)
 
 ---
 
@@ -272,8 +272,8 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 ## Support
 
 - 📖 **Documentation:** [ByteSend Self-Hosting Guide](https://docs.bytesend.cloud/self-hosting/smtp-server)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/NodeByteLTD/ByteSend/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/NodeByteLTD/ByteSend/discussions)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/ByteSendApp/ByteSend/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/ByteSendApp/ByteSend/discussions)
 - 📧 **Email:** [support@bytesend.cloud](mailto:support@bytesend.cloud)
 
 ---

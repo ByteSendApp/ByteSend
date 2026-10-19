@@ -49,7 +49,7 @@ import (
     "context"
     "log"
 
-    bytesend "github.com/nodebyteltd/bytesend-go"
+    bytesend "github.com/ByteSendApp/ByteSend/packages/go-sdk"
 )
 
 func main() {

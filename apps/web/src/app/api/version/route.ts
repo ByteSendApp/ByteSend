@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { env } from "~/env";
 import { logger } from "~/server/logger/log";
 
-const GITHUB_REPOS = ["NodeByteLTD/ByteSend"];
+const GITHUB_REPOS = ["ByteSendApp/ByteSend"];
 const FALLBACK_VERSION = "canary";
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const FALLBACK_TTL_MS = 60 * 1000;

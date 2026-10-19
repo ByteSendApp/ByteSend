@@ -1,6 +1,7 @@
 import { db } from "~/server/db";
 import { logger } from "~/server/logger/log";
 import { parseSesHook, SesHookParser } from "~/server/service/ses-hook-parser";
+import { SesCallbackTracker } from "~/server/service/ses-callback-tracker";
 import { SesSettingsService } from "~/server/service/ses-settings-service";
 import { SnsNotificationMessage } from "~/types/aws-types";
 
@@ -29,8 +30,13 @@ export async function POST(req: Request) {
   logger.debug({ isEventValid }, "SES callback topic validation result");
 
   if (!isEventValid) {
+    if (typeof data?.TopicArn === "string") {
+      await SesCallbackTracker.recordRejected(data.TopicArn);
+    }
     return Response.json({ data: "Event is not valid" });
   }
+
+  await SesCallbackTracker.recordReceived(trustedTopicArn);
 
   if (data.Type === "SubscriptionConfirmation") {
     return handleSubscription(data, trustedTopicArn);

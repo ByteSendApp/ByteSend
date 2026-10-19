@@ -209,7 +209,6 @@ export async function parseSesHook(data: SesEvent) {
       "CLICKED",
       "BOUNCED",
       "COMPLAINED",
-      "SENT",
     ].includes(mailStatus)
   ) {
     logger.info("Updating daily email usage");
@@ -234,7 +233,6 @@ export async function parseSesHook(data: SesEvent) {
         clicked: updateField === "clicked" ? 1 : 0,
         bounced: updateField === "bounced" ? 1 : 0,
         complained: updateField === "complained" ? 1 : 0,
-        sent: updateField === "sent" ? 1 : 0,
         hardBounced: isHardBounced ? 1 : 0,
       },
       update: {

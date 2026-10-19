@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Delivery callback diagnostics** on Admin → SES regions: per region, the SNS subscription state and endpoint, each configuration set's event destination, when the last callback arrived, and any callbacks rejected for an unknown topic, with one-click resubscribe to this site's callback URL
+
+### Fixed
+- Sent counts in analytics no longer depend on SES callbacks: an email is counted when ByteSend hands it to SES, so totals stay accurate even if SNS notifications stop arriving
+
+### Changed
+- **Node.js SDK 0.1.4**: package metadata points at the new `ByteSendApp/ByteSend` repository, and releases publish from it with provenance
+
 ---
 
 ## [0.4.3] - 2026-10-19

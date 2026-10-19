@@ -2,6 +2,7 @@
 
 import { AdminPageHeader } from "../_components/admin-page-header";
 import AddSesConfiguration from "./add-ses-configuration";
+import CallbackDiagnostics from "./callback-diagnostics";
 import SesConfigurations from "./ses-configurations";
 
 export default function AdminSesPage() {
@@ -13,6 +14,7 @@ export default function AdminSesPage() {
         actions={<AddSesConfiguration />}
       />
       <SesConfigurations />
+      <CallbackDiagnostics />
     </>
   );
 }

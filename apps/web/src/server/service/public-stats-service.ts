@@ -1,0 +1,141 @@
+import { db } from "../db";
+import { logger } from "../logger/log";
+import { withCache } from "../redis";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WINDOW_DAYS = 30;
+const CACHE_TTL_SECONDS = 60 * 60;
+const STATUS_STATS_URL = "https://status.bytesend.cloud/api/status/stats?range=30d";
+
+const REGION_LABELS: Record<string, string> = {
+  "us-east-1": "US East (N. Virginia)",
+  "us-east-2": "US East (Ohio)",
+  "us-west-1": "US West (N. California)",
+  "us-west-2": "US West (Oregon)",
+  "ca-central-1": "Canada (Central)",
+  "eu-west-1": "Europe (Ireland)",
+  "eu-west-2": "Europe (London)",
+  "eu-west-3": "Europe (Paris)",
+  "eu-central-1": "Europe (Frankfurt)",
+  "eu-north-1": "Europe (Stockholm)",
+  "eu-south-1": "Europe (Milan)",
+  "ap-south-1": "Asia Pacific (Mumbai)",
+  "ap-northeast-1": "Asia Pacific (Tokyo)",
+  "ap-northeast-2": "Asia Pacific (Seoul)",
+  "ap-northeast-3": "Asia Pacific (Osaka)",
+  "ap-southeast-1": "Asia Pacific (Singapore)",
+  "ap-southeast-2": "Asia Pacific (Sydney)",
+  "sa-east-1": "South America (São Paulo)",
+  "me-south-1": "Middle East (Bahrain)",
+  "af-south-1": "Africa (Cape Town)",
+};
+
+export type PublicStatsDay = { date: string; sent: number; delivered: number };
+
+export type PublicStats = {
+  generatedAt: string;
+  allTime: { sent: number; delivered: number };
+  window: {
+    days: number;
+    sent: number;
+    delivered: number;
+    bounced: number;
+    complained: number;
+  };
+  daily: PublicStatsDay[];
+  regions: { code: string; label: string }[];
+  uptime: number | null;
+};
+
+function toDateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function getAllTimeTotals() {
+  const [row] = await db.$queryRaw<Array<{ sent: number | null; delivered: number | null }>>`
+    SELECT SUM(d.sent)::float8 AS sent, SUM(d.delivered)::float8 AS delivered
+    FROM "DailyEmailUsage" d
+  `;
+  return { sent: row?.sent ?? 0, delivered: row?.delivered ?? 0 };
+}
+
+async function getDailyUsage(startKey: string) {
+  return db.$queryRaw<
+    Array<{ date: string; sent: number; delivered: number; bounced: number; complained: number }>
+  >`
+    SELECT
+      d."date" AS date,
+      SUM(d.sent)::float8 AS sent,
+      SUM(d.delivered)::float8 AS delivered,
+      SUM(d.bounced)::float8 AS bounced,
+      SUM(d.complained)::float8 AS complained
+    FROM "DailyEmailUsage" d
+    WHERE d."date" >= ${startKey}
+    GROUP BY d."date"
+  `;
+}
+
+async function getActiveRegions() {
+  const settings = await db.sesSetting.findMany({
+    where: { isActive: true },
+    select: { region: true },
+    orderBy: { region: "asc" },
+  });
+  return settings.map(({ region }) => ({ code: region, label: REGION_LABELS[region] ?? region }));
+}
+
+async function getUptime(): Promise<number | null> {
+  try {
+    const res = await fetch(STATUS_STATS_URL, { signal: AbortSignal.timeout(3000), cache: "no-store" });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { uptime?: unknown };
+    return typeof body.uptime === "number" ? body.uptime : null;
+  } catch (error) {
+    logger.warn({ err: error }, "[PublicStats] Could not fetch uptime from the status page");
+    return null;
+  }
+}
+
+async function computePublicStats(): Promise<PublicStats> {
+  const today = new Date();
+  const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - (WINDOW_DAYS - 1) * DAY_MS);
+  const startKey = toDateKey(start);
+
+  const [allTime, usage, regions, uptime] = await Promise.all([
+    getAllTimeTotals(),
+    getDailyUsage(startKey),
+    getActiveRegions(),
+    getUptime(),
+  ]);
+
+  const byDate = new Map(usage.map((row) => [row.date, row]));
+  const daily = Array.from({ length: WINDOW_DAYS }, (_, i) => {
+    const date = toDateKey(new Date(start.getTime() + i * DAY_MS));
+    const row = byDate.get(date);
+    return { date, sent: row?.sent ?? 0, delivered: row?.delivered ?? 0 };
+  });
+
+  const window = usage.reduce(
+    (acc, row) => {
+      acc.sent += row.sent;
+      acc.delivered += row.delivered;
+      acc.bounced += row.bounced;
+      acc.complained += row.complained;
+      return acc;
+    },
+    { days: WINDOW_DAYS, sent: 0, delivered: 0, bounced: 0, complained: 0 },
+  );
+
+  return { generatedAt: new Date().toISOString(), allTime, window, daily, regions, uptime };
+}
+
+export const PublicStatsService = {
+  async get(): Promise<PublicStats> {
+    try {
+      return await withCache("public-stats:v1", computePublicStats, { ttlSeconds: CACHE_TTL_SECONDS });
+    } catch (error) {
+      logger.error({ err: error }, "[PublicStats] Cache unavailable, computing directly");
+      return computePublicStats();
+    }
+  },
+};

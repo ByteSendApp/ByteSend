@@ -55,7 +55,7 @@ Message bodies are hidden in the email explorer until you choose **View content*
 
 Every day at 04:30 UTC, ByteSend checks each verified sending domain against the Spamhaus Domain Block List, SURBL and URIBL, and posts newly listed domains to the Discord webhook in `DISCORD_WEBHOOK_URL`. Checks are kept for 30 days.
 
-These lists refuse queries that come through large public DNS resolvers, which most cloud servers use. ByteSend shows those results as **Unknown** rather than reporting a false "clean". For reliable Spamhaus results, set `SPAMHAUS_DQS_KEY` — see [environment variables](/self-hosting/docker#environment-variable-reference).
+These lists refuse queries that come through large public DNS resolvers, which most cloud servers use. ByteSend shows those results as **Unknown** rather than reporting a false "clean". For reliable Spamhaus results, set `SPAMHAUS_DQS_KEY` (see [environment variables](/self-hosting/docker#environment-variable-reference)).
 
 <Note>
 ByteSend sends through Amazon's shared SES IP addresses, so only your sending **domains** are checked, not IPs.

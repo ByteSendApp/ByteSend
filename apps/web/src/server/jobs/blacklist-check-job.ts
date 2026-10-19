@@ -17,7 +17,7 @@ export async function runBlacklistChecks() {
   const listNames = new Map(BLACKLISTS.map((list) => [list.id, list.name]));
   const lines = newlyListed.map(
     ({ domain, newlyListed: hits }) =>
-      `• \`${domain.name}\` (team ${domain.team.name} #${domain.team.id}) — ${hits
+      `• \`${domain.name}\` (team ${domain.team.name} #${domain.team.id}): ${hits
         .map((hit) => `${listNames.get(hit.list) ?? hit.list} [${hit.returnCode}]`)
         .join(", ")}`,
   );

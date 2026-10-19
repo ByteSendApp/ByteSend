@@ -303,10 +303,10 @@ export class LimitService {
       if (bounceRate >= BOUNCE_RATE_HARD_LIMIT) {
         logger.warn(
           { teamId, bounceRate, recentStats },
-          "[LimitService]: Team blocked — bounce rate exceeds 2%",
+          "[LimitService]: Team blocked: bounce rate exceeds 2%",
         );
         sendToDiscord(
-          `⚠️ **Sending blocked** — team \`${teamId}\` hard-bounce rate: **${(bounceRate * 100).toFixed(2)}%** (7-day). Threshold: 2%.`,
+          `⚠️ **Sending blocked**: team \`${teamId}\` hard-bounce rate: **${(bounceRate * 100).toFixed(2)}%** (7-day). Threshold: 2%.`,
         ).catch(() => void 0);
         return {
           isLimitReached: true,
@@ -318,10 +318,10 @@ export class LimitService {
       if (complaintRate >= COMPLAINT_RATE_HARD_LIMIT) {
         logger.warn(
           { teamId, complaintRate, recentStats },
-          "[LimitService]: Team blocked — complaint rate exceeds 0.1%",
+          "[LimitService]: Team blocked: complaint rate exceeds 0.1%",
         );
         sendToDiscord(
-          `⚠️ **Sending blocked** — team \`${teamId}\` complaint rate: **${(complaintRate * 100).toFixed(3)}%** (7-day). Threshold: 0.1%.`,
+          `⚠️ **Sending blocked**: team \`${teamId}\` complaint rate: **${(complaintRate * 100).toFixed(3)}%** (7-day). Threshold: 0.1%.`,
         ).catch(() => void 0);
         return {
           isLimitReached: true,
@@ -336,7 +336,7 @@ export class LimitService {
           "[LimitService]: Team approaching bounce/complaint rate limits",
         );
         sendToDiscord(
-          `⚠️ **Reputation warning** — team \`${teamId}\` is approaching limits. Bounce: **${(bounceRate * 100).toFixed(2)}%**, Complaints: **${(complaintRate * 100).toFixed(3)}%** (7-day).`,
+          `⚠️ **Reputation warning**: team \`${teamId}\` is approaching limits. Bounce: **${(bounceRate * 100).toFixed(2)}%**, Complaints: **${(complaintRate * 100).toFixed(3)}%** (7-day).`,
         ).catch(() => void 0);
       }
     }

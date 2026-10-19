@@ -73,9 +73,9 @@ Prefer another language or no code at all? Use the [Python](../packages/python-s
 
 ## Cloud or self-hosted
 
-**Cloud** — [bytesend.cloud](https://bytesend.cloud) is the fastest start: sign up, verify a domain and send. No infrastructure to run.
+**Cloud**: [bytesend.cloud](https://bytesend.cloud) is the fastest start: sign up, verify a domain and send. No infrastructure to run.
 
-**Self-hosted** — ByteSend is free to self-host under AGPL-3.0. You bring PostgreSQL, Redis and an AWS account with SES.
+**Self-hosted**: ByteSend is free to self-host under AGPL-3.0. You bring PostgreSQL, Redis and an AWS account with SES.
 
 ```bash
 git clone https://github.com/NodeByteLTD/ByteSend.git

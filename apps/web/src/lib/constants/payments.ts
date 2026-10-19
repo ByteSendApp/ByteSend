@@ -15,7 +15,7 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
   const perks: string[] = [];
 
   if (!isFinite(l.monthlyEmailLimit)) {
-    perks.push("Unlimited emails — no overage charges");
+    perks.push("Unlimited emails: no overage charges");
   } else {
     const suffix = plan.plan === "FREE" ? " (hard cap)" : " included";
     perks.push(`${fmt(l.monthlyEmailLimit)} emails / month${suffix}`);

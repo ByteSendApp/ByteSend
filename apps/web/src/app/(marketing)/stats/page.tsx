@@ -17,8 +17,13 @@ export const metadata: Metadata = {
 const BOUNCE_THRESHOLD = 0.05;
 const COMPLAINT_THRESHOLD = 0.001;
 
-const compact = new Intl.NumberFormat("en-GB", { notation: "compact", maximumFractionDigits: 1 });
+const compact = new Intl.NumberFormat("en-GB", { notation: "compact", maximumFractionDigits: 2 });
 const full = new Intl.NumberFormat("en-GB");
+
+// Exact counts read better until they stop fitting the tile.
+function formatCount(value: number) {
+  return value < 1_000_000 ? full.format(value) : compact.format(value);
+}
 
 function rate(part: number, total: number) {
   return total > 0 ? part / total : null;
@@ -130,10 +135,10 @@ export default async function StatsPage() {
       <div className="mx-auto max-w-5xl space-y-16 px-6 py-16">
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Reveal delay={0}>
-            <StatTile value={compact.format(stats.allTime.sent)} label="Emails sent, all time" hint={full.format(stats.allTime.sent)} />
+            <StatTile value={formatCount(stats.allTime.sent)} label="Emails sent" hint="All time" />
           </Reveal>
           <Reveal delay={80}>
-            <StatTile value={compact.format(window.sent)} label={`Emails sent, last ${window.days} days`} hint={full.format(window.sent)} />
+            <StatTile value={formatCount(window.sent)} label="Emails sent" hint={`Last ${window.days} days`} />
           </Reveal>
           <Reveal delay={160}>
             <StatTile value={formatPercent(rate(window.delivered, window.sent))} label="Delivery rate" hint={`Last ${window.days} days`} />

@@ -12,7 +12,7 @@ let cached: { version: string; expiresAt: number } | null = null;
 let lastKnownVersion: string | null = null;
 
 // Injected at build time by CI (e.g. NEXT_PUBLIC_APP_VERSION=v0.2.0).
-// Highest priority — no network call needed.
+// Highest priority: no network call needed.
 // Treat absent / sentinel values as unset so we fall through to the API lookup.
 const _buildVersion = process.env.NEXT_PUBLIC_APP_VERSION;
 const BUILD_VERSION =
@@ -64,7 +64,7 @@ async function fetchFromGitLab(): Promise<string | null> {
     logger.warn({ err }, "[version] GitLab releases list failed");
   }
 
-  // 3. repository tags (last resort — any repo with tags)
+  // 3. repository tags (last resort: any repo with tags)
   try {
     const res = await fetch(
       `${base}/api/v4/projects/${encodedId}/repository/tags?per_page=1&order_by=updated&sort=desc`,

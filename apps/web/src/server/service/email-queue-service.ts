@@ -373,7 +373,7 @@ async function executeEmail(job: QueueEmailJob) {
   if (!configurationSetName) {
     logger.error(
       { emailId: email.id },
-      "[EmailQueueService]: No SES configuration set found — marking email as failed"
+      "[EmailQueueService]: No SES configuration set found: marking email as failed"
     );
     await db.emailEvent.create({
       data: {
@@ -485,7 +485,7 @@ async function executeEmail(job: QueueEmailJob) {
     if (isSesTransientError(error)) {
       logger.warn(
         { emailId: email.id, err: error, attempt: job.attemptsMade + 1, maxAttempts: EMAIL_JOB_ATTEMPTS },
-        "[EmailQueueService]: Transient SES error — will retry"
+        "[EmailQueueService]: Transient SES error: will retry"
       );
       throw error;
     }

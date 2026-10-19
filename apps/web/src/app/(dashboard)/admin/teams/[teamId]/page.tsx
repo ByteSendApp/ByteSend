@@ -262,7 +262,7 @@ export default function AdminTeamDetailPage() {
                 </div>
               </dl>
             ) : (
-              <EmptyRow>No Stripe subscription{team.plan !== "FREE" ? " — plan was assigned manually" : ""}.</EmptyRow>
+              <EmptyRow>No Stripe subscription{team.plan !== "FREE" ? " (plan was assigned manually)" : ""}.</EmptyRow>
             )}
           </Panel>
         </TabsContent>

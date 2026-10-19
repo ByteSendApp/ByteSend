@@ -11,7 +11,7 @@ A reverse proxy sits in front of the SMTP server and handles TLS termination. Th
 - The SMTP process runs as a non-root user and cannot bind to privileged ports (25, 465, 587) directly
 
 **When to skip it:**
-- You want the simplest possible setup — use `SMTP_TLS_MODE=manual` with certbot instead. See [Certificate Setup](./certificates).
+- You want the simplest possible setup: use `SMTP_TLS_MODE=manual` with certbot instead. See [Certificate Setup](./certificates).
 
 ---
 
@@ -19,9 +19,9 @@ A reverse proxy sits in front of the SMTP server and handles TLS termination. Th
 
 Nginx proxies raw TCP (SMTP) via its `stream` module. Each port requires its own `server` block.
 
-<Note>The `stream` module is separate from the `http` module. Ensure your nginx build includes it (`nginx -V 2>&1 | grep stream`), and place the `stream {}` block at the top level of `nginx.conf` — **not** inside `http {}`.</Note>
+<Note>The `stream` module is separate from the `http` module. Ensure your nginx build includes it (`nginx -V 2>&1 | grep stream`), and place the `stream {}` block at the top level of `nginx.conf`, **not** inside `http {}`.</Note>
 
-### Port 587 — Submission with STARTTLS
+### Port 587: Submission with STARTTLS
 
 The most common port for application/client email sending. Nginx terminates TLS; the backend receives plain TCP on `127.0.0.1:587` with `SMTP_TLS_MODE=none`.
 
@@ -42,7 +42,7 @@ stream {
 }
 ```
 
-### Port 465 — Implicit TLS (SMTPS)
+### Port 465: Implicit TLS (SMTPS)
 
 Used by clients that require an SSL-wrapped connection from the start (no STARTTLS negotiation). Add a second `server` block in the same `stream {}` context:
 
@@ -56,7 +56,7 @@ stream {
     server 127.0.0.1:465;
   }
 
-  # Port 587 — STARTTLS
+  # Port 587: STARTTLS
   server {
     listen 587 ssl;
     proxy_pass smtp_submission;
@@ -66,7 +66,7 @@ stream {
     ssl_protocols       TLSv1.2 TLSv1.3;
   }
 
-  # Port 465 — Implicit TLS
+  # Port 465: Implicit TLS
   server {
     listen 465 ssl;
     proxy_pass smtp_smtps;
@@ -78,9 +78,9 @@ stream {
 }
 ```
 
-### Port 25 — MTA (Plain / Inter-server)
+### Port 25: MTA (Plain / Inter-server)
 
-Port 25 is used by other mail servers (MX delivery) and typically does **not** need TLS termination at the proxy — pass it straight through. If you do want nginx to sit in front, use a plain TCP proxy without SSL:
+Port 25 is used by other mail servers (MX delivery) and typically does **not** need TLS termination at the proxy, so pass it straight through. If you do want nginx to sit in front, use a plain TCP proxy without SSL:
 
 ```nginx
 stream {
@@ -88,7 +88,7 @@ stream {
     server 127.0.0.1:25;
   }
 
-  # Port 25 — plain passthrough (no TLS termination)
+  # Port 25: plain passthrough (no TLS termination)
   server {
     listen 25;
     proxy_pass smtp_mta;

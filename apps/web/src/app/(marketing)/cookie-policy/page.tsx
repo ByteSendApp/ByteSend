@@ -121,7 +121,7 @@ export default function CookiePolicyPage() {
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {[
-                    { service: "Simple Analytics", purpose: "Aggregate, privacy-friendly analytics", cookies: "None — no cookies or fingerprinting" },
+                    { service: "Simple Analytics", purpose: "Aggregate, privacy-friendly analytics", cookies: "None (no cookies or fingerprinting)" },
                     { service: "Stripe", purpose: "Payment processing (billing pages only)", cookies: "Stripe sets cookies for fraud prevention and session management on payment flows" },
                   ].map(({ service, purpose, cookies }) => (
                     <tr key={service}>

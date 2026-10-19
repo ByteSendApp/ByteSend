@@ -237,7 +237,7 @@ export default function AddDomain() {
             )}
             {!isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
-                Need more domains? Purchase extra slots — CA$1/mo each.
+                Need more domains? Purchase extra slots for CA$1/mo each.
               </p>
             )}
             <Button

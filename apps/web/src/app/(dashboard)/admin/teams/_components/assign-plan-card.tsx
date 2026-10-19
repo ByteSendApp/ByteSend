@@ -15,10 +15,10 @@ import { api } from "~/trpc/react";
 
 const PLAN_OPTIONS: Array<{ value: Plan; label: string }> = [
   { value: "FREE", label: "Free" },
-  { value: "HOBBY", label: "Hobby — CA$5/mo" },
-  { value: "LITE", label: "Lite — CA$10/mo" },
-  { value: "BASIC", label: "Pro — CA$30/mo" },
-  { value: "LIFETIME", label: "Lifetime — CA$199 one-time" },
+  { value: "HOBBY", label: "Hobby (CA$5/mo)" },
+  { value: "LITE", label: "Lite (CA$10/mo)" },
+  { value: "BASIC", label: "Pro (CA$30/mo)" },
+  { value: "LIFETIME", label: "Lifetime (CA$199 one-time)" },
 ];
 
 export function AssignPlanCard({ teamId, currentPlan }: { teamId: number; currentPlan: Plan }) {

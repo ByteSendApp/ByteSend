@@ -85,7 +85,7 @@ export function ConnectedAccounts({
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{meta.name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {account ? (account.email ?? "Connected — reconnect to see its email") : "Not connected"}
+                      {account ? (account.email ?? "Connected. Reconnect to see its email") : "Not connected"}
                     </p>
                   </div>
                 </div>

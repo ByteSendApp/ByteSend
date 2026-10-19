@@ -188,7 +188,7 @@ export default function AccountSettings() {
                     setShowRecoveryCodes(result.recoveryCodes);
                     utils.user.getProfile.invalidate();
                     router.refresh();
-                    toast.success("Two-factor authentication enabled — save your recovery codes!");
+                    toast.success("Two-factor authentication enabled. Save your recovery codes!");
                 },
                 onError: (e) => toast.error(e.message),
             },
@@ -594,7 +594,7 @@ export default function AccountSettings() {
                                     <span key={code} className="select-all">{code}</span>
                                 ))}
                             </div>
-                            <p className="text-xs text-amber-500">Save these codes now — they won&apos;t be shown again.</p>
+                            <p className="text-xs text-amber-500">Save these codes now. They won&apos;t be shown again.</p>
                             <Button size="sm" variant="outline" onClick={() => setShowRecoveryCodes(null)}>
                                 I&apos;ve saved my codes
                             </Button>

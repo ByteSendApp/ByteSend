@@ -369,7 +369,7 @@ export async function syncLifetimePayment(customerId: string) {
   const team = await db.team.findUnique({ where: { stripeCustomerId: customerId } });
 
   if (!team) {
-    logger.warn({ customerId }, "[Billing]: LIFETIME payment — team not found for customer");
+    logger.warn({ customerId }, "[Billing]: LIFETIME payment: team not found for customer");
     return;
   }
 

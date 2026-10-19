@@ -27,7 +27,7 @@ type Release = {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   Data fetching — GitLab (custom instance) → GitHub (private)
+   Data fetching: GitLab (custom instance) → GitHub (private)
 ───────────────────────────────────────────────────────────── */
 
 const GITHUB_REPO = "NodeByteLTD/ByteSend";
@@ -118,11 +118,15 @@ async function getReleases(): Promise<Release[]> {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Inline markdown parser — **bold**, `code`, *italic*
+   Inline markdown parser: **bold**, `code`, *italic*, [links](url)
 ───────────────────────────────────────────────────────────── */
 
+function safeHref(url: string) {
+  return /^(https?:\/\/|\/|#)/.test(url) ? url : null;
+}
+
 function parseInline(text: string): React.ReactNode {
-  const INLINE = /(\*\*(.+?)\*\*|`([^`]+)`|\*([^*]+)\*)/g;
+  const INLINE = /(\*\*(.+?)\*\*|`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)|\*([^*]+)\*)/g;
   const parts: React.ReactNode[] = [];
   let last = 0;
   let n = 0;
@@ -131,11 +135,28 @@ function parseInline(text: string): React.ReactNode {
   while ((m = INLINE.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     if (m[2] !== undefined) {
-      parts.push(<strong key={n++} className="font-semibold text-foreground">{m[2]}</strong>);
+      parts.push(<strong key={n++} className="font-semibold text-foreground">{parseInline(m[2])}</strong>);
     } else if (m[3] !== undefined) {
       parts.push(<code key={n++} className="font-mono text-[12px] bg-muted px-1 py-0.5 rounded">{m[3]}</code>);
     } else if (m[4] !== undefined) {
-      parts.push(<em key={n++}>{m[4]}</em>);
+      const href = safeHref(m[5]!);
+      const external = href?.startsWith("http") && !href.startsWith("https://bytesend.cloud");
+      parts.push(
+        href ? (
+          <a
+            key={n++}
+            href={href}
+            className="text-primary underline-offset-4 hover:underline"
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          >
+            {parseInline(m[4])}
+          </a>
+        ) : (
+          <span key={n++}>{parseInline(m[4])}</span>
+        ),
+      );
+    } else if (m[6] !== undefined) {
+      parts.push(<em key={n++}>{parseInline(m[6])}</em>);
     }
     last = m.index + m[0].length;
   }
@@ -144,7 +165,7 @@ function parseInline(text: string): React.ReactNode {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Markdown body renderer — ## ### #### headings, bullets, blank
+   Markdown body renderer: ## ### #### headings, bullets, blank
 ───────────────────────────────────────────────────────────── */
 
 type BulletItem = { text: string; indent: number };

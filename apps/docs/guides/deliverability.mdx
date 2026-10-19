@@ -20,7 +20,7 @@ A hard bounce means the email was permanently undeliverable. The address doesn't
 
 | Threshold | Action |
 | --------- | ------ |
-| Below **1.5%** | Healthy — no action |
+| Below **1.5%** | Healthy, no action needed |
 | **1.5% – 2%** | Warning displayed in dashboard |
 | **2% or above** | Sending automatically blocked |
 
@@ -30,7 +30,7 @@ A complaint is recorded when a recipient marks your email as spam.
 
 | Threshold | Action |
 | --------- | ------ |
-| Below **0.08%** | Healthy — no action |
+| Below **0.08%** | Healthy, no action needed |
 | **0.08% – 0.1%** | Warning displayed in dashboard |
 | **0.1% or above** | Sending automatically blocked |
 
@@ -79,8 +79,8 @@ Remove addresses that have bounced, unsubscribed, or haven't engaged in 90+ days
 
 ByteSend handles DKIM signing automatically when you [verify your domain](https://bytesend.cloud/domains). Make sure you also configure:
 
-- **SPF** — Add ByteSend to your domain's allowed senders
-- **DMARC** — A DMARC record tells inbox providers what to do if authentication fails. Start with `p=none` to monitor, then move to `p=quarantine` once you've confirmed alignment.
+- **SPF**: Add ByteSend to your domain's allowed senders
+- **DMARC**: A DMARC record tells inbox providers what to do if authentication fails. Start with `p=none` to monitor, then move to `p=quarantine` once you've confirmed alignment.
 
 All three are shown in the domain verification flow in the dashboard.
 
@@ -203,5 +203,5 @@ If your sending is blocked due to reputation thresholds:
 
 ## Related
 
-- [Spam Protection](/guides/spam-protection) — outbound scoring and held emails
-- [Changing Sending Region](/guides/sending-regions) — move a domain to another AWS region without downtime
+- [Spam Protection](/guides/spam-protection): outbound scoring and held emails
+- [Changing Sending Region](/guides/sending-regions): move a domain to another AWS region without downtime

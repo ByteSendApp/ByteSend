@@ -145,7 +145,7 @@ export default function TeamGeneralSettings() {
           <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
             <h3 className="text-sm font-semibold mb-1">Team Image</h3>
             <p className="text-xs text-muted-foreground mb-5">
-              Shown in the sidebar and team switcher. Max 2 MB — JPEG, PNG, WebP or GIF.
+              Shown in the sidebar and team switcher. Max 2 MB. JPEG, PNG, WebP or GIF.
             </p>
 
             <div className="flex items-center gap-5">

@@ -100,7 +100,7 @@ npm run send
 
 ## React Email (TypeScript)
 
-Pass a React Email component as `react` and the SDK renders it to HTML for you — no separate render step needed.
+Pass a React Email component as `react` and the SDK renders it to HTML for you, so no separate render step is needed.
 
 ```json package.json
 {
@@ -242,7 +242,7 @@ console.log("Queued email", data.emailId);
 
 ## Next.js (App Router)
 
-Send from a route handler, and receive [webhooks](/guides/webhooks) in another. Keep your API key on the server — never import the SDK in a client component.
+Send from a route handler, and receive [webhooks](/guides/webhooks) in another. Keep your API key on the server and never import the SDK in a client component.
 
 ```ts app/api/welcome/route.ts
 import { ByteSend } from "bytesend-js";
@@ -272,7 +272,7 @@ import { Webhooks } from "bytesend-js";
 const webhooks = new Webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
 
 export async function POST(request: Request) {
-  // Verify against the raw body — parsing JSON first breaks the signature.
+  // Verify against the raw body: parsing JSON first breaks the signature.
   const rawBody = await request.text();
 
   try {

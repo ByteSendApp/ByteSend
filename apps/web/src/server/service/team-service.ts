@@ -380,7 +380,7 @@ export class TeamService {
     if (!reason) {
       logger.info(
         { teamId },
-        "[TeamService]: Skipping notify — no reason provided",
+        "[TeamService]: Skipping notify: no reason provided",
       );
       return;
     }
@@ -392,7 +392,7 @@ export class TeamService {
     ) {
       logger.info(
         { teamId, reason },
-        "[TeamService]: Skipping notify — reason not eligible",
+        "[TeamService]: Skipping notify: reason not eligible",
       );
       return;
     }
@@ -404,7 +404,7 @@ export class TeamService {
     if (acquired !== "OK") {
       logger.info(
         { teamId, cacheKey },
-        "[TeamService]: Skipping notify — cooldown active",
+        "[TeamService]: Skipping notify: cooldown active",
       );
       return;
     }
@@ -465,7 +465,7 @@ export class TeamService {
     if (!reason) {
       logger.info(
         { teamId },
-        "[TeamService]: Skipping warning — no reason provided",
+        "[TeamService]: Skipping warning: no reason provided",
       );
       return;
     }
@@ -478,7 +478,7 @@ export class TeamService {
     ) {
       logger.info(
         { teamId, reason },
-        "[TeamService]: Skipping warning — reason not eligible",
+        "[TeamService]: Skipping warning: reason not eligible",
       );
       return;
     }
@@ -489,7 +489,7 @@ export class TeamService {
     if (acquired !== "OK") {
       logger.info(
         { teamId, cacheKey },
-        "[TeamService]: Skipping warning — cooldown active",
+        "[TeamService]: Skipping warning: cooldown active",
       );
       return;
     }

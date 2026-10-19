@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user?.twoFactorEnabled || !user.twoFactorSecret) {
-        // 2FA not enabled — set cookie anyway so middleware passes
+        // 2FA not enabled: set cookie anyway so middleware passes
         const cookieValue = buildTwoFactorCookieValue(session.user.id);
         const res = NextResponse.json({ verified: true });
         res.cookies.set(TWO_FACTOR_COOKIE, cookieValue, {

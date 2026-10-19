@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   const secrets   = [envSecret, dbSecret].filter((s): s is string => Boolean(s));
 
   if (secrets.length === 0) {
-    console.error("[Stripe webhook] No webhook secret configured — set STRIPE_WEBHOOK_SECRET or run pnpm stripe:seed");
+    console.error("[Stripe webhook] No webhook secret configured: set STRIPE_WEBHOOK_SECRET or run pnpm stripe:seed");
     return new NextResponse("No webhook secret", { status: 400 });
   }
 
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       return new NextResponse("OK", { status: 200 });
     }
 
-    // Handle LIFETIME one-time payment checkout separately —
+    // Handle LIFETIME one-time payment checkout separately:
     // these have no subscription so syncStripeData would be a no-op.
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Extract customer ID — some event types (e.g. payment_intent.*) can have
+    // Extract customer ID: some event types (e.g. payment_intent.*) can have
     // customer as null or an expanded object, so we normalize defensively.
     const rawCustomer = (event.data.object as { customer?: string | { id: string } | null }).customer;
     const customerId =
@@ -118,8 +118,8 @@ export async function POST(req: Request) {
           : null;
 
     if (!customerId) {
-      // Event has no customer — nothing to sync (e.g. anonymous payment intent)
-      console.log(`[Stripe webhook] Skipping ${event.type} — no customer ID`);
+      // Event has no customer: nothing to sync (e.g. anonymous payment intent)
+      console.log(`[Stripe webhook] Skipping ${event.type}: no customer ID`);
       return new NextResponse("OK", { status: 200 });
     }
 

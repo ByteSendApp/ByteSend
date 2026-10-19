@@ -678,7 +678,7 @@ export async function refreshDomainVerification(
       await setDkimReregisteredFlag(domain.id);
       logger.info(
         { domainId: domain.id, domain: domain.name },
-        "[DomainService]: Auto re-registered DKIM signing — DNS pre-check found record but SES was stuck",
+        "[DomainService]: Auto re-registered DKIM signing: DNS pre-check found record but SES was stuck",
       );
     } catch (err) {
       logger.error(

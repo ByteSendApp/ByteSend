@@ -5,6 +5,7 @@ import { env } from "~/env";
 import { getRedis, redisKey } from "../redis";
 import { logger } from "../logger/log";
 import { BLACKLISTS, lookupDomain } from "./blacklist-service";
+import { isPrivateSuffixHostname, isSharedHostname } from "~/lib/constants/shared-domains";
 import { AdminAuditService } from "./admin-audit-service";
 import { TeamService } from "./team-service";
 import {
@@ -35,6 +36,21 @@ const PHISHING_PATTERNS = [
   /password (will )?expire/i,
   /(seed|recovery) phrase/i,
   /claim your (refund|prize|reward)/i,
+  // German
+  /(dein|ihr) konto[^.]{0,60}(gesperrt|deaktiviert|eingeschränkt|gelöscht)/i,
+  /(vorübergehend|dauerhaft|endgültig) (gesperrt|deaktiviert)/i,
+  /(verifizier|bestätig)\w* (sie |du )?(dein|ihr)e? (identität|konto|zahlungs\w*)/i,
+  /ungewöhnliche (anmeldung|aktivität)/i,
+  /zahlungs(daten|informationen|methode) (aktualisieren|bestätigen)/i,
+  // French
+  /votre compte[^.]{0,60}(suspendu|bloqué|désactivé|limité)/i,
+  /(vérifiez|confirmez) votre (identité|compte|paiement)/i,
+  // Spanish and Italian
+  /su cuenta[^.]{0,60}(suspendida|bloqueada|desactivada)/i,
+  /(verifique|confirme) su (identidad|cuenta)/i,
+  /il tuo account[^.]{0,60}(sospeso|bloccato|disattivato)/i,
+  // Dutch
+  /uw (account|rekening)[^.]{0,60}(geblokkeerd|opgeschort|gedeactiveerd)/i,
 ];
 
 const SPAM_PATTERNS = [
@@ -74,6 +90,34 @@ const IMPERSONATED_BRANDS = [
   "coinbase",
   "binance",
   "metamask",
+  "ebay",
+  "kleinanzeigen",
+  "vinted",
+  "etsy",
+  "booking.com",
+  "airbnb",
+  "docusign",
+  "adobe",
+  "icloud",
+  "telekom",
+  "vodafone",
+  "sparkasse",
+  "volksbank",
+  "commerzbank",
+  "deutsche bank",
+  "postbank",
+  "n26",
+  "revolut",
+  "santander",
+  "dpd",
+  "hermes",
+  "gls",
+  "deutsche post",
+  "la poste",
+  "correos",
+  "postnl",
+  "ameli",
+  "impots",
 ];
 
 const URL_SHORTENERS = new Set([
@@ -224,6 +268,13 @@ export function scanContent(input: SpamScanInput): SpamHit[] {
 
   if (/(display\s*:\s*none|font-size\s*:\s*0(px)?\s*[;"'])/i.test(html)) {
     hits.push({ rule: "hidden_text", score: 2 });
+  }
+
+  // Hostnames on dynamic-DNS, tunnel and free-hosting services: nothing legitimate sends from them.
+  if (isSharedHostname(senderDomain)) {
+    hits.push({ rule: "shared_hostname_sender", score: 10, detail: senderDomain });
+  } else if (isPrivateSuffixHostname(senderDomain)) {
+    hits.push({ rule: "shared_namespace_sender", score: 2, detail: senderDomain });
   }
 
   if (input.teamCreatedAt && Date.now() - input.teamCreatedAt.getTime() < 7 * 24 * 60 * 60 * 1000) {

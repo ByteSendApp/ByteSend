@@ -61,6 +61,54 @@ describe("scanContent: phishing and abuse", () => {
     );
   });
 
+  it("holds the Kleinanzeigen phishing sent from a dynamic-DNS hostname", async () => {
+    const result = await SpamScanService.scan({
+      from: '"kleinanzeigen" <support@ds0elybh.homelinuxserver.org>',
+      subject: "E-Mail-Adresse bestätigen",
+      html:
+        "<h1>E-Mail-Adresse bestätigen</h1><p>Hallo, aufgrund eines neuen Sicherheitssystems bitten wir dich, deine E-Mail-Adresse zu bestätigen.</p>" +
+        "<p><b>Wichtiger Hinweis:</b> Bitte bestätige deine Adresse innerhalb von 24 Stunden, da dein Konto andernfalls vorübergehend gesperrt wird.</p>",
+      teamCreatedAt: new Date(),
+    });
+    expect(result.verdict).toBe("HOLD");
+    expect(rules(result.hits)).toEqual(
+      expect.arrayContaining(["phishing_phrase", "brand_impersonation", "shared_hostname_sender"]),
+    );
+  });
+
+  it("holds anything sent from a dynamic-DNS hostname, even with harmless content", async () => {
+    const result = await SpamScanService.scan({
+      from: "Updates <hi@abc.duckdns.org>",
+      subject: "Hello",
+      html: "<p>Just saying hi.</p>",
+    });
+    expect(result.verdict).toBe("HOLD");
+  });
+
+  it("does not flag a real German sign-up confirmation from the sender's own domain", async () => {
+    const result = await SpamScanService.scan({
+      from: "Kleinanzeigen <noreply@kleinanzeigen.de>",
+      subject: "Bitte bestätige deine E-Mail-Adresse",
+      html: '<p>Hallo, bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren.</p><a href="https://www.kleinanzeigen.de/confirm">Bestätigen</a>',
+    });
+    expect(result.verdict).toBeNull();
+  });
+
+  it("only lightly scores paid namespaces like uk.com, never holding them", async () => {
+    const result = await SpamScanService.scan({
+      from: "Acme <hello@acme.uk.com>",
+      subject: "Your order has shipped",
+      html: "<p>Thanks for your order.</p>",
+    });
+    expect(result.verdict).toBeNull();
+    expect(rules(result.hits)).toEqual(["shared_namespace_sender"]);
+  });
+
+  it("does not treat newsletters with common words in their name as impersonation", () => {
+    const hits = scanContent({ from: "The Outlook Weekly <news@outlookweekly.example>", subject: "This week", html: "<p>Hi</p>" });
+    expect(rules(hits)).not.toContain("brand_impersonation");
+  });
+
   it("flags executable attachments", () => {
     const hits = scanContent({ from: "a@b.co", subject: "Invoice", text: "See attached", attachmentNames: ["invoice.pdf.exe"] });
     expect(rules(hits)).toContain("dangerous_attachment");

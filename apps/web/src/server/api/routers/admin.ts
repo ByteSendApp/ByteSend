@@ -1,4 +1,4 @@
-import { EmailStatus, Prisma, type Plan } from "@prisma/client";
+import { BlocklistType, EmailStatus, Prisma, type Plan } from "@prisma/client";
 import { z } from "zod";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
@@ -18,6 +18,8 @@ import { TeamService } from "~/server/service/team-service";
 import { AdminOverviewService } from "~/server/service/admin-overview-service";
 import { AdminAuditService, diffFields } from "~/server/service/admin-audit-service";
 import { SesCallbackDiagnosticsService } from "~/server/service/ses-callback-diagnostics-service";
+import { BanService } from "~/server/service/ban-service";
+import { BlocklistService, normalizeBlocklistValue } from "~/server/service/blocklist-service";
 import { AdminDeliverabilityService } from "~/server/service/admin-deliverability-service";
 import { AdminDetailService } from "~/server/service/admin-detail-service";
 import { BlacklistService } from "~/server/service/blacklist-service";
@@ -578,35 +580,125 @@ export const adminRouter = createTRPCRouter({
       z.object({
         userId: z.number(),
         isBanned: z.boolean(),
+        reason: z.string().trim().max(300).optional(),
+        blockMailboxes: z.boolean().default(true),
+        blockDomains: z.array(z.string().trim().min(1)).max(50).default([]),
+        alsoBanUserIds: z.array(z.number()).max(25).default([]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const target = await db.user.findUnique({
-        where: { id: input.userId },
+      const targets = await db.user.findMany({
+        where: { id: { in: [input.userId, ...input.alsoBanUserIds] } },
         select: { id: true, email: true },
       });
+      const target = targets.find((t) => t.id === input.userId);
 
       if (!target) {
         throw new Error("User not found");
       }
-
-      if (target.email === env.FOUNDER_EMAIL) {
+      if (targets.some((t) => t.email && t.email === env.FOUNDER_EMAIL)) {
         throw new Error("Cannot ban the founder account");
       }
+      if (input.isBanned && [input.userId, ...input.alsoBanUserIds].includes(ctx.session.user.id)) {
+        throw new Error("You can't ban yourself");
+      }
 
-      const updated = await db.user.update({
-        where: { id: input.userId },
-        data: { isBanned: input.isBanned },
-        select: userAdminSelection,
-      });
+      if (!input.isBanned) {
+        const { removedEntries } = await BanService.unban(input.userId);
+        await AdminAuditService.record({
+          actor: actorFrom(ctx),
+          action: "user.unban",
+          targetType: "user",
+          targetId: input.userId,
+          metadata: { email: target.email, removedBlocklistEntries: removedEntries },
+        });
+        return db.user.findUniqueOrThrow({ where: { id: input.userId }, select: userAdminSelection });
+      }
+
+      const result = await BanService.ban(
+        input.userId,
+        {
+          reason: input.reason,
+          blockMailboxes: input.blockMailboxes,
+          blockDomains: input.blockDomains,
+          alsoBanUserIds: input.alsoBanUserIds,
+        },
+        ctx.session.user.id,
+      );
+      for (const userId of result.bannedUserIds) {
+        await AdminAuditService.record({
+          actor: actorFrom(ctx),
+          action: "user.ban",
+          targetType: "user",
+          targetId: userId,
+          metadata: {
+            email: targets.find((t) => t.id === userId)?.email,
+            reason: input.reason,
+            ...(userId === input.userId ? { blocked: result.blocked, alsoBanned: input.alsoBanUserIds } : { relatedTo: input.userId }),
+          },
+        });
+      }
+      return db.user.findUniqueOrThrow({ where: { id: input.userId }, select: userAdminSelection });
+    }),
+
+  getBanPreview: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => BanService.preview(input.userId)),
+
+  getRelatedAccounts: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => BanService.relatedAccounts(input.userId)),
+
+  listBlocklist: adminProcedure
+    .input(
+      z.object({
+        type: z.nativeEnum(BlocklistType).optional(),
+        query: z.string().trim().max(200).optional(),
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(100).default(25),
+      }),
+    )
+    .query(async ({ input }) => BlocklistService.list(input)),
+
+  addBlocklistEntry: adminProcedure
+    .input(
+      z.object({
+        type: z.nativeEnum(BlocklistType),
+        value: z.string().trim().min(3).max(253),
+        reason: z.string().trim().max(300).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const value = normalizeBlocklistValue(input.type, input.value);
+      if (input.type === BlocklistType.EMAIL ? !value.includes("@") : !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(value)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: input.type === BlocklistType.EMAIL ? "Enter a full email address." : "Enter a domain like example.com.",
+        });
+      }
+      const entry = await BlocklistService.add({ ...input, createdById: ctx.session.user.id });
       await AdminAuditService.record({
         actor: actorFrom(ctx),
-        action: input.isBanned ? "user.ban" : "user.unban",
-        targetType: "user",
-        targetId: input.userId,
-        metadata: { email: target.email },
+        action: "blocklist.add",
+        targetType: "blocklist",
+        targetId: entry.id,
+        metadata: { type: entry.type, value: entry.value, reason: input.reason },
       });
-      return updated;
+      return entry;
+    }),
+
+  removeBlocklistEntry: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const entry = await BlocklistService.remove(input.id);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "blocklist.remove",
+        targetType: "blocklist",
+        targetId: entry.id,
+        metadata: { type: entry.type, value: entry.value },
+      });
+      return entry;
     }),
 
   listUsers: adminProcedure
@@ -643,7 +735,13 @@ export const adminRouter = createTRPCRouter({
         db.user.count({ where }),
       ]);
 
-      return { users, total, page, pageSize };
+      const flags = await BanService.evasionFlags(users);
+      return {
+        users: users.map((user) => ({ ...user, evasion: flags.get(user.id) ?? null })),
+        total,
+        page,
+        pageSize,
+      };
     }),
 
   findTeam: adminProcedure

@@ -40,7 +40,7 @@ export default function BannedPage() {
 
           <div className="flex flex-col gap-2.5">
             <Link
-              href="https://discord.gg/Bg3Sf5fqa4"
+              href="https://discord.gg/C2Q4GHXKQA"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-[#5865F2] px-6 text-sm font-medium text-white hover:bg-[#4752c4] transition-colors shadow-lg shadow-[#5865F2]/20"

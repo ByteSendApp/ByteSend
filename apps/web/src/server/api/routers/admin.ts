@@ -461,16 +461,16 @@ export const adminRouter = createTRPCRouter({
 
   getSesCallbackDiagnostics: adminProcedure.query(async () => SesCallbackDiagnosticsService.diagnose()),
 
-  resubscribeSesCallback: adminProcedure
+  repairSesCallbacks: adminProcedure
     .input(z.object({ settingsId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const result = await SesCallbackDiagnosticsService.resubscribe(input.settingsId);
+      const result = await SesCallbackDiagnosticsService.repair(input.settingsId);
       await AdminAuditService.record({
         actor: actorFrom(ctx),
-        action: "ses.resubscribe",
+        action: "ses.repair",
         targetType: "ses",
         targetId: input.settingsId,
-        metadata: { from: result.previousCallbackUrl, to: result.callbackUrl },
+        metadata: { actions: result.actions },
       });
       return result;
     }),

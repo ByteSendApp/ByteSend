@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.4.4] - 2026-10-19
+
 ### Added
-- **Delivery callback diagnostics** on Admin → SES regions: per region, the SNS subscription state and endpoint, each configuration set's event destination, when the last callback arrived, and any callbacks rejected for an unknown topic, with one-click resubscribe to this site's callback URL
+- **Delivery callback diagnostics** on Admin → SES regions: per region, the SNS subscription state and endpoint, each configuration set's event destination, when the last callback arrived, and any callbacks rejected for an unknown topic, with a one-click **Repair** that resubscribes this site's callback URL and re-enables or re-points broken event destinations
 
 ### Fixed
+- Adding an SES region with the full callback URL (as the old "Callback URL" label suggested) no longer produces `/api/ses_callback/api/ses_callback`; the field is now labelled "Site URL" and either form is accepted
 - Sent counts in analytics no longer depend on SES callbacks: an email is counted when ByteSend hands it to SES, so totals stay accurate even if SNS notifications stop arriving
 
 ### Changed
@@ -911,7 +916,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.0...v0.4.1

@@ -8,7 +8,7 @@ import { EmailQueueService } from "./email-queue-service";
 import { smallNanoid } from "../nanoid";
 import { logger } from "../logger/log";
 
-const GENERAL_EVENTS: EventType[] = [
+export const GENERAL_EVENTS: EventType[] = [
   "BOUNCE",
   "COMPLAINT",
   "DELIVERY",
@@ -61,9 +61,8 @@ export class SesSettingsService {
       throw new Error(`SesSetting for region ${region} already exists`);
     }
 
-    const parsedUrl = bytesendUrl.endsWith("/")
-      ? bytesendUrl.substring(0, bytesendUrl.length - 1)
-      : bytesendUrl;
+    // Accept either the site URL or the full callback URL; the callback path is appended below.
+    const parsedUrl = bytesendUrl.replace(/\/+$/, "").replace(/\/api\/ses_callback$/, "");
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       const bytesendUrlValidation = await isValidBytesendUrl(parsedUrl);
       if (!bytesendUrlValidation.isValid) {

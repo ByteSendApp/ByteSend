@@ -105,9 +105,16 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {user.isBanned ? <StatusPill tone="destructive">Banned</StatusPill> : null}
+                        {user.evasion ? (
+                          <span title={user.evasion.reason}>
+                            <StatusPill tone={user.evasion.level === "match" ? "destructive" : "warning"}>
+                              {user.evasion.level === "match" ? "Ban evasion" : "Possible evasion"}
+                            </StatusPill>
+                          </span>
+                        ) : null}
                         {user.isAdmin ? <StatusPill tone="warning">Admin</StatusPill> : null}
                         {user.isBetaUser ? <StatusPill tone="muted">Beta</StatusPill> : null}
-                        {!user.isBanned && !user.isAdmin && !user.isBetaUser ? (
+                        {!user.isBanned && !user.evasion && !user.isAdmin && !user.isBetaUser ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : null}
                       </div>

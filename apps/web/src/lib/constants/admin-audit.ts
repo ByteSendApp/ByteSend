@@ -8,6 +8,8 @@ export const ADMIN_AUDIT_ACTIONS = {
   "user.admin.update": "Changed admin role",
   "user.ban": "Banned user",
   "user.unban": "Unbanned user",
+  "blocklist.add": "Added to blocklist",
+  "blocklist.remove": "Removed from blocklist",
   "team.settings.update": "Updated team settings",
   "team.plan.assign": "Assigned plan",
   "team.plan.checkout_link": "Created checkout link",
@@ -26,7 +28,7 @@ export const ADMIN_AUDIT_ACTIONS = {
 
 export type AdminAuditAction = keyof typeof ADMIN_AUDIT_ACTIONS;
 
-export const ADMIN_AUDIT_TARGET_TYPES = ["ses", "user", "team", "domain", "email"] as const;
+export const ADMIN_AUDIT_TARGET_TYPES = ["ses", "user", "team", "domain", "email", "blocklist"] as const;
 
 export type AdminAuditTargetType = (typeof ADMIN_AUDIT_TARGET_TYPES)[number];
 

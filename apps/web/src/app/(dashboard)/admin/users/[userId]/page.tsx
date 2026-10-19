@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +14,7 @@ import { toast } from "@bytesend/ui/src/toaster";
 import { api } from "~/trpc/react";
 import { AuditLogTable } from "../../_components/audit-log-table";
 import { StatusPill } from "../../_components/status-pill";
+import { BanUserDialog } from "./ban-user-dialog";
 
 const PROVIDER_LABELS: Record<string, string> = {
   github: "GitHub",
@@ -94,6 +96,8 @@ export default function AdminUserDetailPage() {
   const updateBeta = api.admin.updateUserBeta.useMutation({ onSuccess: refresh, onError });
   const setAdmin = api.admin.setUserAdmin.useMutation({ onSuccess: refresh, onError });
   const banUser = api.admin.banUser.useMutation({ onSuccess: refresh, onError });
+  const relatedQuery = api.admin.getRelatedAccounts.useQuery({ userId }, { enabled: Number.isFinite(userId) });
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
   const isPending = updateBeta.isPending || setAdmin.isPending || banUser.isPending;
 
   if (userQuery.isLoading) {
@@ -164,7 +168,7 @@ export default function AdminUserDetailPage() {
               destructive
               disabled={isPending || isSelf}
               disabledReason={isSelf ? "You can't ban yourself." : undefined}
-              onChange={(isBanned) => banUser.mutate({ userId, isBanned })}
+              onChange={(isBanned) => (isBanned ? setBanDialogOpen(true) : banUser.mutate({ userId, isBanned: false }))}
             />
             <FlagRow
               label="Platform admin"
@@ -235,6 +239,38 @@ export default function AdminUserDetailPage() {
           </dl>
         </Panel>
       </div>
+
+      {relatedQuery.data && relatedQuery.data.length > 0 ? (
+        <Panel title="Related accounts" description="Accounts that look like the same person. Same mailbox is a strong match; same name is only a hint.">
+          <ul className="divide-y divide-border/60">
+            {relatedQuery.data.map((account) => (
+              <li key={account.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                <Link href={`/admin/users/${account.id}`} className="min-w-0 hover:underline">
+                  <span className="block truncate font-medium">{account.name ?? account.email}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {account.email} · <span className="font-mono">#{account.id}</span>
+                  </span>
+                </Link>
+                <div className="flex shrink-0 items-center gap-2">
+                  <StatusPill tone={account.reason === "same_mailbox" ? "destructive" : "warning"}>
+                    {account.reason === "same_mailbox" ? "Same mailbox" : "Same name"}
+                  </StatusPill>
+                  {account.isBanned ? <StatusPill tone="muted">Banned</StatusPill> : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
+
+      <BanUserDialog
+        user={{ id: user.id, email: user.email, name: user.name }}
+        open={banDialogOpen}
+        onOpenChange={setBanDialogOpen}
+        onDone={async () => {
+          await Promise.all([refresh(), relatedQuery.refetch()]);
+        }}
+      />
 
       <Panel title="Teams">
         {user.teamUsers.length === 0 ? (

@@ -137,7 +137,12 @@ export default function LoginPage({
     setEmailLoading(true);
     setCodeError(null);
     try {
-      await signIn("email", { email, callbackUrl, redirect: false });
+      const result = await signIn("email", { email, callbackUrl, redirect: false });
+      // The signIn callback refuses banned or blocked addresses by redirecting to /login?error=...
+      if (result?.url && new URL(result.url, window.location.origin).searchParams.get("error")) {
+        window.location.href = result.url;
+        return;
+      }
       // Persist email so it can be restored when NextAuth redirects to ?verify=1
       sessionStorage.setItem(SESSION_EMAIL_KEY, email);
       setEmailSent(true);
@@ -331,6 +336,15 @@ export default function LoginPage({
           </div>
         ) : (
           <>
+            {errorParam === "blocked" && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                <p>
+                  This email address can&apos;t be used to create a ByteSend account. If you think this is a mistake,
+                  contact support.
+                </p>
+              </div>
+            )}
+
             {errorParam === "unverified_email" && (
               <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
                 <p>

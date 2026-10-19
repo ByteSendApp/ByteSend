@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2026-10-19
+
+### Added
+- **Discord bot auto-roles and event log**: new members get the Members role (after accepting the rules) and bots get the Bots role; joins, leaves, member and role changes, bans, deleted, edited and bulk-deleted messages, channels, threads, roles, invites and voice activity are logged to `EVENT_LOG_CHANNEL_ID`
+- **Blocklist** (Admin → Blocklist) for email addresses, email domains and sending domains. Blocked addresses can't sign up, become an account email or a backup email, and blocked sending domains (and their subdomains) can't be added by any team
+- **Ban evasion detection**: banning a user now opens a dialog that blocks their email addresses (including `+` and Gmail dot aliases), optionally blocks their sending domains, and offers to ban related accounts. The users list flags **Ban evasion** (same mailbox as a banned user) and **Possible evasion** (same name), and each user page lists related accounts. Unbanning removes what the ban blocked. Users banned before this release have their addresses blocked automatically
+- Admins get a Discord alert when a blocked sign-up is refused, and when a domain on a shared namespace is added
+
+### Security
+- Sending domains on dynamic-DNS, tunnel and free-hosting services (DynDNS, No-IP, DuckDNS, ngrok, `github.io`, `vercel.app` and similar) can no longer be added on ByteSend Cloud, and email from such hostnames is held for review
+- Spam protection recognises phishing phrases in German, French, Spanish, Italian and Dutch, and more impersonated brands (eBay, Kleinanzeigen, European banks and couriers)
+
+### Fixed
+- Signing in by email with a banned or blocked address now shows why, instead of claiming a sign-in link was sent
+
+---
+
 ## [0.5.0] - 2026-10-19
 
 ### Added
@@ -931,7 +948,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.2...v0.4.3

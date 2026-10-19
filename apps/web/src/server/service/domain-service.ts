@@ -1,4 +1,8 @@
 import dns from "dns";
+import { BlocklistService } from "./blocklist-service";
+import { isPrivateSuffixHostname, isSharedHostname } from "~/lib/constants/shared-domains";
+import { isCloud } from "~/utils/common";
+import { sendToDiscord } from "./notification-service";
 import util from "util";
 import * as tldts from "tldts";
 import * as ses from "~/server/aws/ses";
@@ -522,6 +526,21 @@ export async function createDomain(
     });
   }
 
+  if (isCloud() && isSharedHostname(name)) {
+    throw new ByteSendApiError({
+      code: "BAD_REQUEST",
+      message:
+        "Domains on dynamic-DNS, free-subdomain or tunnel services (like duckdns.org or no-ip.org) can't send through ByteSend. Use a domain you own.",
+    });
+  }
+
+  if (await BlocklistService.findBlockedSendingDomain(name)) {
+    throw new ByteSendApiError({
+      code: "FORBIDDEN",
+      message: "This domain can't be added to ByteSend. Contact support if you think this is a mistake.",
+    });
+  }
+
   const setting = await SesSettingsService.getSetting(region);
 
   if (!setting) {
@@ -578,6 +597,14 @@ export async function createDomain(
   }
 
   await emitDomainEvent(domain, "domain.created");
+
+  // Shared namespaces the curated block list doesn't cover (some are legitimate paid ones, like
+  // acme.uk.com), so they're allowed but put in front of an admin.
+  if (isCloud() && isPrivateSuffixHostname(name)) {
+    sendToDiscord(
+      `⚠️ **Domain on a shared namespace added**\n**Domain:** \`${name}\`\n**Team:** #${teamId}\nCould be a dynamic-DNS or free-subdomain host. Review it in the admin panel and add it to the blocklist if it isn't legitimate.`,
+    ).catch(() => void 0);
+  }
 
   return withDnsRecords(domain);
 }

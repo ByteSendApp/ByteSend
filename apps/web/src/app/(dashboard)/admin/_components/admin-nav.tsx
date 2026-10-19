@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Ban,
   Building2,
   CreditCard,
   Globe,
@@ -49,6 +50,7 @@ const NAV_GROUPS: AdminNavGroup[] = [
       { href: "/admin/deliverability", label: "Deliverability", icon: ShieldAlert },
       { href: "/admin/blacklists", label: "Blacklists", icon: ShieldBan, cloudOnly: true },
       { href: "/admin/spam", label: "Spam review", icon: MailWarning },
+      { href: "/admin/blocklist", label: "Blocklist", icon: Ban },
     ],
   },
   {

@@ -14,6 +14,7 @@ import { Provider } from "next-auth/providers/index";
 import { sendSignUpEmail } from "~/server/mailer";
 import { createEmailVerificationAdapter } from "~/server/email-adapter";
 import { sendToDiscord } from "~/server/service/notification-service";
+import { BlocklistService } from "~/server/service/blocklist-service";
 import { compare } from "bcryptjs";
 
 import { env } from "~/env";
@@ -207,6 +208,16 @@ export const authOptions: NextAuthOptions = {
         });
         if (dbUser?.isBanned) {
           return "/login?error=banned";
+        }
+        // Only new sign-ups are checked, so blocking a domain never locks out existing accounts.
+        if (!dbUser) {
+          const blocked = await BlocklistService.findBlockedSignup(user.email);
+          if (blocked) {
+            sendToDiscord(
+              `🚫 **Blocked sign-up**\n**Email:** ${user.email}\n**Matched:** ${blocked.type === "EMAIL" ? "blocked mailbox" : "blocked email domain"} \`${blocked.value}\`${blocked.sourceUserId ? ` (banned user #${blocked.sourceUserId})` : ""}`,
+            ).catch(() => void 0);
+            return "/login?error=blocked";
+          }
         }
       }
 

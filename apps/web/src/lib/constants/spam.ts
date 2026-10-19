@@ -19,4 +19,6 @@ export const SPAM_RULE_LABELS: Record<string, string> = {
   hidden_text: "Hidden text",
   blacklisted_link: "Link domain on a blocklist",
   new_team: "Team created in the last 7 days",
+  shared_hostname_sender: "Sender on a dynamic-DNS or free-hosting hostname",
+  shared_namespace_sender: "Sender on a shared domain namespace",
 };

@@ -742,3 +742,25 @@ model SpamScan {
   @@index([emailId])
   @@index([campaignId])
 }
+
+enum BlocklistType {
+  EMAIL
+  EMAIL_DOMAIN
+  SENDING_DOMAIN
+}
+
+/// Addresses and domains that can't be used to sign up or be added as sending domains.
+/// EMAIL values are canonical (see src/lib/canonical-email.ts) so aliases of a blocked address match.
+model BlocklistEntry {
+  id           String        @id @default(cuid())
+  type         BlocklistType
+  value        String
+  reason       String?
+  /// The banned user this entry was created for; unbanning them removes it.
+  sourceUserId Int?
+  createdById  Int?
+  createdAt    DateTime      @default(now())
+
+  @@unique([type, value])
+  @@index([sourceUserId])
+}

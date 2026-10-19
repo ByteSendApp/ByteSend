@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { TRPCError } from "@trpc/server";
+import { BlocklistService } from "~/server/service/blocklist-service";
 import { sendEmailChangeVerificationEmail, sendBackupEmailVerificationEmail } from "~/server/mailer";
 import {
   generateTwoFactorSecret,
@@ -83,6 +84,10 @@ export const userRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const nextEmail = input.email.trim().toLowerCase();
+
+      if (await BlocklistService.findBlockedSignup(nextEmail)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This email address can't be used on ByteSend." });
+      }
 
       const currentUser = await db.user.findUnique({
         where: { id: ctx.session.user.id },
@@ -612,6 +617,10 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const backupEmail = input.email.trim().toLowerCase();
       const password = input.password;
+
+      if (await BlocklistService.findBlockedSignup(backupEmail)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This email address can't be used on ByteSend." });
+      }
 
       const existingBackup = await db.backupEmail.findUnique({
         where: { email: backupEmail },

@@ -10,31 +10,31 @@
 ### NPM
 
 ```bash
-npm install bytesend
+npm install bytesend-js
 ```
 
 ### Yarn
 
 ```bash
-yarn add bytesend
+yarn add bytesend-js
 ```
 
 ### PNPM
 
 ```bash
-pnpm add bytesend
+pnpm add bytesend-js
 ```
 
 ### Bun
 
 ```bash
-bun add bytesend
+bun add bytesend-js
 ```
 
 ## Usage
 
 ```javascript
-import { ByteSend } from "bytesend";
+import { ByteSend } from "bytesend-js";
 
 const bytesend = new ByteSend("bs_12345");
 
@@ -86,7 +86,7 @@ await bytesend.emails.batch(
 Create and manage email campaigns:
 
 ```javascript
-import { ByteSend } from "bytesend";
+import { ByteSend } from "bytesend-js";
 
 const bytesend = new ByteSend("bs_12345");
 
@@ -121,7 +121,7 @@ await bytesend.campaigns.resume(campaign.data.id);
 Verify webhook signatures and get typed events:
 
 ```ts
-import { ByteSend } from "bytesend";
+import { ByteSend } from "bytesend-js";
 
 const bytesend = new ByteSend("bs_12345");
 const webhooks = bytesend.webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
 You can also use the `Webhooks` class directly:
 
 ```ts
-import { Webhooks } from "bytesend";
+import { Webhooks } from "bytesend-js";
 
 const webhooks = new Webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
 const event = webhooks.constructEvent(rawBody, { headers: request.headers });
@@ -168,7 +168,7 @@ Express example (ensure raw body is preserved):
 
 ```ts
 import express from "express";
-import { Webhooks } from "bytesend";
+import { Webhooks } from "bytesend-js";
 
 const webhooks = new Webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
 

@@ -42,7 +42,6 @@ export async function emailTimeSeries(input: EmailTimeSeries) {
     ORDER BY "date" ASC
   `;
 
-  // Fill in any missing dates with 0 values
   const filledResult: DailyEmailUsage[] = [];
   const endDateObj = new Date();
 

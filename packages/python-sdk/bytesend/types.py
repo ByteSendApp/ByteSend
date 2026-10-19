@@ -615,6 +615,7 @@ WebhookEmailStatus = Literal[
     "FAILED",
     "CANCELLED",
     "SUPPRESSED",
+    "HELD",
     "OPENED",
     "CLICKED",
     "SCHEDULED",

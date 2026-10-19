@@ -136,7 +136,6 @@ export const teamRouter = createTRPCRouter({
     const adminCount = await ctx.db.teamUser.count({
       where: { teamId: ctx.team.id, role: "ADMIN" },
     });
-    // Extra safety: only the sole admin (the owner) can delete the team
     if (adminCount !== 1) {
       throw new TRPCError({
         code: "FORBIDDEN",

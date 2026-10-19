@@ -108,6 +108,8 @@ Start with your most engaged users: people who have recently interacted with you
 - Keep your image-to-text ratio reasonable. Pure-image emails perform poorly.
 - Always include a visible, working unsubscribe link
 
+ByteSend also scores every outbound email before it is sent, and holds high-risk messages for review. See [Spam Protection](/guides/spam-protection) for what is checked and how to avoid false positives.
+
 ### 5. Monitor Bounces and Complaints in Real Time
 
 Set up a [webhook](/guides/webhooks) for `email.bounced` and `email.complained` events so you can react immediately:
@@ -154,7 +156,7 @@ Configure [Discord or Slack notifications](/guides/notification-providers) for `
 
 ByteSend maintains an automatic suppression list. Addresses that hard bounce are added automatically and will be silently skipped on future sends rather than bouncing again, protecting your reputation.
 
-If you need to manually remove an address from the suppression list (e.g., after the recipient fixed a typo in their email), contact support via [Discord](https://discord.gg/Bg3Sf5fqa4).
+If you need to manually remove an address from the suppression list (e.g., after the recipient fixed a typo in their email), contact support via [Discord](https://discord.gg/C2Q4GHXKQA).
 
 ---
 
@@ -166,7 +168,7 @@ If your sending is blocked due to reputation thresholds:
 2. **Check the dashboard** for the specific metric that triggered it.
 3. **Clean your list.** Remove bounced addresses and unsubscribe anyone who has complained.
 4. **Wait for the 7-day window to roll.** As old events age out, your rate will naturally improve.
-5. **Contact support** on [Discord](https://discord.gg/Bg3Sf5fqa4) if you need the block lifted sooner and can explain why the spike occurred
+5. **Contact support** on [Discord](https://discord.gg/C2Q4GHXKQA) if you need the block lifted sooner and can explain why the spike occurred
 
 ---
 
@@ -196,3 +198,10 @@ If your sending is blocked due to reputation thresholds:
     - Dashboard reputation metrics reviewed weekly
   </Accordion>
 </AccordionGroup>
+
+---
+
+## Related
+
+- [Spam Protection](/guides/spam-protection) — outbound scoring and held emails
+- [Changing Sending Region](/guides/sending-regions) — move a domain to another AWS region without downtime

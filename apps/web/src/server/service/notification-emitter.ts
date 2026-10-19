@@ -1,14 +1,7 @@
 import { NotificationEventType } from "@prisma/client";
 import { NotificationProviderService, type NotificationMessage } from "./notification-provider-service";
 
-/**
- * Helper to emit notifications for key events
- * Integrate this into your webhook service and event handlers
- */
 export class NotificationEmitter {
-  /**
-   * Email event notification
-   */
   static async emitEmailEvent(
     teamId: number,
     status: "sent" | "delivered" | "bounced" | "complained" | "opened" | "clicked",
@@ -59,12 +52,12 @@ export class NotificationEmitter {
         },
         ...(data.subject
           ? [
-              {
-                name: "Subject",
-                value: data.subject,
-                inline: false,
-              },
-            ]
+            {
+              name: "Subject",
+              value: data.subject,
+              inline: false,
+            },
+          ]
           : []),
       ],
       timestamp: true,
@@ -103,21 +96,21 @@ export class NotificationEmitter {
         },
         ...(data.totalContacts
           ? [
-              {
-                name: "Total Contacts",
-                value: data.totalContacts.toString(),
-                inline: true,
-              },
-            ]
+            {
+              name: "Total Contacts",
+              value: data.totalContacts.toString(),
+              inline: true,
+            },
+          ]
           : []),
         ...(data.sent
           ? [
-              {
-                name: "Sent",
-                value: data.sent.toString(),
-                inline: true,
-              },
-            ]
+            {
+              name: "Sent",
+              value: data.sent.toString(),
+              inline: true,
+            },
+          ]
           : []),
       ],
       timestamp: true,
@@ -165,12 +158,12 @@ export class NotificationEmitter {
         },
         ...(data.error
           ? [
-              {
-                name: "Error",
-                value: data.error,
-                inline: false,
-              },
-            ]
+            {
+              name: "Error",
+              value: data.error,
+              inline: false,
+            },
+          ]
           : []),
       ],
       timestamp: true,
@@ -208,21 +201,21 @@ export class NotificationEmitter {
         },
         ...(data.contactBookName
           ? [
-              {
-                name: "Contact Book",
-                value: data.contactBookName,
-                inline: true,
-              },
-            ]
+            {
+              name: "Contact Book",
+              value: data.contactBookName,
+              inline: true,
+            },
+          ]
           : []),
         ...(data.count
           ? [
-              {
-                name: "Count",
-                value: data.count.toString(),
-                inline: true,
-              },
-            ]
+            {
+              name: "Count",
+              value: data.count.toString(),
+              inline: true,
+            },
+          ]
           : []),
       ],
       timestamp: true,
@@ -260,12 +253,12 @@ export class NotificationEmitter {
         },
         ...(data.errorCode
           ? [
-              {
-                name: "Error Code",
-                value: data.errorCode,
-                inline: true,
-              },
-            ]
+            {
+              name: "Error Code",
+              value: data.errorCode,
+              inline: true,
+            },
+          ]
           : []),
       ],
       timestamp: true,

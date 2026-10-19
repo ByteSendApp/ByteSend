@@ -13,10 +13,8 @@ const createQueryClient = () => new QueryClient();
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
   if (typeof window === "undefined") {
-    // Server: always make a new query client
     return createQueryClient();
   }
-  // Browser: use singleton pattern to keep the same query client
   return (clientQueryClientSingleton ??= createQueryClient());
 };
 
@@ -39,7 +37,6 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
-            // Pass the active team so teamProcedure resolves the right team.
             const activeTeamId =
               typeof window !== "undefined"
                 ? window.localStorage.getItem("bytesend:active-team-id")

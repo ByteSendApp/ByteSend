@@ -132,7 +132,6 @@ export const DashboardProvider = ({
     );
   }
 
-  // Show profile setup if the user hasn't set a name yet (email-only sign-in)
   if (session && !session.user.name) {
     return <ProfileSetup />;
   }

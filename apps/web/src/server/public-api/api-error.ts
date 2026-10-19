@@ -75,9 +75,6 @@ export class ByteSendApiError extends HTTPException {
 }
 
 export function handleError(err: Error, c: Context): Response {
-  /**
-   * We can handle this very well, as it is something we threw ourselves
-   */
   if (err instanceof ByteSendApiError) {
     if (err.status >= 500) {
       logger.error(
@@ -96,10 +93,6 @@ export function handleError(err: Error, c: Context): Response {
     );
   }
 
-  /**
-   * HTTPExceptions from hono at least give us some idea of what to do as they provide a status and
-   * message
-   */
   if (err instanceof HTTPException) {
     if (err.status >= 500) {
       logger.error(
@@ -119,9 +112,6 @@ export function handleError(err: Error, c: Context): Response {
     );
   }
 
-  /**
-   * We're lost here, all we can do is return a 500 and log it to investigate
-   */
   logger.error(
     {
       err,

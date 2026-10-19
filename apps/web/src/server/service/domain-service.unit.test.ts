@@ -97,6 +97,14 @@ function createDomain(overrides: Partial<Domain> = {}): Domain {
     isVerifying: true,
     createdAt: new Date("2026-03-01T00:00:00.000Z"),
     updatedAt: new Date("2026-03-01T00:00:00.000Z"),
+    pendingRegion: null,
+    pendingDkimSelector: null,
+    pendingPublicKey: null,
+    pendingDkimStatus: null,
+    pendingMailFromStatus: null,
+    regionMoveStartedAt: null,
+    retiredRegion: null,
+    retiredRegionAt: null,
     ...overrides,
   };
 }

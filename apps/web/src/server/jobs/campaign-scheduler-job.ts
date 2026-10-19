@@ -8,8 +8,10 @@ import { getRedis, BULL_PREFIX } from "../redis";
 import { CampaignBatchService } from "../service/campaign-service";
 import { db } from "../db";
 import { logger } from "../logger/log";
+import { isSchedulerIdle, markSchedulerIdle } from "../queue/campaign-scheduler-state";
 
 const SCHEDULER_TICK_MS = 1500;
+const SCHEDULER_ID = "campaign-scheduler";
 
 type SchedulerJob = TeamJob<{}>;
 
@@ -27,6 +29,8 @@ export class CampaignSchedulerService {
     CAMPAIGN_SCHEDULER_QUEUE,
     createWorkerHandler(async (_job: SchedulerJob) => {
       try {
+        if (await isSchedulerIdle()) return;
+
         const now = new Date();
         const campaigns = await db.campaign.findMany({
           where: {
@@ -40,6 +44,11 @@ export class CampaignSchedulerService {
             batchWindowMinutes: true,
           },
         });
+
+        if (campaigns.length === 0) {
+          await markSchedulerIdle();
+          return;
+        }
 
         const enqueuePromises: Promise<any>[] = [];
         for (const c of campaigns) {
@@ -89,18 +98,25 @@ export class CampaignSchedulerService {
 
   static async start() {
     try {
-      await this.schedulerQueue.add(
-        "tick",
-        {},
-        {
-          jobId: "campaign-scheduler",
-          repeat: { every: SCHEDULER_TICK_MS },
-          ...DEFAULT_QUEUE_OPTIONS,
-        }
+      // Older builds registered the tick with queue.add({ repeat }); each tick interval it ever
+      // used left a separate repeatable behind that kept firing, so clear them before upserting.
+      const legacyRepeatables = (await this.schedulerQueue.getRepeatableJobs()).filter(
+        (job) => job.key !== SCHEDULER_ID,
+      );
+      await Promise.all(
+        legacyRepeatables.map((job) => this.schedulerQueue.removeRepeatableByKey(job.key)),
+      );
+      if (legacyRepeatables.length > 0) {
+        logger.info({ removed: legacyRepeatables.length }, "Removed legacy campaign scheduler repeatables");
+      }
+
+      await this.schedulerQueue.upsertJobScheduler(
+        SCHEDULER_ID,
+        { every: SCHEDULER_TICK_MS },
+        { name: "tick", data: {}, opts: { ...DEFAULT_QUEUE_OPTIONS } },
       );
     } catch (err) {
-      // Adding the same repeatable job is idempotent; ignore job-exists errors
-      logger.info({ err }, "Scheduler start attempted");
+      logger.error({ err }, "Failed to start campaign scheduler");
     }
   }
 }

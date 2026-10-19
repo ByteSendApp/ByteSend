@@ -27,10 +27,6 @@ export function isStorageConfigured(): boolean {
   return getS3Client() !== null;
 }
 
-/**
- * Returns a presigned PUT URL valid for 5 minutes.
- * The caller uploads directly to S3; the public URL is derived from S3_COMPATIBLE_PUBLIC_URL.
- */
 export async function getPresignedUploadUrl(
   key: string,
   contentType: string,

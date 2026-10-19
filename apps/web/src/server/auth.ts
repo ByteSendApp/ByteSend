@@ -18,13 +18,8 @@ import { compare } from "bcryptjs";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
+import { isOAuthEmailVerified, isOAuthProvider, recordProviderEmail } from "~/server/auth/oauth-email";
 
-/**
- * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
- * object and keep type safety.
- *
- * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
- */
 declare module "next-auth" {
   // eslint-disable-next-line no-unused-vars
   interface Session extends DefaultSession {
@@ -35,8 +30,6 @@ declare module "next-auth" {
       isFounder: boolean;
       isEnvAdmin?: boolean;
       isBanned: boolean;
-      // ...other properties
-      // role: UserRole;
     } & DefaultSession["user"];
   }
 
@@ -62,10 +55,6 @@ declare module "next-auth/jwt" {
 function normalizeEmail(email?: string | null) {
   return email?.trim().toLowerCase();
 }
-
-/**
- * Auth providers
- */
 
 function getProviders() {
   const providers: Provider[] = [];
@@ -110,7 +99,7 @@ function getProviders() {
     EmailProvider({
       server: {},
       from: env.FROM_EMAIL ?? "noreply@bytesend.cloud",
-      maxAge: 24 * 60 * 60, // 24 hours instead of 10 minutes for email verification code
+      maxAge: 24 * 60 * 60,
       generateVerificationToken() {
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let token = "";
@@ -125,7 +114,6 @@ function getProviders() {
     })
   );
 
-  // Credentials provider for backup email + password login
   providers.push(
     CredentialsProvider({
       name: "Backup Email",
@@ -141,7 +129,6 @@ function getProviders() {
         const email = credentials.email.trim().toLowerCase();
         const password = credentials.password;
 
-        // Check primary email first — they should use OAuth or Email OTP
         const primaryUser = await db.user.findUnique({
           where: { email },
           select: { id: true },
@@ -153,7 +140,6 @@ function getProviders() {
           );
         }
 
-        // Check backup email
         const backupEmail = await db.backupEmail.findUnique({
           where: { email },
           select: {
@@ -173,13 +159,11 @@ function getProviders() {
           );
         }
 
-        // Validate password
         const isPasswordValid = await compare(password, backupEmail.passwordHash);
         if (!isPasswordValid) {
           throw new Error("Invalid email or password");
         }
 
-        // Get user
         const user = await db.user.findUnique({
           where: { id: backupEmail.userId },
           select: {
@@ -213,17 +197,9 @@ function getProviders() {
   return providers;
 }
 
-/**
- * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
- * @see https://next-auth.js.org/configuration/options
- */
 export const authOptions: NextAuthOptions = {
   callbacks: {
     signIn: async ({ user, account, profile, credentials }) => {
-      // Block banned users from signing in.
-      // Look up by email — user.id is the OAuth provider's ID for OAuth sign-ins
-      // (e.g. a Discord snowflake that overflows INT4), not the database user ID.
       if (user.email) {
         const dbUser = await db.user.findUnique({
           where: { email: user.email },
@@ -234,7 +210,6 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // For email provider with code verification
       if (account?.provider === "email" && credentials?.code) {
         try {
           return true;
@@ -243,12 +218,22 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Sync the OAuth provider's profile picture to the User record on every
-      // OAuth sign-in so the avatar stays fresh (covers both first-time OAuth
-      // logins and users who originally signed up via email then linked OAuth).
-      const oauthProviders = ["github", "discord", "google"];
-      if (account?.provider && oauthProviders.includes(account.provider)) {
-        // Each provider uses a different field name in its raw profile response.
+      if (account && isOAuthProvider(account.provider)) {
+        const emailVerified = await isOAuthEmailVerified({
+          provider: account.provider,
+          profile,
+          accessToken: account.access_token,
+          email: user.email,
+        });
+        if (!emailVerified) {
+          return "/login?error=unverified_email";
+        }
+        await recordProviderEmail({
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          email: user.email,
+        });
+
         let freshImage: string | null = null;
         if (account.provider === "github") {
           freshImage = (profile as { avatar_url?: string } | undefined)?.avatar_url ?? null;
@@ -269,11 +254,8 @@ export const authOptions: NextAuthOptions = {
               where: { id: typeof user.id === "string" ? parseInt(user.id, 10) : user.id },
               data: { image: freshImage },
             });
-            // Reflect immediately so the session callback sees the new value
             user.image = freshImage;
-          } catch {
-            // Non-fatal — sign-in still succeeds without the image update
-          }
+          } catch { }
         }
       }
 
@@ -307,8 +289,6 @@ export const authOptions: NextAuthOptions = {
           isFounder,
           isEnvAdmin,
           isBanned: user.isBanned ?? false,
-          // Explicitly forward the DB image so it always reaches the client,
-          // even when session.user was built before the image update above.
           image: user.image ?? session.user.image,
         },
       };
@@ -321,6 +301,13 @@ export const authOptions: NextAuthOptions = {
     error: "/login?error=callback",
   },
   events: {
+    linkAccount: async ({ user, account, profile }) => {
+      await recordProviderEmail({
+        provider: account.provider,
+        providerAccountId: account.providerAccountId,
+        email: profile.email ?? user.email,
+      });
+    },
     createUser: async ({ user }) => {
       sendToDiscord(`**New user signed up** 🎉\n**Email:** ${user.email ?? "unknown"}\n**Name:** ${user.name ?? "—"}`).catch(() => void 0);
 
@@ -354,9 +341,4 @@ export const authOptions: NextAuthOptions = {
   providers: getProviders(),
 };
 
-/**
- * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
- *
- * @see https://next-auth.js.org/configuration/nextjs
- */
 export const getServerAuthSession = () => getServerSession(authOptions);

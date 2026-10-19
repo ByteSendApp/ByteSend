@@ -3,19 +3,20 @@
   "theme": "maple",
   "name": "ByteSend",
   "colors": {
-    "primary": "#0066CC",
-    "light": "#E6F2FF",
-    "dark": "#3D9FFF"
+    "primary": "#0057FF",
+    "light": "#1FB5FF",
+    "dark": "#0046CC"
   },
   "background": {
     "color": {
       "light": "#F8F9FB",
-      "dark": "#0A0A0A"
+      "dark": "#05070D"
     }
   },
   "fonts": {
     "heading": {
-      "family": "Inter"
+      "family": "Sora",
+      "weight": 700
     },
     "body": {
       "family": "Inter"
@@ -52,7 +53,8 @@
               "self-hosting/certificates",
               "self-hosting/firewall",
               "self-hosting/reverse-proxy",
-              "self-hosting/security"
+              "self-hosting/security",
+              "self-hosting/admin-panel"
             ]
           }
         ]
@@ -66,6 +68,7 @@
               "guides/github-oauth",
               "guides/google-oauth",
               "guides/discord-oauth",
+              "guides/connected-accounts",
               "guides/api-authentication"
             ]
           },
@@ -91,7 +94,9 @@
           {
             "group": "Deliverability",
             "pages": [
-              "guides/deliverability"
+              "guides/deliverability",
+              "guides/spam-protection",
+              "guides/sending-regions"
             ]
           },
           {
@@ -116,7 +121,9 @@
         "groups": [
           {
             "group": "API Reference",
-            "pages": ["api-reference/introduction"]
+            "pages": [
+              "api-reference/introduction"
+            ]
           },
           {
             "group": "Emails",
@@ -189,7 +196,6 @@
           }
         ]
       }
-
     ],
     "global": {
       "anchors": [
@@ -200,7 +206,7 @@
         },
         {
           "anchor": "Discord",
-          "href": "https://discord.gg/nodebyte",
+          "href": "https://https://discord.gg/C2Q4GHXKQA",
           "icon": "discord"
         },
         {
@@ -212,8 +218,8 @@
     }
   },
   "logo": {
-    "light": "/logo/logo-wordmark.svg",
-    "dark": "/logo/logo-wordmark-dark.svg"
+    "light": "/logo/wordmark-light.png",
+    "dark": "/logo/wordmark-dark.png"
   },
   "api": {
     "playground": {
@@ -230,7 +236,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "https://discord.gg/nodebyte"
+        "href": "https://https://discord.gg/C2Q4GHXKQA"
       }
     ],
     "primary": {
@@ -246,6 +252,12 @@
     }
   },
   "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity"
+    ]
   }
 }

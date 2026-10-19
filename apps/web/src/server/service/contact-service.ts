@@ -43,7 +43,6 @@ export async function addOrUpdateContact(
     throw new Error("Contact book not found");
   }
 
-  // Check if contact exists to handle subscribed logic
   const existingContact = await db.contact.findUnique({
     where: {
       contactBookId_email: {
@@ -58,7 +57,6 @@ export async function addOrUpdateContact(
     },
   });
 
-  // Enforce contacts limit only when adding a brand-new contact
   if (!existingContact) {
     const resolvedTeamId = teamId ?? contactBook.teamId;
     const { isLimitReached, reason } =
@@ -71,15 +69,11 @@ export async function addOrUpdateContact(
     }
   }
 
-  // Determine subscribed value for update
-  // Only allow Yes→No transitions (allow unsubscribe, prevent re-subscribe)
   let subscribedValue: boolean | undefined = contact.subscribed;
   if (existingContact && contact.subscribed !== undefined) {
-    // Block No→Yes (prevent re-subscribe via CSV), allow all other transitions
     if (!existingContact.subscribed && contact.subscribed) {
-      subscribedValue = undefined; // Block re-subscribe
+      subscribedValue = undefined;
     }
-    // All other cases (Yes→No, Yes→Yes, No→No) are allowed naturally
   }
 
   const isExplicitUnsubscribeRequest = contact.subscribed === false;
@@ -104,10 +98,10 @@ export async function addOrUpdateContact(
     normalizedProperties === undefined
       ? undefined
       : mergeContactProperties(
-          (existingContact?.properties as Record<string, unknown> | null) ?? {},
-          normalizedProperties,
-          contactBook.variables,
-        );
+        (existingContact?.properties as Record<string, unknown> | null) ?? {},
+        normalizedProperties,
+        contactBook.variables,
+      );
 
   const savedContact = await db.contact.upsert({
     where: {
@@ -139,11 +133,11 @@ export async function addOrUpdateContact(
         : {}),
       ...(subscribedValue !== undefined
         ? {
-            subscribed: subscribedValue,
-            unsubscribeReason: subscribedValue
-              ? null
-              : UnsubscribeReason.UNSUBSCRIBED,
-          }
+          subscribed: subscribedValue,
+          unsubscribeReason: subscribedValue
+            ? null
+            : UnsubscribeReason.UNSUBSCRIBED,
+        }
         : {}),
     },
   });
@@ -213,10 +207,10 @@ export async function updateContactInContactBook(
     contact.properties === undefined
       ? undefined
       : mergeContactProperties(
-          (existingContact.properties as Record<string, unknown> | null) ?? {},
-          contact.properties,
-          contactBook?.variables ?? [],
-        );
+        (existingContact.properties as Record<string, unknown> | null) ?? {},
+        contact.properties,
+        contactBook?.variables ?? [],
+      );
 
   const updatedContact = await db.contact.update({
     where: {
@@ -229,10 +223,10 @@ export async function updateContactInContactBook(
         : {}),
       ...(contact.subscribed !== undefined
         ? {
-            unsubscribeReason: contact.subscribed
-              ? null
-              : UnsubscribeReason.UNSUBSCRIBED,
-          }
+          unsubscribeReason: contact.subscribed
+            ? null
+            : UnsubscribeReason.UNSUBSCRIBED,
+        }
         : {}),
     },
   });

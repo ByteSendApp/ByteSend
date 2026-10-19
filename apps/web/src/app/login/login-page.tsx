@@ -325,6 +325,15 @@ export default function LoginPage({
           </div>
         ) : (
           <>
+            {errorParam === "unverified_email" && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                <p>
+                  That account&apos;s email address isn&apos;t verified with the provider. Verify it there, or sign in
+                  with your email instead.
+                </p>
+              </div>
+            )}
+
             {/* Email form */}
             {hasEmailProvider && (
               <form onSubmit={handleEmailSubmit} className="space-y-3">

@@ -22,7 +22,7 @@ export function TopNav() {
           {isCloud && <Link href="/#features" className="hover:text-foreground transition-colors text-[13px]">Features</Link>}
           {isCloud && <Link href="/#pricing" className="hover:text-foreground transition-colors text-[13px]">Pricing</Link>}
           {isCloud && <Link href="/changelog" className="hover:text-foreground transition-colors text-[13px]">Changelog</Link>}
-          <a href="https://discord.gg/Bg3Sf5fqa4" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors text-[13px]">Discord</a>
+          <a href="https://discord.gg/C2Q4GHXKQA" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors text-[13px]">Discord</a>
           <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors text-[13px]">Docs</a>
         </nav>
 

@@ -14,7 +14,6 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
   const l = plan.limits;
   const perks: string[] = [];
 
-  // Email volume
   if (!isFinite(l.monthlyEmailLimit)) {
     perks.push("Unlimited emails — no overage charges");
   } else {
@@ -29,7 +28,6 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
     }
   }
 
-  // Marketing
   if (!l.marketingEmailsIncluded) {
     perks.push("Marketing emails not available");
   } else if (plan.usageMetering) {
@@ -43,14 +41,12 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
     perks.push("Marketing & transactional included");
   }
 
-  // Domains
   if (l.additionalDomainRateCents > 0) {
     perks.push(`Up to ${fmt(l.maxDomains)} domains + $${l.additionalDomainRateCents / 100}/extra`);
   } else {
     perks.push(`Up to ${fmt(l.maxDomains)} domains`);
   }
 
-  // Members
   if (!isFinite(l.maxTeamMembers)) {
     perks.push("Unlimited team members");
   } else {
@@ -61,10 +57,8 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
     perks.push(`Up to ${l.maxTeamMembers} team members${memberAddonSuffix}`);
   }
 
-  // Support
   perks.push(l.prioritySupport ? "Priority support" : "Community support");
 
-  // Analytics
   if (l.advancedAnalytics) perks.push("Advanced analytics");
 
   return perks;

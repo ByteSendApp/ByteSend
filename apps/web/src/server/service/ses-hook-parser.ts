@@ -57,7 +57,6 @@ export async function parseSesHook(data: SesEvent) {
     },
   });
 
-  // Handle race condition: If email not found by sesEmailId, try to find by custom header
   if (!email) {
     const emailIdHeader = data.mail.headers.find(
       (h) => h.name === "X-ByteSend-Email-ID",
@@ -70,7 +69,6 @@ export async function parseSesHook(data: SesEvent) {
         },
       });
 
-      // If found, update the sesEmailId to fix the missing reference
       if (email) {
         await db.email.update({
           where: { id: email.id },
@@ -102,7 +100,6 @@ export async function parseSesHook(data: SesEvent) {
     return true;
   }
 
-  // Update the latest status and to avoid race conditions
   await db.$executeRaw`
       UPDATE "Email"
       SET "latestStatus" = CASE
@@ -115,23 +112,18 @@ export async function parseSesHook(data: SesEvent) {
 
   logger.info("Latest status updated");
 
-  // Update daily email usage statistics
-  const today = new Date().toISOString().split("T")[0] as string; // Format: YYYY-MM-DD
+  const today = new Date().toISOString().split("T")[0] as string;
 
   const isHardBounced =
     mailStatus === EmailStatus.BOUNCED &&
     (mailData as SesBounce).bounceType === "Permanent";
 
-  // Fix: Only add the actual bounced/complained recipients to suppression list
-  // Add emails to suppression list for hard bounces and complaints
   if (isHardBounced || mailStatus === EmailStatus.COMPLAINED) {
     logger.info("Adding emails to suppression list");
 
-    // Get the actual affected recipients from the event data
     let recipientEmails: string[] = [];
 
     if (isHardBounced && data.bounce?.bouncedRecipients) {
-      // For bounces, only add the recipients that actually bounced
       recipientEmails = data.bounce.bouncedRecipients.map(
         (recipient) => recipient.emailAddress,
       );
@@ -139,13 +131,11 @@ export async function parseSesHook(data: SesEvent) {
       mailStatus === EmailStatus.COMPLAINED &&
       data.complaint?.complainedRecipients
     ) {
-      // For complaints, only add the recipients that actually complained
       recipientEmails = data.complaint.complainedRecipients.map(
         (recipient) => recipient.emailAddress,
       );
     }
 
-    // Only proceed if we have affected recipients
     if (recipientEmails.length > 0) {
       try {
         await Promise.all(
@@ -178,7 +168,6 @@ export async function parseSesHook(data: SesEvent) {
           },
           "Failed to add emails to suppression list",
         );
-        // Don't throw error - continue processing the webhook
       }
     } else {
       logger.warn(
@@ -555,10 +544,6 @@ async function checkUnsubscribe({
   event: EmailStatus;
   mailData: SesEvent;
 }) {
-  /**
-   * If the email is bounced and the bounce type is permanent, we need to unsubscribe the contact
-   * If the email is complained, we need to unsubscribe the contact
-   */
   if (
     (event === EmailStatus.BOUNCED &&
       mailData.bounce?.bounceType === "Permanent") ||

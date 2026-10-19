@@ -70,7 +70,6 @@ export const invitationRouter = createTRPCRouter({
           id: input.inviteId,
         },
       });
-      // No need to invalidate cache here again
 
       return true;
     }),

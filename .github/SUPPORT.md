@@ -4,7 +4,7 @@ Need help with ByteSend?
 
 ## Community Support
 
-- Discord: https://discord.gg/nodebyte
+- Discord: https://https://discord.gg/C2Q4GHXKQA
 - Docs: https://docs.bytesend.cloud
 
 ## Commercial / Cloud Support

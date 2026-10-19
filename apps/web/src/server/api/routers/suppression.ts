@@ -5,7 +5,6 @@ import { createTRPCRouter, teamProcedure } from "~/server/api/trpc";
 import { SuppressionService } from "~/server/service/suppression-service";
 
 export const suppressionRouter = createTRPCRouter({
-  // Get suppression list for team with pagination
   getSuppressions: teamProcedure
     .input(
       z.object({
@@ -43,7 +42,6 @@ export const suppressionRouter = createTRPCRouter({
       };
     }),
 
-  // Add manual suppression
   addSuppression: teamProcedure
     .input(
       z.object({
@@ -61,7 +59,6 @@ export const suppressionRouter = createTRPCRouter({
       });
     }),
 
-  // Remove suppression
   removeSuppression: teamProcedure
     .input(
       z.object({
@@ -72,7 +69,6 @@ export const suppressionRouter = createTRPCRouter({
       await SuppressionService.removeSuppression(input.email, ctx.team.id);
     }),
 
-  // Bulk add suppressions
   bulkAddSuppressions: teamProcedure
     .input(
       z.object({
@@ -90,7 +86,6 @@ export const suppressionRouter = createTRPCRouter({
       );
     }),
 
-  // Check if email is suppressed
   checkSuppression: teamProcedure
     .input(
       z.object({
@@ -101,7 +96,6 @@ export const suppressionRouter = createTRPCRouter({
       return SuppressionService.isEmailSuppressed(input.email, ctx.team.id);
     }),
 
-  // Check multiple emails for suppression
   checkMultipleSuppressions: teamProcedure
     .input(
       z.object({
@@ -112,12 +106,10 @@ export const suppressionRouter = createTRPCRouter({
       return SuppressionService.checkMultipleEmails(input.emails, ctx.team.id);
     }),
 
-  // Get suppression stats
   getSuppressionStats: teamProcedure.query(async ({ ctx }) => {
     return SuppressionService.getSuppressionStats(ctx.team.id);
   }),
 
-  // Export suppressions (for download functionality)
   exportSuppressions: teamProcedure
     .input(
       z.object({
@@ -126,11 +118,10 @@ export const suppressionRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      // Get all suppressions without pagination for export
       const result = await SuppressionService.getSuppressionList({
         teamId: ctx.team.id,
         page: 1,
-        limit: 10000, // Large limit for export
+        limit: 10000,
         search: input.search,
         reason: input.reason,
         sortBy: "createdAt",

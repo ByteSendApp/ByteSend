@@ -564,7 +564,8 @@
                               "COMPLAINED",
                               "FAILED",
                               "CANCELLED",
-                              "SUPPRESSED"
+                              "SUPPRESSED",
+                              "HELD"
                             ]
                           },
                           "createdAt": { "type": "string" },
@@ -755,7 +756,8 @@
                               "COMPLAINED",
                               "FAILED",
                               "CANCELLED",
-                              "SUPPRESSED"
+                              "SUPPRESSED",
+                              "HELD"
                             ]
                           },
                           "scheduledAt": {

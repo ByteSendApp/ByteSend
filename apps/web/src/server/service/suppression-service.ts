@@ -27,9 +27,6 @@ export type SuppressionListResult = {
 };
 
 export class SuppressionService {
-  /**
-   * Add email to suppression list
-   */
   static async addSuppression(
     params: AddSuppressionParams
   ): Promise<SuppressionList> {
@@ -87,9 +84,6 @@ export class SuppressionService {
     }
   }
 
-  /**
-   * Check if email is suppressed for team
-   */
   static async isEmailSuppressed(
     email: string,
     teamId: number
@@ -115,18 +109,13 @@ export class SuppressionService {
         "Failed to check email suppression status"
       );
 
-      // In case of error, err on the side of caution and don't suppress
       return false;
     }
   }
 
-  /**
-   * Remove email from suppression list (both local DB and AWS SES)
-   */
   static async removeSuppression(email: string, teamId: number): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Get all unique regions from team's domains for AWS SES cleanup
     try {
       const teamDomains = await db.domain.findMany({
         where: { teamId },
@@ -134,7 +123,6 @@ export class SuppressionService {
       });
       const uniqueRegions = [...new Set(teamDomains.map((d) => d.region))];
 
-      // Attempt to remove from AWS SES in all regions (best effort, don't throw)
       if (uniqueRegions.length > 0) {
         const results = await Promise.allSettled(
           uniqueRegions.map((region) =>
@@ -142,7 +130,6 @@ export class SuppressionService {
           )
         );
 
-        // Check for failures - deleteFromSesSuppressionList returns false on error
         const failures = results.filter(
           (r) =>
             r.status === "rejected" ||
@@ -161,7 +148,6 @@ export class SuppressionService {
         }
       }
     } catch (error) {
-      // AWS SES cleanup failure should not block local DB deletion
       logger.error(
         {
           email: normalizedEmail,
@@ -172,7 +158,6 @@ export class SuppressionService {
       );
     }
 
-    // Delete from local database. Use case-insensitive match to handle legacy rows.
     try {
       const deleted = await db.suppressionList.deleteMany({
         where: {
@@ -225,9 +210,6 @@ export class SuppressionService {
     }
   }
 
-  /**
-   * Get suppression list for team with pagination
-   */
   static async getSuppressionList(
     params: GetSuppressionListParams
   ): Promise<SuppressionListResult> {
@@ -289,20 +271,15 @@ export class SuppressionService {
     }
   }
 
-  /**
-   * Add multiple emails to suppression list
-   */
   static async addMultipleSuppressions(
     teamId: number,
     emails: string[],
     reason: SuppressionReason
   ) {
-    // Remove duplicates by normalizing emails first, then using Set
     const normalizedEmails = emails.map((email) => email.toLowerCase().trim());
     const uniqueEmails = Array.from(new Set(normalizedEmails));
 
     try {
-      // Process in batches to avoid overwhelming the database
       const batchSize = 1000;
       for (let i = 0; i < uniqueEmails.length; i += batchSize) {
         const batch = uniqueEmails.slice(i, i + batchSize);
@@ -351,9 +328,6 @@ export class SuppressionService {
     }
   }
 
-  /**
-   * Get suppression statistics for a team
-   */
   static async getSuppressionStats(
     teamId: number
   ): Promise<Record<SuppressionReason, number>> {
@@ -391,9 +365,6 @@ export class SuppressionService {
     }
   }
 
-  /**
-   * Check multiple emails for suppression status
-   */
   static async checkMultipleEmails(
     emails: string[],
     teamId: number
@@ -433,7 +404,6 @@ export class SuppressionService {
         "Failed to check multiple emails for suppression"
       );
 
-      // In case of error, err on the side of caution and don't suppress any
       const result: Record<string, boolean> = {};
       emails.forEach((email) => {
         result[email] = false;

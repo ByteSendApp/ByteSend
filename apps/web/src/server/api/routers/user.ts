@@ -93,7 +93,6 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
-      // Block OAuth users from changing email
       const oauthAccounts = await db.account.findMany({
         where: { userId: ctx.session.user.id, type: "oauth" },
         select: { provider: true },
@@ -468,7 +467,6 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      // Generate fresh recovery codes
       const plainCodes = generateRecoveryCodes();
       await db.twoFactorRecoveryCode.deleteMany({ where: { userId: ctx.session.user.id } });
       await db.twoFactorRecoveryCode.createMany({
@@ -627,7 +625,6 @@ export const userRouter = createTRPCRouter({
       const backupEmail = input.email.trim().toLowerCase();
       const password = input.password;
 
-      // Check if email is already a backup email
       const existingBackup = await db.backupEmail.findUnique({
         where: { email: backupEmail },
       });
@@ -639,7 +636,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Check if email is the user's primary email
       const user = await db.user.findUnique({
         where: { id: ctx.session.user.id },
         select: { email: true },
@@ -652,7 +648,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Check if email is already a primary email for another user
       const userWithEmail = await db.user.findFirst({
         where: { email: { equals: backupEmail, mode: "insensitive" } },
         select: { id: true },
@@ -665,14 +660,11 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Hash password
       const passwordHash = await hash(password, 10);
 
-      // Generate verification code
       const code = generateCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      // Create pending verification with encrypted password
       await db.pendingBackupEmailVerification.upsert({
         where: {
           userId_email: {
@@ -692,7 +684,6 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      // Send verification email to backup email address
       await sendBackupEmailVerificationEmail(backupEmail, code);
 
       return {
@@ -700,7 +691,7 @@ export const userRouter = createTRPCRouter({
         message: "Verification email sent to your backup email address",
         email: backupEmail,
         expiresAt,
-        passwordHash, // Return to client for use in verification step
+        passwordHash,
       };
     }),
 
@@ -751,7 +742,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Create backup email with the provided password hash
       await db.backupEmail.create({
         data: {
           userId: ctx.session.user.id,
@@ -761,7 +751,6 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      // Clean up pending verification
       await db.pendingBackupEmailVerification.delete({ where: { id: pending.id } });
 
       return {
@@ -790,7 +779,6 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const backupEmail = input.email.trim().toLowerCase();
 
-      // Check if user has other verified login methods
       const verifiedBackups = await db.backupEmail.count({
         where: { userId: ctx.session.user.id, emailVerified: { not: null } },
       });
@@ -834,15 +822,12 @@ export const userRouter = createTRPCRouter({
       const email = input.email.trim().toLowerCase();
       const password = input.password;
 
-      // Check primary email first
       const primaryUser = await db.user.findUnique({
         where: { email },
         select: {
           id: true,
           email: true,
           twoFactorEnabled: true,
-          // Note: Primary users using email provider use OTP, not password
-          // This is for future password support on primary email
         },
       });
 
@@ -853,7 +838,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Check backup email
       const backupEmail = await db.backupEmail.findUnique({
         where: { email },
         select: {
@@ -878,7 +862,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Validate password
       const isPasswordValid = await compare(password, backupEmail.passwordHash);
       if (!isPasswordValid) {
         throw new TRPCError({
@@ -887,7 +870,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Get user to check 2FA status
       const user = await db.user.findUnique({
         where: { id: backupEmail.userId },
         select: {
@@ -910,6 +892,36 @@ export const userRouter = createTRPCRouter({
         requiresTwoFactor: user.twoFactorEnabled,
       };
     }),
+
+  listLinkedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    return db.account.findMany({
+      where: { userId: ctx.session.user.id, type: "oauth" },
+      select: { id: true, provider: true, email: true },
+      orderBy: { provider: "asc" },
+    });
+  }),
+
+  unlinkAccount: protectedProcedure
+    .input(z.object({ accountId: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { email: true, accounts: { select: { id: true, type: true } } },
+      });
+      const account = user?.accounts.find((item) => item.id === input.accountId && item.type === "oauth");
+      if (!user || !account) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Connected account not found" });
+      }
+
+      const remainingOAuth = user.accounts.filter((item) => item.type === "oauth" && item.id !== account.id).length;
+      if (!user.email && remainingOAuth === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Add an email address before disconnecting your only sign-in method",
+        });
+      }
+
+      await db.account.delete({ where: { id: account.id } });
+      return { success: true };
+    }),
 });
-
-

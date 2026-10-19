@@ -18,11 +18,6 @@ import { userRouter } from "./routers/user";
 import { notificationProviderRouter } from "./routers/notification-provider";
 import { logsRouter } from "./routers/logs";
 
-/**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
- */
 export const appRouter = createTRPCRouter({
   domain: domainRouter,
   apiKey: apiRouter,
@@ -44,14 +39,6 @@ export const appRouter = createTRPCRouter({
   logs: logsRouter,
 });
 
-// export type definition of API
 export type AppRouter = typeof appRouter;
 
-/**
- * Create a server-side caller for the tRPC API.
- * @example
- * const trpc = createCaller(createContext);
- * const res = await trpc.post.all();
- *       ^? Post[]
- */
 export const createCaller = createCallerFactory(appRouter);

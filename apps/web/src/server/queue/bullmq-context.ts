@@ -4,9 +4,6 @@ import { Job } from "bullmq";
 
 export type TeamJob<T> = Job<T & { teamId?: number }>;
 
-/**
- * Simple wrapper function for BullMQ worker jobs with team context
- */
 export function createWorkerHandler<T>(
   handler: (job: TeamJob<T>) => Promise<void>
 ) {

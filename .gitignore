@@ -15,6 +15,7 @@ node_modules
 .docs
 .docker
 apps/status
+apps/discord-bot
 
 # Testing
 coverage

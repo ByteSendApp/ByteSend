@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **ByteSend Discord bot** (`apps/discord-bot`, Go) for the support server:
+  - **Presence** mirrors status.bytesend.cloud
+  - **Commands:** `/docs`, `/faq`, `/status`, `/links` and `/roles`
+  - **Moderation:** `/purge`, `/warn`, `/timeout`, `/untimeout`, `/kick` and `/ban`, with a mod log
+  - **AutoMod** for invite links, mass mentions and repeated messages
+  - **Automatic FAQ answers** in support channels
+  - **Custom emojis** from the application
+- **Discord linked roles**: members connect their ByteSend account at `/api/discord/linked-roles` to claim roles based on having an account, being on a paid plan, emails sent, or account age. Enable with `DISCORD_LINKED_ROLES_CLIENT_ID` and `DISCORD_LINKED_ROLES_CLIENT_SECRET`
+
 ---
 
 ## [0.4.4] - 2026-10-19

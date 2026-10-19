@@ -8,6 +8,7 @@ import {
   SendEmailCommand,
   CreateConfigurationSetEventDestinationCommand,
   CreateConfigurationSetCommand,
+  GetConfigurationSetEventDestinationsCommand,
   EventType,
   GetAccountCommand,
   CreateTenantResourceAssociationCommand,
@@ -350,6 +351,19 @@ export async function addWebhookConfiguration(
 
   const response = await sesClient.send(command);
   return response.$metadata.httpStatusCode === 200;
+}
+
+export async function getConfigurationSetEventDestinations(configName: string, region: string) {
+  const sesClient = getSesClient(region);
+  const response = await sesClient.send(
+    new GetConfigurationSetEventDestinationsCommand({ ConfigurationSetName: configName }),
+  );
+  return (response.EventDestinations ?? []).map((destination) => ({
+    name: destination.Name ?? null,
+    enabled: destination.Enabled ?? false,
+    topicArn: destination.SnsDestination?.TopicArn ?? null,
+    eventTypes: destination.MatchingEventTypes ?? [],
+  }));
 }
 
 export async function deleteFromSesSuppressionList(

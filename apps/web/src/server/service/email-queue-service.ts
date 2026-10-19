@@ -476,10 +476,26 @@ async function executeEmail(job: QueueEmailJob) {
       data: { sesEmailId: messageId, text, attachments: null, headers: null },
     });
 
-    await db.email.updateMany({
+    const { count: markedSent } = await db.email.updateMany({
       where: { id: email.id, latestStatus: { in: ["QUEUED", "SCHEDULED"] } },
       data: { latestStatus: "SENT" },
     });
+
+    // Counted here rather than from SES's Send event so sending totals don't depend on SNS
+    // callbacks arriving; markedSent guards against counting a retried job twice.
+    if (markedSent > 0) {
+      const usageKey = {
+        teamId: email.teamId,
+        domainId: email.domainId ?? 0,
+        date: new Date().toISOString().slice(0, 10),
+        type: email.campaignId ? ("MARKETING" as const) : ("TRANSACTIONAL" as const),
+      };
+      await db.dailyEmailUsage.upsert({
+        where: { teamId_domainId_date_type: usageKey },
+        create: { ...usageKey, sent: 1 },
+        update: { sent: { increment: 1 } },
+      });
+    }
 
   } catch (error: any) {
     if (isSesTransientError(error)) {

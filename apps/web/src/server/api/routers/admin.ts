@@ -17,6 +17,7 @@ import { createCheckoutSessionForTeam, type CheckoutPlan } from "~/server/billin
 import { TeamService } from "~/server/service/team-service";
 import { AdminOverviewService } from "~/server/service/admin-overview-service";
 import { AdminAuditService, diffFields } from "~/server/service/admin-audit-service";
+import { SesCallbackDiagnosticsService } from "~/server/service/ses-callback-diagnostics-service";
 import { AdminDeliverabilityService } from "~/server/service/admin-deliverability-service";
 import { AdminDetailService } from "~/server/service/admin-detail-service";
 import { BlacklistService } from "~/server/service/blacklist-service";
@@ -454,6 +455,22 @@ export const adminRouter = createTRPCRouter({
         targetType: "ses",
         targetId: input.settingsId,
         metadata: { isActive: input.isActive },
+      });
+      return result;
+    }),
+
+  getSesCallbackDiagnostics: adminProcedure.query(async () => SesCallbackDiagnosticsService.diagnose()),
+
+  resubscribeSesCallback: adminProcedure
+    .input(z.object({ settingsId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await SesCallbackDiagnosticsService.resubscribe(input.settingsId);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "ses.resubscribe",
+        targetType: "ses",
+        targetId: input.settingsId,
+        metadata: { from: result.previousCallbackUrl, to: result.callbackUrl },
       });
       return result;
     }),

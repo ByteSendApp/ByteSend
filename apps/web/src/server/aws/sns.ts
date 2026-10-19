@@ -3,6 +3,7 @@ import {
   CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
+  ListSubscriptionsByTopicCommand,
 } from "@aws-sdk/client-sns";
 import { env } from "~/env";
 
@@ -47,4 +48,15 @@ export async function subscribeEndpoint(
 
   const data = await client.send(subscribeCommand);
   return data.SubscriptionArn;
+}
+
+export async function listTopicSubscriptions(topicArn: string, region: string) {
+  const client = getSnsClient(region);
+  const data = await client.send(new ListSubscriptionsByTopicCommand({ TopicArn: topicArn }));
+  return (data.Subscriptions ?? []).map((subscription) => ({
+    endpoint: subscription.Endpoint ?? null,
+    protocol: subscription.Protocol ?? null,
+    // SNS reports "PendingConfirmation" here until the endpoint confirms the subscription.
+    subscriptionArn: subscription.SubscriptionArn ?? null,
+  }));
 }

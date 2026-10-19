@@ -1,4 +1,3 @@
-import { env } from "~/env";
 import { db } from "~/server/db";
 import { logger } from "~/server/logger/log";
 import { parseSesHook, SesHookParser } from "~/server/service/ses-hook-parser";
@@ -143,12 +142,12 @@ async function getTrustedTopicArn(topicArn: SnsNotificationMessage["TopicArn"]) 
     return trustedTopicArn;
   }
 
-  if (env.NODE_ENV === "development") {
-    logger.warn(
-      { topicArn },
-      "SES callback TopicArn not configured in development",
-    );
-  }
+  // SNS treats our 200 response as delivered and never retries, so a mismatch silently drops every
+  // SES event (statuses stay QUEUED, bounces aren't suppressed). Always log it.
+  logger.warn(
+    { topicArn, configuredTopicArns },
+    "[SesCallback]: Rejected SNS message from a TopicArn that matches no SES setting",
+  );
 
   return null;
 }

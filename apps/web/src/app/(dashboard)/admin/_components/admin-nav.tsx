@@ -84,7 +84,7 @@ export function AdminNav({ isAdmin }: { isAdmin: boolean }) {
     <nav aria-label="Admin" className="lg:sticky lg:top-6">
       <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0">
         {groups.map((group, index) => (
-          <div key={group.label ?? index} className="flex gap-1 lg:flex-col lg:gap-0.5">
+          <div key={group.label ?? index} className="flex shrink-0 gap-1 lg:flex-col lg:gap-0.5">
             {group.label ? (
               <p className="hidden px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 lg:block">
                 {group.label}

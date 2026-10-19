@@ -16,13 +16,14 @@
   <a href="https://docs.bytesend.cloud">Docs</a> ·
   <a href="https://docs.bytesend.cloud/api-reference/introduction">API reference</a> ·
   <a href="https://github.com/NodeByteLTD/ByteSend/releases">Releases</a> ·
-  <a href="https://https://discord.gg/C2Q4GHXKQA">Discord</a>
+  <a href="https://status.bytesend.cloud">Status</a> ·
+  <a href="https://discord.gg/C2Q4GHXKQA">Discord</a>
 </p>
 
 <p align="center">
   <a href="../LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-0057ff"></a>
   <a href="https://github.com/NodeByteLTD/ByteSend/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/NodeByteLTD/ByteSend?color=1fb5ff"></a>
-  <a href="https://https://discord.gg/C2Q4GHXKQA"><img alt="Discord" src="https://img.shields.io/badge/chat-discord-00c3d6"></a>
+  <a href="https://discord.gg/C2Q4GHXKQA"><img alt="Discord" src="https://img.shields.io/badge/chat-discord-00c3d6"></a>
 </p>
 
 ---

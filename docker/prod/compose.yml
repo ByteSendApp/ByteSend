@@ -91,6 +91,14 @@ services:
 
       # ── Admin ────────────────────────────────────────────────────────────────
       - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      # Discord webhook for platform alerts (blocked teams, blocklisted domains)
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+
+      # ── Deliverability ──────────────────────────────────────────────────────
+      # Spamhaus Data Query Service key for reliable blocklist checks
+      - SPAMHAUS_DQS_KEY=${SPAMHAUS_DQS_KEY:-}
+      # Unlocks full detail on /api/health/ses for status-page monitors
+      - HEALTH_CHECK_TOKEN=${HEALTH_CHECK_TOKEN:-}
 
       # ── Optional / cloud-only ────────────────────────────────────────────────
       # Leave NEXT_PUBLIC_IS_CLOUD unset (or false) for self-hosted deployments.

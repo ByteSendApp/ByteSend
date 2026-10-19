@@ -144,30 +144,30 @@ puts res.body`;
     ];
 
     return (
-        <section className="border-t border-border/30 bg-muted/20 py-20 sm:py-28">
+        <section id="developers" className="border-t border-border/30 bg-muted/20 py-20 sm:py-28">
             <div className="mx-auto max-w-6xl px-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-start">
                     {/* Left: text */}
                     <div className="lg:pt-4">
-                        <p className="text-sm font-medium uppercase tracking-wider text-primary mb-3">Developer-first</p>
+                        <p className="text-sm font-medium uppercase tracking-wider text-brand-blue dark:text-brand-sky mb-3">Developer-first</p>
                         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
                             Up and running<br />in minutes
                         </h2>
                         <p className="mt-4 text-muted-foreground leading-relaxed">
-                            Typed SDK for TypeScript. Simple REST API for every language. Fully documented,
-                            consistently designed, with no surprises.
+                            Official SDKs for TypeScript, Python and Go, and a simple REST API for every other
+                            language. Fully documented, consistently designed, with no surprises.
                         </p>
 
                         <ul className="mt-6 space-y-2.5">
                             {[
-                                "TypeScript SDK with full type safety",
-                                "Simple REST API with Bearer auth",
-                                "Webhooks for real-time event delivery",
-                                "Drop-in SMTP relay one config change",
-                                "OpenAPI spec included",
+                                "Typed SDKs for TypeScript, Python and Go",
+                                "REST API with Bearer auth and an OpenAPI spec",
+                                "Idempotency keys for safe retries",
+                                "Signed webhooks for every event",
+                                "Drop-in SMTP relay — one config change",
                             ].map((item) => (
                                 <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                                    <CheckIcon className="h-4 w-4 text-emerald-500 shrink-0" />
+                                    <CheckIcon className="h-4 w-4 text-brand-teal shrink-0" />
                                     {item}
                                 </li>
                             ))}

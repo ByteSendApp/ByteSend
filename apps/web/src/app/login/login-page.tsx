@@ -49,9 +49,15 @@ export default function LoginPage({
   const isVerifying = searchParams.get("verify") === "1";
   const errorParam = searchParams.get("error");
 
+  const requestedCallback = searchParams.get("callbackUrl");
+  // Only same-site paths are honoured so the parameter can't be used as an open redirect.
+  const safeCallback =
+    requestedCallback && requestedCallback.startsWith("/") && !requestedCallback.startsWith("//")
+      ? requestedCallback
+      : null;
   const callbackUrl = inviteId
     ? `/join-team?inviteId=${inviteId}`
-    : "/dashboard";
+    : (safeCallback ?? "/dashboard");
 
   // When NextAuth redirects to ?verify=1 after the user clicks the magic link,
   // restore the email we stored in sessionStorage before submitting

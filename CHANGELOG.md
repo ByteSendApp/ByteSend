@@ -20,6 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Brand asset kit** (`public/brand/`) — SVG marks (colour, mono black/white, compact, glyph), light/dark wordmarks, 1024px app icon, social avatar, GitHub social preview (1280×640), Discord banner (960×540) and invite splash (1920×1080), X/Twitter header (1500×500)
 - **`pnpm --filter web brand:generate`** — regenerates every logo, favicon, app icon and banner from the shared geometry in `src/lib/brand.tsx`
 - **Open Graph & Twitter images** — generated `opengraph-image` / `twitter-image` routes for the site and the changelog using `next/og`, replacing the externally hosted share image
+- **Discord emoji set** (`public/brand/discord-emojis/`) — static `bs_logo`, `bs_send`, `bs_api`, `bs_delivered`, `bs_bounced`, `bs_held`, `bs_verified` and animated `bs_sending`, `bs_loading`, `bs_mailfly`, all 128×128 and well under Discord's 256 KB limit; regenerate with `pnpm --filter web brand:emojis`
+
+#### Website
+- **Refreshed homepage** — reordered to hero → proof points → developer quick-start → features → how it works → pricing → comparison → call to action, with smooth anchor scrolling and gentle scroll-in animations that respect reduced-motion settings
+- New hero copy with a "What's new" link to the changelog, and the brand palette across headings, feature icons and accents
+- Features rewritten as a bento grid that now covers deliverability guardrails, spam protection and sending regions
+- New "How it works" section: verify a domain, send, watch it land
+- Proof strip now lists verifiable facts (free tier, AGPL-3.0, REST + SMTP + three SDKs, self-hosting) in place of unverified uptime and delivery-time figures
+- Free-tier copy clarifies that the 12,500 free emails a month are transactional
+- Comparison table re-checked against each provider's published plans (SendGrid's free plan is now a 60-day trial; Resend has a visual editor) and dated
+- All Discord links point to the new ByteSend community server
 
 #### Admin Panel
 - **Overview dashboard** (`/admin`) — 7/30/90-day KPIs with prior-period deltas, sending and signup charts, SES quota and sandbox status per region, a "Needs attention" panel (teams over bounce/complaint warning thresholds, blocked teams, failing domains) and recent admin activity
@@ -45,14 +56,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Prisma query logging** is now opt-in in development via `PRISMA_LOG_QUERIES=true`
 - Teams and users admin pages are now searchable lists that open the new detail pages; domains, webhooks, billing and email analytics share the refreshed admin layout
 - Bounce/complaint thresholds moved to `src/lib/constants/deliverability.ts`, shared by `LimitService` and the admin views
+- **`/api/version`** caches the release lookup for 10 minutes and falls back to the last known version, instead of calling GitHub up to three times on every dashboard load; the sidebar no longer shows a stale hard-coded version when the lookup fails
+- **Syntax highlighting** loads only the eight languages and two themes the site uses instead of every Shiki grammar, shrinking the homepage bundle and dev compile
+- **SDKs** — `bytesend-js` 0.1.3 and the `bytesend` Python package 0.1.2 add the `HELD` email status
+- Release workflows skip versions that are already published instead of failing, and the npm release runs on Node 24 (npm 12 no longer supports Node 20)
 
 ### Fixed
+- **Security: dashboard route gate** — the middleware treated every path as public because `/` matched every route as a prefix, so the dashboard was never gated at the edge. It now requires a session for all dashboard routes and sends signed-out visitors to the login page, which returns them to the page they asked for. (Sessions are stored in the database, so bans and 2FA continue to be enforced on the server for every request.)
 - **Security: OAuth account takeover** — sign-in with GitHub, Google or Discord now requires the provider to have verified the email address; previously an unverified provider email could be linked to an existing ByteSend account
 - Webhook-call cleanup job was never started, so call history was never pruned
 - "Paid users only" in admin email analytics only counted the BASIC plan
 - Admin team settings reset dropped extra domain/member slots after saving; literal `…`/`–` text in the teams page
 - Web manifest pointed at icon paths that did not exist
 - Discord notification icon URL now uses `bytesend.cloud`
+- The campaign scheduler no longer removes and re-creates its own job on every start
+- CI: unit and tRPC test mocks updated for the per-request ban check, and the email-change tests rewritten for the two-step verification flow
 
 ### Documentation
 - New guides: [Spam Protection](https://docs.bytesend.cloud/guides/spam-protection), [Changing Sending Region](https://docs.bytesend.cloud/guides/sending-regions), [Connected Accounts](https://docs.bytesend.cloud/guides/connected-accounts) and, for self-hosters, [Admin Panel](https://docs.bytesend.cloud/self-hosting/admin-panel)

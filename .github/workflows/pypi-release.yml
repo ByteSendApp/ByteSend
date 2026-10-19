@@ -1,4 +1,4 @@
-name: Relase Python SDK
+name: Release Python SDK
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -47,3 +47,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/python-sdk/dist
+          # Pushes that don't bump the version in pyproject.toml would otherwise fail on the duplicate upload.
+          skip-existing: true

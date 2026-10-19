@@ -93,18 +93,6 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
-      const oauthAccounts = await db.account.findMany({
-        where: { userId: ctx.session.user.id, type: "oauth" },
-        select: { provider: true },
-      });
-      if (oauthAccounts.length > 0) {
-        const providers = oauthAccounts.map((a) => a.provider).join(", ");
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Email changes are not allowed for accounts linked to OAuth providers (${providers}). Sign in with email to manage your email address.`,
-        });
-      }
-
       const currentEmail = currentUser.email?.trim().toLowerCase() ?? null;
       if (currentEmail === nextEmail) {
         throw new TRPCError({

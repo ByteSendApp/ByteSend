@@ -11,13 +11,13 @@ export function Pricing() {
         <section id="pricing" className="py-20 sm:py-28 border-t border-border/30">
             <div className="mx-auto max-w-6xl px-6">
                 <div className="text-center max-w-2xl mx-auto mb-14">
-                    <p className="text-sm font-medium uppercase tracking-wider text-primary mb-3">Pricing</p>
+                    <p className="text-sm font-medium uppercase tracking-wider text-brand-blue dark:text-brand-sky mb-3">Pricing</p>
                     <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-                        Estimate your monthly ByteSend bill
+                        Simple pricing that grows with you
                     </h2>
                     <p className="mt-4 text-muted-foreground">
-                        One calculator for both transactional and marketing volume. Fine-tune by plan,
-                        then choose your final subscription in dashboard billing.
+                        Start free with 12,500 transactional emails a month. Estimate a paid plan for your
+                        transactional and marketing volume below, then pick it in the dashboard when you're ready.
                     </p>
                 </div>
 
@@ -31,13 +31,10 @@ export function Pricing() {
                         </p>
                     </div>
                     <Button variant="outline" size="sm" className="shrink-0 rounded-xl" asChild>
-                        <Link href="https://discord.gg/xqkqzVRC4S">Contact us →</Link>
+                        <Link href="https://discord.gg/C2Q4GHXKQA">Contact us →</Link>
                     </Button>
                 </div>
 
-                <p className="text-xs text-muted-foreground text-center mt-6">
-                    Final plan selection and checkout are handled inside the dashboard billing page.
-                </p>
             </div>
         </section>
     );

@@ -36,7 +36,8 @@
               "get-started/nodejs",
               "get-started/python",
               "get-started/local",
-              "get-started/smtp"
+              "get-started/smtp",
+              "get-started/examples"
             ]
           }
         ]

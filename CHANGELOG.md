@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1] - 2026-10-19
+
+### Added
+- **SES health endpoints** for status-page monitoring: `GET /api/health/ses/<region>` returns 200 while a region can send (with `status` of `operational` or `degraded` — sandboxed, on probation or above 90% of the 24-hour quota) and 503 when sending is disabled, the account is shut down or SES can't be reached; `GET /api/health/ses` summarises every active region. Results are cached for a minute, and enforcement and quota details are only returned to requests carrying the optional `HEALTH_CHECK_TOKEN`
+- **Status links** — the dashboard sidebar, docs navigation, README and support page now link to [status.bytesend.cloud](https://status.bytesend.cloud)
+- **[Examples](https://docs.bytesend.cloud/get-started/examples)** — complete, runnable examples for Node.js, TypeScript, React Email (TypeScript and JavaScript), Next.js, Express, idempotent and batch sends, Python and Go, replacing links to an examples repository that no longer exists
+- The React Email guide now passes components straight to the SDK's `react` option instead of rendering them by hand
+
+### Fixed
+- Broken Discord links (`https://https://…`) in the docs navigation, docs introduction, self-hosting overview, README and support page
+- The support page now lists `security@nodebyte.co.uk` for vulnerability reports, matching the security policy
+- Emails move to `SENT` as soon as SES accepts them instead of staying `QUEUED` until SES's first event arrives
+- SES callbacks from an unrecognised SNS topic are now logged in production; previously they were dropped silently, leaving statuses, bounces and complaints unprocessed
+- Removed a per-email Stripe call that always failed (it used the meter-event *adjustment* API); usage continues to be reported by the daily usage job
+- Docker Compose files now pass `SPAMHAUS_DQS_KEY` (and `ADMIN_DISCORD_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`) through to the app, so blocklist checks and platform alerts can use them
+- Admin navigation no longer overlaps on narrow screens
+
+---
+
 ## [0.4.0] - 2026-10-18
 
 ### Added

@@ -11,82 +11,83 @@ description: "A guide on how to use ByteSend with React Email"
 
 <CodeGroup>
   ```sh npm
-  npm install bytesend-js @react-email/render
+  npm install bytesend-js @react-email/components react
   ```
 
 ```sh yarn
-yarn add bytesend-js @react-email/render
+yarn add bytesend-js @react-email/components react
 ```
 
 ```sh pnpm
-pnpm add bytesend-js @react-email/render
+pnpm add bytesend-js @react-email/components react
 ```
 
 ```sh bun
-bun add bytesend-js @react-email/render
+bun add bytesend-js @react-email/components react
 ```
 
 </CodeGroup>
 
 ## Create an email template
 
-```tsx
-import * as React from "react";
-import { Html } from "@react-email/html";
-import { Button } from "@react-email/button";
+```tsx emails/welcome.tsx
+import { Button, Html } from "@react-email/components";
 
-export function Email(props) {
-  const { url } = props;
-
+export function WelcomeEmail({ url }: { url: string }) {
   return (
     <Html lang="en">
-      <Button href={url}>Click me</Button>
+      <Button href={url}>Open dashboard</Button>
     </Html>
   );
 }
 ```
 
-## Send an email using ByteSend
+## Send it with ByteSend
 
-```ts
+Pass the component as `react`. The SDK renders it to HTML for you, so there's no separate render step.
+
+```tsx send.tsx
 import { ByteSend } from "bytesend-js";
-import { render } from "@react-email/render";
-import { Email } from "./email";
+import { WelcomeEmail } from "./emails/welcome";
 
 const bytesend = new ByteSend("bs_your_bytesend_api_key");
 
-  const html = await render(<Email url="https://bytesend.cloud" />);
-
-const response = await bytesend.emails.send({
-  to: "hello@bytesend.cloud",
-  from: "hello@bytesend.cloud",
-  subject: "ByteSend email",
-  html,
+const { data, error } = await bytesend.emails.send({
+  from: "Acme <hello@acme.com>",
+  to: "customer@example.com",
+  subject: "Welcome to Acme",
+  react: <WelcomeEmail url="https://acme.com/dashboard" />,
 });
 ```
 
-## Build your project
+<Note>
+`react` isn't supported in `emails.batch()`. For batches, render each email with `render()` from `@react-email/components` and pass the result as `html`.
+</Note>
 
-### JavaScript
-
-If you're using nodejs, importing `email.jsx` might fail. make sure to add these to your babel config:
-
-```js
-{
-  "plugins": ["@babel/plugin-proposal-class-properties"]
-}
-```
-
-Checkout this [example](https://github.com/NodeByteHosting/bytesend-js-examples/tree/main/react-email-js)
+## Run it
 
 ### TypeScript
 
-Just add `jsx` to your `tsconfig.json`
+Set `"jsx": "react-jsx"` in your `tsconfig.json`, then run the file with [`tsx`](https://tsx.is):
 
-```json
+```json tsconfig.json
 {
   "compilerOptions": { "jsx": "react-jsx" }
 }
 ```
 
-Checkout this [example](https://github.com/NodeByteHosting/bytesend-js-examples/tree/main/react-email-ts)
+```sh
+npx tsx send.tsx
+```
+
+See the complete [React Email TypeScript example](/get-started/examples#react-email-typescript).
+
+### JavaScript
+
+Use `.jsx` files and run them with `tsx` — it handles JSX without any Babel configuration:
+
+```sh
+npx tsx send.jsx
+```
+
+See the complete [React Email JavaScript example](/get-started/examples#react-email-javascript).

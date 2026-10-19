@@ -1,0 +1,422 @@
+---
+title: Examples
+description: "Complete, copy-paste examples for sending email with ByteSend from Node.js, TypeScript, React Email, Next.js, Express, Python and Go"
+icon: code
+---
+
+Every example below is a complete project you can run as-is. Each one needs:
+
+- A [ByteSend API key](https://bytesend.cloud/dev-settings/api-keys), exported as `BYTESEND_API_KEY`
+- A [verified domain](https://bytesend.cloud/domains) to send from
+
+The SDKs read `BYTESEND_API_KEY` from the environment automatically, so you don't need to pass it in code.
+
+---
+
+## Node.js
+
+```json package.json
+{
+  "type": "module",
+  "dependencies": {
+    "bytesend-js": "latest"
+  }
+}
+```
+
+```js send.js
+import { ByteSend } from "bytesend-js";
+
+const bytesend = new ByteSend();
+
+const { data, error } = await bytesend.emails.send({
+  from: "Acme <hello@acme.com>",
+  to: "customer@example.com",
+  subject: "Welcome to Acme",
+  html: "<p>Thanks for signing up!</p>",
+  text: "Thanks for signing up!",
+});
+
+if (error) {
+  console.error("Send failed:", error);
+  process.exit(1);
+}
+
+console.log("Queued email", data.emailId);
+```
+
+```sh
+npm install
+node send.js
+```
+
+<Note>
+SDK methods return `{ data, error }` instead of throwing, so always check `error` before using `data`.
+</Note>
+
+---
+
+## TypeScript
+
+```json package.json
+{
+  "type": "module",
+  "scripts": {
+    "send": "tsx send.ts"
+  },
+  "dependencies": {
+    "bytesend-js": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
+```
+
+```ts send.ts
+import { ByteSend } from "bytesend-js";
+
+const bytesend = new ByteSend();
+
+const { data, error } = await bytesend.emails.send({
+  from: "Acme <hello@acme.com>",
+  to: ["customer@example.com"],
+  subject: "Your receipt",
+  html: "<p>Thanks for your order.</p>",
+  replyTo: "billing@acme.com",
+});
+
+if (error) throw new Error(error.message);
+console.log("Queued email", data?.emailId);
+```
+
+```sh
+npm install
+npm run send
+```
+
+---
+
+## React Email (TypeScript)
+
+Pass a React Email component as `react` and the SDK renders it to HTML for you — no separate render step needed.
+
+```json package.json
+{
+  "type": "module",
+  "scripts": {
+    "send": "tsx send.tsx"
+  },
+  "dependencies": {
+    "bytesend-js": "latest",
+    "@react-email/components": "latest",
+    "react": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
+```
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+```tsx emails/welcome.tsx
+import { Body, Button, Container, Heading, Html, Text } from "@react-email/components";
+
+export function WelcomeEmail({ name, url }: { name: string; url: string }) {
+  return (
+    <Html lang="en">
+      <Body style={{ fontFamily: "sans-serif" }}>
+        <Container>
+          <Heading>Welcome, {name}!</Heading>
+          <Text>Your account is ready.</Text>
+          <Button href={url} style={{ background: "#0057ff", color: "#fff", padding: "12px 20px" }}>
+            Open dashboard
+          </Button>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+```
+
+```tsx send.tsx
+import { ByteSend } from "bytesend-js";
+import { WelcomeEmail } from "./emails/welcome";
+
+const bytesend = new ByteSend();
+
+const { data, error } = await bytesend.emails.send({
+  from: "Acme <hello@acme.com>",
+  to: "customer@example.com",
+  subject: "Welcome to Acme",
+  react: <WelcomeEmail name="Sam" url="https://acme.com/dashboard" />,
+});
+
+if (error) throw new Error(error.message);
+console.log("Queued email", data?.emailId);
+```
+
+```sh
+npm install
+npm run send
+```
+
+<Warning>
+`react` isn't supported in `emails.batch()`. For batch sends, render each email first with `render()` from `@react-email/components` and pass the result as `html`.
+</Warning>
+
+---
+
+## React Email (JavaScript)
+
+The same project without TypeScript. `tsx` runs `.jsx` files directly, so no Babel setup is needed.
+
+```json package.json
+{
+  "type": "module",
+  "scripts": {
+    "send": "tsx send.jsx"
+  },
+  "dependencies": {
+    "bytesend-js": "latest",
+    "@react-email/components": "latest",
+    "react": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest"
+  }
+}
+```
+
+```jsx emails/welcome.jsx
+import { Body, Button, Container, Heading, Html, Text } from "@react-email/components";
+
+export function WelcomeEmail({ name, url }) {
+  return (
+    <Html lang="en">
+      <Body style={{ fontFamily: "sans-serif" }}>
+        <Container>
+          <Heading>Welcome, {name}!</Heading>
+          <Text>Your account is ready.</Text>
+          <Button href={url}>Open dashboard</Button>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+```
+
+```jsx send.jsx
+import { ByteSend } from "bytesend-js";
+import { WelcomeEmail } from "./emails/welcome.jsx";
+
+const bytesend = new ByteSend();
+
+const { data, error } = await bytesend.emails.send({
+  from: "Acme <hello@acme.com>",
+  to: "customer@example.com",
+  subject: "Welcome to Acme",
+  react: <WelcomeEmail name="Sam" url="https://acme.com/dashboard" />,
+});
+
+if (error) throw new Error(error.message);
+console.log("Queued email", data.emailId);
+```
+
+---
+
+## Next.js (App Router)
+
+Send from a route handler, and receive [webhooks](/guides/webhooks) in another. Keep your API key on the server — never import the SDK in a client component.
+
+```ts app/api/welcome/route.ts
+import { ByteSend } from "bytesend-js";
+
+const bytesend = new ByteSend();
+
+export async function POST(request: Request) {
+  const { email } = (await request.json()) as { email: string };
+
+  const { data, error } = await bytesend.emails.send({
+    from: "Acme <hello@acme.com>",
+    to: email,
+    subject: "Welcome to Acme",
+    html: "<p>Thanks for signing up!</p>",
+  });
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 502 });
+  }
+  return Response.json({ emailId: data?.emailId });
+}
+```
+
+```ts app/api/bytesend-webhook/route.ts
+import { Webhooks } from "bytesend-js";
+
+const webhooks = new Webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
+
+export async function POST(request: Request) {
+  // Verify against the raw body — parsing JSON first breaks the signature.
+  const rawBody = await request.text();
+
+  try {
+    const event = webhooks.constructEvent(rawBody, { headers: request.headers });
+
+    if (event.type === "email.bounced") {
+      // Mark the address as undeliverable in your own database
+    }
+
+    return new Response("ok");
+  } catch (error) {
+    return new Response((error as Error).message, { status: 400 });
+  }
+}
+```
+
+---
+
+## Express
+
+```ts server.ts
+import express from "express";
+import { ByteSend, Webhooks } from "bytesend-js";
+
+const bytesend = new ByteSend();
+const webhooks = new Webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
+const app = express();
+
+app.post("/welcome", express.json(), async (req, res) => {
+  const { data, error } = await bytesend.emails.send({
+    from: "Acme <hello@acme.com>",
+    to: req.body.email,
+    subject: "Welcome to Acme",
+    html: "<p>Thanks for signing up!</p>",
+  });
+
+  if (error) return res.status(502).json({ error: error.message });
+  res.json({ emailId: data?.emailId });
+});
+
+// The webhook route needs the raw body for signature verification.
+app.post("/bytesend-webhook", express.raw({ type: "application/json" }), (req, res) => {
+  try {
+    const event = webhooks.constructEvent(req.body, { headers: req.headers });
+    if (event.type === "email.complained") {
+      // Stop emailing this recipient
+    }
+    res.send("ok");
+  } catch (error) {
+    res.status(400).send((error as Error).message);
+  }
+});
+
+app.listen(3000);
+```
+
+---
+
+## Safe retries and batches
+
+Pass an idempotency key to make retries safe: sending the same payload with the same key returns the original response instead of sending twice.
+
+```ts
+await bytesend.emails.send(
+  {
+    from: "Acme <hello@acme.com>",
+    to: "customer@example.com",
+    subject: "Your receipt",
+    html: "<p>Order #1042</p>",
+  },
+  { idempotencyKey: "receipt-1042" },
+);
+
+await bytesend.emails.batch(
+  [
+    { from: "Acme <hello@acme.com>", to: "a@example.com", subject: "Hello A", html: "<p>Hi A</p>" },
+    { from: "Acme <hello@acme.com>", to: "b@example.com", subject: "Hello B", html: "<p>Hi B</p>" },
+  ],
+  { idempotencyKey: "welcome-batch-7" },
+);
+```
+
+---
+
+## Python
+
+```sh
+pip install bytesend
+```
+
+```python send.py
+from bytesend import ByteSend
+
+client = ByteSend()  # reads BYTESEND_API_KEY
+
+resp, _ = client.emails.send(payload={
+    "from": "Acme <hello@acme.com>",
+    "to": "customer@example.com",
+    "subject": "Welcome to Acme",
+    "html": "<p>Thanks for signing up!</p>",
+})
+
+print("Queued email", resp["emailId"])
+```
+
+See the [Python guide](/get-started/python) for error handling, idempotency and batches.
+
+---
+
+## Go
+
+```sh
+go get github.com/nodebyteltd/bytesend-go
+```
+
+```go main.go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    bytesend "github.com/nodebyteltd/bytesend-go"
+)
+
+func main() {
+    client, err := bytesend.NewClient("") // empty key reads BYTESEND_API_KEY
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    resp, err := client.Emails.Create(context.Background(), bytesend.SendEmailPayload{
+        From:    "Acme <hello@acme.com>",
+        To:      []string{"customer@example.com"},
+        Subject: "Welcome to Acme",
+        HTML:    "<p>Thanks for signing up!</p>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Queued email", resp.EmailID)
+}
+```
+
+See the [Go guide](/get-started/go) for the full client.

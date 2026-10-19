@@ -36,7 +36,8 @@
               "get-started/nodejs",
               "get-started/python",
               "get-started/local",
-              "get-started/smtp"
+              "get-started/smtp",
+              "get-started/examples"
             ]
           }
         ]
@@ -206,7 +207,7 @@
         },
         {
           "anchor": "Discord",
-          "href": "https://https://discord.gg/C2Q4GHXKQA",
+          "href": "https://discord.gg/C2Q4GHXKQA",
           "icon": "discord"
         },
         {
@@ -235,8 +236,12 @@
   "navbar": {
     "links": [
       {
+        "label": "Status",
+        "href": "https://status.bytesend.cloud"
+      },
+      {
         "label": "Support",
-        "href": "https://https://discord.gg/C2Q4GHXKQA"
+        "href": "https://discord.gg/C2Q4GHXKQA"
       }
     ],
     "primary": {
@@ -248,7 +253,8 @@
   "footer": {
     "socials": {
       "x": "https://x.com/TryByteSend",
-      "github": "https://github.com/NodeByteLTD/ByteSend"
+      "github": "https://github.com/NodeByteLTD/ByteSend",
+      "discord": "https://discord.gg/C2Q4GHXKQA"
     }
   },
   "contextual": {

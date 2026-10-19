@@ -185,50 +185,30 @@ An unexpected error occurred on the ByteSend server. These are rare and typicall
 
 ## Handling Errors in Code
 
-### JavaScript / TypeScript
+Each SDK surfaces the `code` and `message` from the error body, so you can branch on the code:
 
-```typescript
+<CodeGroup>
+
+```ts Node.js
 import { ByteSend } from "bytesend-js";
 
-const bytesend = new ByteSend(process.env.BYTESEND_API_KEY!);
+const bytesend = new ByteSend();
 
-try {
-  const email = await bytesend.emails.send({
-    from: "hello@example.com",
-    to: "recipient@example.com",
-    subject: "Hello",
-    html: "<p>Hello!</p>",
-  });
-  console.log("Sent:", email.id);
-} catch (error) {
-  if (error instanceof Error) {
-    console.error("Failed:", error.message);
-  }
-}
-```
-
-### Handling specific codes (raw fetch)
-
-```typescript
-const response = await fetch("https://bytesend.cloud/api/v1/emails", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.BYTESEND_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ from: "...", to: "...", subject: "...", html: "..." }),
+// SDK methods return { data, error } instead of throwing.
+const { data, error } = await bytesend.emails.send({
+  from: "hello@example.com",
+  to: "recipient@example.com",
+  subject: "Hello",
+  html: "<p>Hello!</p>",
 });
 
-if (!response.ok) {
-  const { error } = await response.json();
-
+if (error) {
   switch (error.code) {
     case "UNAUTHORIZED":
       console.error("Check your API key");
       break;
     case "RATE_LIMITED":
-      const retryAfter = response.headers.get("Retry-After");
-      console.error(`Rate limited. Retry in ${retryAfter}s`);
+      console.error("Rate limited, retry shortly");
       break;
     case "BAD_REQUEST":
       console.error("Invalid request:", error.message);
@@ -236,34 +216,64 @@ if (!response.ok) {
     default:
       console.error(`API error ${error.code}: ${error.message}`);
   }
+} else {
+  console.log("Queued:", data?.emailId);
 }
 ```
 
-### Python
+```python Python
+from bytesend import ByteSend, ByteSendHTTPError
 
-```python
-import bytesend
-import time
-
-client = bytesend.ByteSend(api_key=os.environ["BYTESEND_API_KEY"])
+client = ByteSend()  # raises ByteSendHTTPError on API errors by default
 
 try:
-    email = client.emails.send(
-        from_="hello@example.com",
-        to="recipient@example.com",
-        subject="Hello",
-        html="<p>Hello!</p>",
-    )
-    print(f"Sent: {email.id}")
-except bytesend.APIError as e:
-    if e.code == "RATE_LIMITED":
-        retry_after = e.headers.get("Retry-After", 1)
-        time.sleep(int(retry_after))
-    elif e.code == "UNAUTHORIZED":
-        print("Invalid API key")
+    email, _ = client.emails.send({
+        "from": "hello@example.com",
+        "to": "recipient@example.com",
+        "subject": "Hello",
+        "html": "<p>Hello!</p>",
+    })
+    print("Queued:", email["emailId"])
+except ByteSendHTTPError as err:
+    code = err.error.get("code")
+    if code == "RATE_LIMITED":
+        print("Rate limited, retry shortly")
+    elif code == "UNAUTHORIZED":
+        print("Check your API key")
     else:
-        print(f"Error {e.code}: {e.message}")
+        print(f"API error {code}: {err.error.get('message')}")
 ```
+
+```go Go
+resp, err := client.Emails.Create(ctx, bytesend.SendEmailPayload{
+    From:    "hello@example.com",
+    To:      []string{"recipient@example.com"},
+    Subject: "Hello",
+    HTML:    "<p>Hello!</p>",
+})
+
+var apiErr *bytesend.ErrorResponse
+switch {
+case err == nil:
+    fmt.Println("Queued:", resp.EmailID)
+case errors.As(err, &apiErr) && apiErr.Code == "RATE_LIMITED":
+    fmt.Println("Rate limited, retry shortly")
+case errors.As(err, &apiErr) && apiErr.Code == "UNAUTHORIZED":
+    fmt.Println("Check your API key")
+case errors.As(err, &apiErr):
+    fmt.Printf("API error %s: %s\n", apiErr.Code, apiErr.Message)
+default:
+    log.Fatal(err) // network error
+}
+```
+
+```bash cURL
+# Error responses use the shape shown above; -i prints the status line and headers
+curl -i https://bytesend.cloud/api/v1/emails/does-not-exist \
+  -H "Authorization: Bearer $BYTESEND_API_KEY"
+```
+
+</CodeGroup>
 
 ---
 

@@ -64,5 +64,11 @@ class Campaigns:
         )
         return (data, err)  # type: ignore[return-value]
 
+    def delete(
+        self, campaign_id: str
+    ) -> Tuple[Optional[Campaign], Optional[APIError]]:
+        data, err = self.bytesend.delete(f"/campaigns/{campaign_id}")
+        return (data, err)  # type: ignore[return-value]
+
 
 from .bytesend import ByteSend  # noqa: E402  pylint: disable=wrong-import-position

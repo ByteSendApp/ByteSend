@@ -15,14 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `S3_COMPATIBLE_REGION` sets the storage bucket's region. AWS S3 needs the bucket's real region (e.g. `us-east-1`); R2 and MinIO keep working with the default `auto`
+- **Python SDK 0.1.3**: `client.campaigns.delete()`, matching the Node.js and Go SDKs
+- **Go SDK 0.3.3**: `ErrorResponse` now includes the HTTP `StatusCode`
 
 ### Changed
 - ByteSend now lives at [github.com/ByteSendApp/ByteSend](https://github.com/ByteSendApp/ByteSend); docs, READMEs, the site, the status page and package metadata link there
 - **Go SDK module path** is now `github.com/ByteSendApp/ByteSend/packages/go-sdk`, matching where the code lives. Update imports from `github.com/nodebyteltd/bytesend-go`. A new workflow tags `packages/go-sdk/v<version>` and publishes to the Go module proxy whenever the SDK version changes on `main`
 - Docker images publish to the GitHub Container Registry under the repository owner's namespace (`ghcr.io/bytesendapp/…`) instead of a hard-coded `ghcr.io/bytesend/…` the workflow token couldn't push to
+- **SDK-first docs**: the campaigns, campaign personalization, contact books, double opt-in, rate limits and error codes guides now show every example in Node.js, Python and Go, with cURL as a fallback tab, instead of cURL or raw `fetch` only
 
 ### Fixed
 - Changelog links render as links instead of raw Markdown
+- Go SDK API errors now carry the real error code and message (e.g. `RATE_LIMITED`); previously every API error came back as `INTERNAL_SERVER_ERROR` with only the HTTP status text
+- Docs examples that didn't match the SDKs: the contact books guide read `book.id` instead of the `{ data, error }` result and called `contacts.upsert` without a contact ID, and the error-codes guide used `try/catch` and a Python `APIError` class that don't exist
 - Open stats shows exact email counts instead of rounded figures that looked inconsistent with the totals beneath them
 - Em-dashes removed from site, dashboard, status page and docs copy
 

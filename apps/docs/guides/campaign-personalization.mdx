@@ -112,11 +112,38 @@ This renders `there` when `firstName` is empty.
 
 ## Using the API
 
+<Tip>
+The examples assume a client set up as in the [Node.js](/get-started/nodejs), [Python](/get-started/python) or [Go](/get-started/go) guide. Every SDK reads `BYTESEND_API_KEY` from the environment.
+</Tip>
+
 ### Create a contact book with variables
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+const { data: book } = await bytesend.contactBooks.create({
+  name: "Customers",
+  variables: ["company", "plan", "registrationCode"],
+});
+```
+
+```python Python
+book, _ = client.contact_books.create({
+    "name": "Customers",
+    "variables": ["company", "plan", "registrationCode"],
+})
+```
+
+```go Go
+book, err := client.ContactBooks.Create(ctx, bytesend.CreateContactBookPayload{
+    Name:      "Customers",
+    Variables: []string{"company", "plan", "registrationCode"},
+})
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/contactBooks \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Customers",
@@ -124,11 +151,51 @@ curl -X POST https://bytesend.cloud/api/v1/contactBooks \
   }'
 ```
 
+</CodeGroup>
+
 ### Create a contact with variable values
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+await bytesend.contacts.create(contactBookId, {
+  email: "jane@example.com",
+  firstName: "Jane",
+  properties: {
+    company: "Acme",
+    plan: "Pro",
+    registrationCode: "WELCOME-2026",
+  },
+});
+```
+
+```python Python
+client.contacts.create(contact_book_id, {
+    "email": "jane@example.com",
+    "firstName": "Jane",
+    "properties": {
+        "company": "Acme",
+        "plan": "Pro",
+        "registrationCode": "WELCOME-2026",
+    },
+})
+```
+
+```go Go
+_, err := client.Contacts.Create(ctx, contactBookID, bytesend.CreateContactPayload{
+    Email:     "jane@example.com",
+    FirstName: "Jane",
+    Properties: map[string]string{
+        "company":          "Acme",
+        "plan":             "Pro",
+        "registrationCode": "WELCOME-2026",
+    },
+})
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "jane@example.com",
@@ -141,11 +208,45 @@ curl -X POST https://bytesend.cloud/api/v1/contactBooks/{contactBookId}/contacts
   }'
 ```
 
+</CodeGroup>
+
 ### Create a campaign that uses variables
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+await bytesend.campaigns.create({
+  name: "Welcome campaign",
+  from: "Acme <hello@acme.com>",
+  subject: "Welcome to {{company}}",
+  contactBookId,
+  html: "<p>Hi {{firstName,fallback=there}}, your plan is {{plan}}.</p>",
+});
+```
+
+```python Python
+client.campaigns.create({
+    "name": "Welcome campaign",
+    "from": "Acme <hello@acme.com>",
+    "subject": "Welcome to {{company}}",
+    "contactBookId": contact_book_id,
+    "html": "<p>Hi {{firstName,fallback=there}}, your plan is {{plan}}.</p>",
+})
+```
+
+```go Go
+_, err := client.Campaigns.Create(ctx, bytesend.CreateCampaignPayload{
+    Name:          "Welcome campaign",
+    From:          "Acme <hello@acme.com>",
+    Subject:       "Welcome to {{company}}",
+    ContactBookID: contactBookID,
+    HTML:          "<p>Hi {{firstName,fallback=there}}, your plan is {{plan}}.</p>",
+})
+```
+
+```bash cURL
 curl -X POST https://bytesend.cloud/api/v1/campaigns \
-  -H "Authorization: Bearer bs_your_api_key" \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Welcome campaign",
@@ -155,6 +256,8 @@ curl -X POST https://bytesend.cloud/api/v1/campaigns \
     "html": "<p>Hi {{firstName,fallback=there}}, your plan is {{plan}}.</p>"
   }'
 ```
+
+</CodeGroup>
 
 ## Best practices
 

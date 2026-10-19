@@ -54,56 +54,71 @@ When you receive a `429 RATE_LIMITED` response, wait for the number of seconds s
 }
 ```
 
-### Retry with backoff (TypeScript)
+### Retrying in your code
 
-```typescript
-async function sendWithRetry(payload: object, maxRetries = 3): Promise<Response> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch("https://bytesend.cloud/api/v1/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.BYTESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+The SDKs report a rate-limited request as a `RATE_LIMITED` error rather than retrying for you, so wrap sends that might burst in a short retry loop:
 
-    if (response.status !== 429) return response;
+<CodeGroup>
 
-    if (attempt === maxRetries) throw new Error("Max retries reached");
+```ts Node.js
+import { ByteSend } from "bytesend-js";
 
-    const retryAfter = parseInt(response.headers.get("Retry-After") ?? "1", 10);
-    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+const bytesend = new ByteSend();
+
+type SendPayload = Parameters<typeof bytesend.emails.send>[0];
+
+async function sendWithRetry(payload: SendPayload, maxRetries = 3) {
+  for (let attempt = 0; ; attempt++) {
+    const result = await bytesend.emails.send(payload);
+    if (result.error?.code !== "RATE_LIMITED" || attempt === maxRetries) {
+      return result;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
   }
-
-  throw new Error("Unreachable");
 }
 ```
 
-### Retry with backoff (Python)
-
-```python
+```python Python
 import time
-import requests
+from bytesend import ByteSend, ByteSendHTTPError
 
-def send_with_retry(payload: dict, max_retries: int = 3) -> dict:
-    headers = {
-        "Authorization": f"Bearer {os.environ['BYTESEND_API_KEY']}",
-        "Content-Type": "application/json",
-    }
+client = ByteSend()
+
+def send_with_retry(payload: dict, max_retries: int = 3):
     for attempt in range(max_retries + 1):
-        response = requests.post(
-            "https://bytesend.cloud/api/v1/emails",
-            json=payload,
-            headers=headers,
-        )
-        if response.status_code != 429:
-            return response.json()
-        if attempt == max_retries:
-            raise Exception("Max retries reached")
-        retry_after = int(response.headers.get("Retry-After", 1))
-        time.sleep(retry_after)
+        try:
+            return client.emails.send(payload)
+        except ByteSendHTTPError as err:
+            if err.status_code != 429 or attempt == max_retries:
+                raise
+            time.sleep(2 ** attempt)
 ```
+
+```go Go
+func sendWithRetry(ctx context.Context, client *bytesend.Client, payload bytesend.SendEmailPayload) (bytesend.CreateEmailResponse, error) {
+    const maxRetries = 3
+    for attempt := 0; ; attempt++ {
+        resp, err := client.Emails.Create(ctx, payload)
+        var apiErr *bytesend.ErrorResponse
+        if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusTooManyRequests || attempt == maxRetries {
+            return resp, err
+        }
+        time.Sleep(time.Duration(1<<attempt) * time.Second)
+    }
+}
+```
+
+```bash cURL
+# Honour Retry-After when calling the API directly
+curl -i -X POST https://bytesend.cloud/api/v1/emails \
+  -H "Authorization: Bearer $BYTESEND_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"from": "hello@example.com", "to": "user@example.com", "subject": "Hi", "html": "<p>Hi</p>"}'
+```
+
+</CodeGroup>
+
+When calling the REST API directly, wait for the number of seconds in the `Retry-After` header instead of a fixed backoff.
 
 ---
 

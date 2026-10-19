@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Button } from "@bytesend/ui/src/button";
-import { Input } from "@bytesend/ui/src/input";
 import Spinner from "@bytesend/ui/src/spinner";
 import {
   Table,
@@ -15,6 +13,9 @@ import {
   TableRow,
 } from "@bytesend/ui/src/table";
 import { api } from "~/trpc/react";
+import { AdminPageHeader } from "../_components/admin-page-header";
+import { Pagination } from "../_components/pagination";
+import { SearchInput } from "../_components/search-input";
 import { isCloud } from "~/utils/common";
 import { WebhookStatusBadge } from "../../webhooks/webhook-status-badge";
 import type { AppRouter } from "~/server/api/root";
@@ -26,7 +27,6 @@ type AdminWebhook = NonNullable<RouterOutputs["admin"]["listAdminWebhooks"]>["we
 export default function AdminWebhooksPage() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
-  const [queryInput, setQueryInput] = useState("");
 
   const webhooksQuery = api.admin.listAdminWebhooks.useQuery(
     { page, pageSize: 20, query: query || undefined },
@@ -42,36 +42,19 @@ export default function AdminWebhooksPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Webhooks</h2>
-        <div className="flex items-center gap-2">
-          <Input
-            value={queryInput}
-            onChange={(event) => setQueryInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setPage(1);
-                setQuery(queryInput);
-              }
-            }}
-            placeholder="Filter by URL, team, or creator email"
-            className="h-9 w-[320px]"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setPage(1);
-              setQuery(queryInput);
-            }}
-          >
-            Filter
-          </Button>
-        </div>
-      </div>
+    <>
+      <AdminPageHeader title="Webhooks" description="Customer webhook endpoints and their delivery health" />
+      <SearchInput
+        onSearch={(value) => {
+          setPage(1);
+          setQuery(value);
+        }}
+        placeholder="Filter by URL, team, or creator email"
+        label="Search webhooks"
+        className="sm:max-w-md"
+      />
 
-      <div className="overflow-x-auto rounded-xl border shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
@@ -116,7 +99,7 @@ export default function AdminWebhooksPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{webhook.team.name}</p>
+                      <Link href={`/admin/teams/${webhook.team.id}`} className="font-medium hover:underline">{webhook.team.name}</Link>
                       <p className="text-xs text-muted-foreground">{webhook.team.plan}</p>
                     </div>
                   </TableCell>
@@ -149,33 +132,9 @@ export default function AdminWebhooksPage() {
         </Table>
       </div>
 
-      {webhooksQuery.data && webhooksQuery.data.total > 20 ? (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {(page - 1) * 20 + 1}–{Math.min(page * 20, webhooksQuery.data.total)} of {webhooksQuery.data.total}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page * 20 >= webhooksQuery.data.total}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {webhooksQuery.data ? (
+        <Pagination page={page} pageSize={20} total={webhooksQuery.data.total} onPageChange={setPage} />
       ) : null}
-    </div>
+    </>
   );
 }

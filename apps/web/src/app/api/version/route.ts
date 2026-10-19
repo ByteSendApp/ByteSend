@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { env } from "~/env";
+import { logger } from "~/server/logger/log";
 
 const GITHUB_REPOS = ["NodeByteLTD/ByteSend"];
 const FALLBACK_VERSION = "canary";
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const FALLBACK_TTL_MS = 60 * 1000;
+
+// Without a token GitHub allows 60 requests/hour per IP, so lookups are cached per server process.
+let cached: { version: string; expiresAt: number } | null = null;
+let lastKnownVersion: string | null = null;
 
 // Injected at build time by CI (e.g. NEXT_PUBLIC_APP_VERSION=v0.2.0).
 // Highest priority — no network call needed.
@@ -40,7 +47,7 @@ async function fetchFromGitLab(): Promise<string | null> {
       if (data.tag_name) return data.tag_name;
     }
   } catch (err) {
-    console.error("[version] GitLab permalink/latest failed:", err);
+    logger.warn({ err }, "[version] GitLab permalink/latest failed");
   }
 
   // 2. releases list (works on older GitLab)
@@ -54,7 +61,7 @@ async function fetchFromGitLab(): Promise<string | null> {
       if (Array.isArray(data) && data[0]?.tag_name) return data[0].tag_name;
     }
   } catch (err) {
-    console.error("[version] GitLab releases list failed:", err);
+    logger.warn({ err }, "[version] GitLab releases list failed");
   }
 
   // 3. repository tags (last resort — any repo with tags)
@@ -68,7 +75,7 @@ async function fetchFromGitLab(): Promise<string | null> {
       if (Array.isArray(data) && data[0]?.name) return data[0].name;
     }
   } catch (err) {
-    console.error("[version] GitLab tags failed:", err);
+    logger.warn({ err }, "[version] GitLab tags failed");
   }
 
   return null;
@@ -96,7 +103,7 @@ async function fetchFromGitHub(): Promise<string | null> {
         if (data.tag_name) return data.tag_name;
       }
     } catch (err) {
-      console.error(`[version] GitHub releases/latest failed for ${repo}:`, err);
+      logger.warn({ err, repo }, "[version] GitHub releases/latest failed");
     }
 
     // 2. releases list (handles repos where latest returns 404)
@@ -110,7 +117,7 @@ async function fetchFromGitHub(): Promise<string | null> {
         if (Array.isArray(data) && data[0]?.tag_name) return data[0].tag_name;
       }
     } catch (err) {
-      console.error(`[version] GitHub releases list failed for ${repo}:`, err);
+      logger.warn({ err, repo }, "[version] GitHub releases list failed");
     }
 
     // 3. tags (catches repos that use tags but not formal releases)
@@ -124,7 +131,7 @@ async function fetchFromGitHub(): Promise<string | null> {
         if (Array.isArray(data) && data[0]?.name) return data[0].name;
       }
     } catch (err) {
-      console.error(`[version] GitHub tags failed for ${repo}:`, err);
+      logger.warn({ err, repo }, "[version] GitHub tags failed");
     }
   }
 
@@ -137,11 +144,15 @@ export async function GET() {
     return NextResponse.json({ version: BUILD_VERSION });
   }
 
-  // 2. Runtime: GitLab → GitHub → canary
-  const version =
-    (await fetchFromGitLab()) ??
-    (await fetchFromGitHub()) ??
-    FALLBACK_VERSION;
+  if (cached && cached.expiresAt > Date.now()) {
+    return NextResponse.json({ version: cached.version });
+  }
+
+  // 2. Runtime: GitLab → GitHub → last known → canary
+  const fetched = (await fetchFromGitLab()) ?? (await fetchFromGitHub());
+  if (fetched) lastKnownVersion = fetched;
+  const version = fetched ?? lastKnownVersion ?? FALLBACK_VERSION;
+  cached = { version, expiresAt: Date.now() + (fetched ? CACHE_TTL_MS : FALLBACK_TTL_MS) };
 
   return NextResponse.json({ version });
 }

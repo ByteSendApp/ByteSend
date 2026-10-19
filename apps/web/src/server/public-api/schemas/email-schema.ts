@@ -1,8 +1,5 @@
 import { z } from "@hono/zod-openapi";
 
-/**
- * Reusable Zod schema for a single email payload used in public API requests.
- */
 export const emailSchema = z
   .object({
     to: z.string().or(z.array(z.string())),
@@ -26,12 +23,12 @@ export const emailSchema = z
       .array(
         z.object({
           filename: z.string().min(1),
-          content: z.string().min(1), // Consider base64 validation if needed
+          content: z.string().min(1),
         })
       )
-      .max(10) // Limit attachments array size if desired
+      .max(10)
       .optional(),
-    scheduledAt: z.string().datetime({ offset: true }).optional(), // Ensure ISO 8601 format with offset
+    scheduledAt: z.string().datetime({ offset: true }).optional(),
     inReplyToId: z.string().optional().nullable(),
   })
   .refine(

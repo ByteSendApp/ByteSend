@@ -1,15 +1,7 @@
 import crypto from "crypto";
 
-/**
- * Possible Gravatar rating values: 'g' (general), 'pg' (parental guidance),
- * 'r' (restricted), or 'x' (explicit).
- */
 export type GravatarRating = "g" | "pg" | "r" | "x";
 
-/**
- * Common default image options in Gravatar.
- * Can also be a URL (string) for a custom default image.
- */
 export type GravatarDefaultImage =
   | "404"
   | "mp"
@@ -21,9 +13,9 @@ export type GravatarDefaultImage =
   | "blank";
 
 export interface GravatarOptions {
-  size?: number; // specify the size (in pixels)
-  defaultImage?: GravatarDefaultImage; // default image
-  rating?: GravatarRating; // image rating
+  size?: number;
+  defaultImage?: GravatarDefaultImage;
+  rating?: GravatarRating;
 }
 
 export function getGravatarUrl(
@@ -37,10 +29,8 @@ export function getGravatarUrl(
   const trimmedEmail = email.trim().toLowerCase();
   const hash = crypto.createHash("sha256").update(trimmedEmail).digest("hex");
 
-  // Base Gravatar URL
   const baseUrl = "https://www.gravatar.com/avatar/";
 
-  // Use URLSearchParams to build query string
   const queryParams = new URLSearchParams();
 
   if (options.size) {

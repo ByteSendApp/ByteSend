@@ -48,7 +48,7 @@ type DomainVerificationRefreshResult = DomainWithDnsRecords & {
   dkimReregistered: boolean;
 };
 
-function parseDomainStatus(status?: string | null): DomainStatus {
+export function parseDomainStatus(status?: string | null): DomainStatus {
   if (!status) {
     return DomainStatus.NOT_STARTED;
   }
@@ -121,23 +121,22 @@ const dnsResolveTxt = dns.promises?.resolveTxt
   : typeof dns.resolveTxt === "function"
     ? util.promisify(dns.resolveTxt.bind(dns))
     : (async () => {
-        throw new Error("DNS TXT resolver unavailable");
-      }) as (hostname: string) => Promise<string[][]>;
+      throw new Error("DNS TXT resolver unavailable");
+    }) as (hostname: string) => Promise<string[][]>;
 
 const dnsResolveMx = dns.promises?.resolveMx
   ? dns.promises.resolveMx.bind(dns.promises)
   : typeof dns.resolveMx === "function"
     ? util.promisify(dns.resolveMx.bind(dns))
     : (async () => {
-        throw new Error("DNS MX resolver unavailable");
-      }) as (hostname: string) => Promise<Array<{ exchange: string }>>;
+      throw new Error("DNS MX resolver unavailable");
+    }) as (hostname: string) => Promise<Array<{ exchange: string }>>;
 
-/** How long DKIM must be stuck in PENDING/NOT_STARTED before we auto-reregister */
-const DKIM_STUCK_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
+const DKIM_STUCK_THRESHOLD_MS = 60 * 60 * 1000;
 
-type DnsCheckResult = "found" | "wrong_key" | "not_found";
+export type DnsCheckResult = "found" | "wrong_key" | "not_found";
 
-async function checkDkimDnsRecord(
+export async function checkDkimDnsRecord(
   selector: string,
   domainName: string,
   expectedPublicKey: string,
@@ -184,7 +183,7 @@ async function checkSpfDnsRecord(mailDomain: string): Promise<DnsCheckResult> {
   }
 }
 
-async function checkMxDnsRecord(
+export async function checkMxDnsRecord(
   mailDomain: string,
   region: string,
 ): Promise<DnsCheckResult> {
@@ -249,7 +248,7 @@ async function setDkimReregisteredFlag(domainId: number) {
     getDomainVerificationKey("dkim-reregistered", domainId),
     "1",
     "EX",
-    86400, // 24 hours
+    86400,
   );
 }
 
@@ -432,7 +431,6 @@ function buildDomainPayload(domain: Domain): DomainPayload {
 }
 
 export async function validateDomainFromEmail(email: string, teamId: number) {
-  // Extract email from format like 'Name <email@domain>' this will allow entries such as "Someone @ something <some@domain.com>" to parse correctly as well.
   const match = email.match(/<([^>]+)>/);
   let fromDomain: string | undefined;
 
@@ -481,15 +479,12 @@ export async function validateApiKeyDomainAccess(
   teamId: number,
   apiKey: ApiKey & { domain?: { name: string } | null },
 ) {
-  // First validate the domain exists and is verified
   const domain = await validateDomainFromEmail(email, teamId);
 
-  // If API key has no domain restriction (domainId is null), allow all domains
   if (!apiKey.domainId) {
     return domain;
   }
 
-  // If API key is restricted to a specific domain, check if it matches
   if (apiKey.domainId !== domain.id) {
     throw new ByteSendApiError({
       code: "FORBIDDEN",
@@ -568,7 +563,6 @@ export async function createDomain(
       },
     });
   } catch (error) {
-    // Domain name has a global unique constraint — give a clear message
     if (
       error instanceof Error &&
       "code" in error &&
@@ -607,7 +601,6 @@ export async function getDomain(id: number, teamId: number) {
     return refreshDomainVerification(domain);
   }
 
-  // Include the persistent reregistered banner flag even when not actively verifying
   const dkimReregistered = await getDkimReregisteredFlag(domain.id);
   return { ...withDnsRecords(domain), dkimReregistered, dnsPrecheck: null };
 }
@@ -633,7 +626,6 @@ export async function refreshDomainVerification(
   const mailDomain = `mail${subdomainSuffix}.${domain.name}`;
   const dkimSelector = domain.dkimSelector ?? "bytesend";
 
-  // Run independent DNS pre-checks and SES identity lookup in parallel
   const [domainIdentity, dkimDns, spfDns, mxDns] = await Promise.all([
     ses.getDomainIdentity(domain.name, domain.region),
     checkDkimDnsRecord(dkimSelector, domain.name, domain.publicKey),
@@ -661,17 +653,11 @@ export async function refreshDomainVerification(
   const dmarcRecord = _dmarcRecord?.[0]?.[0];
   const checkedAt = new Date();
 
-  // If DKIM is stuck (PENDING or NOT_STARTED) but the correct DNS record is
-  // found in DNS with the exact expected key, the issue is likely SES has a
-  // stale negative cache. Auto re-register so SES initiates a fresh check.
-  // We intentionally do NOT trigger on "wrong_key" — that means the user still
-  // has an old record in DNS; re-registering again just moves the goalposts.
   let dkimReregistered = false;
   const dkimIsStuck =
     dkimStatus !== DomainStatus.SUCCESS && dkimDns === "found";
   const lastChecked = verificationState.lastCheckedAt;
-  // A null lastCheckedAt means the domain was just created; give SES time to
-  // pick up the initial record before triggering auto-reregistration.
+
   const stuckTooLong =
     lastChecked !== null &&
     Date.now() - lastChecked.getTime() > DKIM_STUCK_THRESHOLD_MS;
@@ -683,7 +669,6 @@ export async function refreshDomainVerification(
         domain.region,
         dkimSelector,
       );
-      // Update public key so the DNS records table reflects the new expected value
       await db.domain.update({
         where: { id: domain.id },
         data: { publicKey: newPublicKey, dkimStatus: DomainStatus.NOT_STARTED },
@@ -713,8 +698,6 @@ export async function refreshDomainVerification(
       status: verificationStatus,
       errorMessage: verificationError,
       dmarcAdded: Boolean(dmarcRecord),
-      // When DKIM keys were auto-regenerated the user must update their DNS
-      // record first — stop polling so the Verify button becomes available.
       isVerifying: dkimReregistered
         ? false
         : shouldContinueVerifying(verificationStatus, dkimStatus, spfDetails),
@@ -798,12 +781,6 @@ export async function refreshDomainVerification(
   };
 }
 
-/**
- * Manually re-registers the DKIM signing key pair with SES for a domain.
- * This generates a new key pair, updates SES, and updates the domain record
- * so the user can publish the new public key in DNS. Use this when DKIM
- * verification is stuck after the record has been set in DNS.
- */
 export async function reregisterDomainDkim(id: number, teamId: number) {
   const domain = await db.domain.findUnique({
     where: { id, teamId },
@@ -825,9 +802,6 @@ export async function reregisterDomainDkim(id: number, teamId: number) {
     data: {
       publicKey: newPublicKey,
       dkimStatus: DomainStatus.NOT_STARTED,
-      // The user must update their DNS record with the new key before
-      // verification can succeed — keep isVerifying false so the Verify
-      // button stays visible and accessible.
       isVerifying: false,
     },
   });
@@ -875,6 +849,18 @@ export async function deleteDomain(id: number) {
     throw new Error("Error in deleting domain");
   }
 
+  for (const extraRegion of [domain.pendingRegion, domain.retiredRegion]) {
+    if (!extraRegion || extraRegion === domain.region) continue;
+    try {
+      await ses.deleteDomain(domain.name, extraRegion, domain.sesTenantId ?? undefined);
+    } catch (error) {
+      logger.error(
+        { err: error, domainId: id, region: extraRegion },
+        "[DomainService]: Failed to delete secondary-region identity",
+      );
+    }
+  }
+
   const deletedRecord = await db.domain.delete({ where: { id } });
   try {
     await clearDomainVerificationState(id);
@@ -913,11 +899,11 @@ async function getDmarcRecord(domain: string) {
     return dmarcRecord;
   } catch (error) {
     logger.error({ err: error, domain }, "Error fetching DMARC record");
-    return null; // or handle error as appropriate
+    return null;
   }
 }
 
-async function emitDomainEvent(domain: Domain, type: DomainWebhookEventType) {
+export async function emitDomainEvent(domain: Domain, type: DomainWebhookEventType) {
   try {
     await WebhookService.emit(domain.teamId, type, buildDomainPayload(domain), {
       domainId: domain.id,
@@ -945,7 +931,7 @@ export async function isDomainVerificationDue(domain: Domain) {
   const lastCheckedAt = verificationState.lastCheckedAt?.getTime() ?? 0;
   const intervalMs =
     verificationState.hasEverVerified ||
-    VERIFIED_DOMAIN_STATUSES.has(domain.status)
+      VERIFIED_DOMAIN_STATUSES.has(domain.status)
       ? DOMAIN_VERIFIED_RECHECK_MS
       : DOMAIN_UNVERIFIED_RECHECK_MS;
 

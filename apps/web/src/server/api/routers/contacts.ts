@@ -88,12 +88,12 @@ export const contactsRouter = createTRPCRouter({
           : {}),
         ...(input.search
           ? {
-              OR: [
-                { email: { contains: input.search, mode: "insensitive" } },
-                { firstName: { contains: input.search, mode: "insensitive" } },
-                { lastName: { contains: input.search, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { email: { contains: input.search, mode: "insensitive" } },
+              { firstName: { contains: input.search, mode: "insensitive" } },
+              { lastName: { contains: input.search, mode: "insensitive" } },
+            ],
+          }
           : {}),
       };
 
@@ -237,7 +237,7 @@ export const contactsRouter = createTRPCRouter({
         if (
           error instanceof Error &&
           error.message ===
-            "Double opt-in confirmation can only be resent to pending contacts"
+          "Double opt-in confirmation can only be resent to pending contacts"
         ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -264,12 +264,12 @@ export const contactsRouter = createTRPCRouter({
           : {}),
         ...(input.search
           ? {
-              OR: [
-                { email: { contains: input.search, mode: "insensitive" } },
-                { firstName: { contains: input.search, mode: "insensitive" } },
-                { lastName: { contains: input.search, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { email: { contains: input.search, mode: "insensitive" } },
+              { firstName: { contains: input.search, mode: "insensitive" } },
+              { lastName: { contains: input.search, mode: "insensitive" } },
+            ],
+          }
           : {}),
       };
 
@@ -287,7 +287,7 @@ export const contactsRouter = createTRPCRouter({
         orderBy: {
           createdAt: "desc",
         },
-        take: 100000, // Limit to 100k contacts to prevent memory issues
+        take: 100000,
       });
 
       return contacts;

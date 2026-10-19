@@ -12,9 +12,7 @@ import { renderUsageLimitReachedEmail } from "../email-templates/UsageLimitReach
 import { renderUsageWarningEmail } from "../email-templates/UsageWarningEmail";
 import { sendToDiscord } from "./notification-service";
 
-// Cache stores exactly Prisma Team shape (no counts)
-
-const TEAM_CACHE_TTL_SECONDS = 120; // 2 minutes
+const TEAM_CACHE_TTL_SECONDS = 120;
 
 export class TeamService {
   private static cacheKey(teamId: number) {
@@ -66,9 +64,6 @@ export class TeamService {
         });
       }
     } else {
-      // Cloud: a user may only be ADMIN of one FREE/inactive team at a time.
-      // This prevents the abuse pattern of creating new teams to reset free limits.
-      // Once all existing admin teams are on a paid plan, creating another team is allowed.
       const existingAdminTeams = await db.teamUser.findMany({
         where: { userId, role: "ADMIN" },
         include: { team: { select: { plan: true, isActive: true } } },
@@ -104,7 +99,6 @@ export class TeamService {
         },
       },
     });
-    // Warm cache for the new team
     await TeamService.refreshTeamCache(created.id);
 
     sendToDiscord(`**New team created** 🏢\n**Name:** ${created.name}\n**Team ID:** ${created.id}`).catch(() => void 0);
@@ -112,10 +106,6 @@ export class TeamService {
     return created;
   }
 
-  /**
-   * Update a team and refresh the cache.
-   * Returns the full Prisma Team object.
-   */
   static async updateTeam(
     teamId: number,
     data: Prisma.TeamUpdateInput,
@@ -205,9 +195,6 @@ export class TeamService {
       },
     });
 
-    // Users can now be members of multiple teams — no longer blocked here.
-    // The team's maxTeamMembers limit is enforced above via checkTeamMemberLimit.
-
     const teamInvite = await db.teamInvite.create({
       data: {
         teamId,
@@ -244,7 +231,6 @@ export class TeamService {
       });
     }
 
-    // Check if this is the last admin
     const adminCount = await db.teamUser.count({
       where: {
         teamId,
@@ -270,7 +256,6 @@ export class TeamService {
         role,
       },
     });
-    // Role updates might influence permissions; refresh cache to be safe
     await TeamService.invalidateTeamCache(teamId);
     return updated;
   }
@@ -302,7 +287,6 @@ export class TeamService {
       });
     }
 
-    // Check if this is the last admin
     const adminCount = await db.teamUser.count({
       where: {
         teamId,
@@ -384,9 +368,6 @@ export class TeamService {
     });
   }
 
-  /**
-   * Notify all team users that email limit has been reached, at most once per day.
-   */
   static async maybeNotifyEmailLimitReached(
     teamId: number,
     limit: number,
@@ -403,7 +384,6 @@ export class TeamService {
       );
       return;
     }
-    // Only notify on actual email limit reasons
     if (
       ![
         LimitReason.EMAIL_DAILY_LIMIT_REACHED,
@@ -419,35 +399,29 @@ export class TeamService {
 
     const redis = getRedis();
     const cacheKey = redisKey(`limit:notify:${teamId}:${reason}`);
-    // Atomic SET NX to prevent race conditions: only one concurrent caller
-    // can acquire the cooldown key. TTL = 24 hours (one notification per day).
     const acquired = await redis.set(cacheKey, "1", "EX", 24 * 60 * 60, "NX");
+
     if (acquired !== "OK") {
       logger.info(
         { teamId, cacheKey },
         "[TeamService]: Skipping notify — cooldown active",
       );
-      return; // another request already claimed this window
+      return;
     }
 
     const team = await TeamService.getTeamCached(teamId);
-    // Only consider it a paid plan if the subscription is active
     const isPaidPlan = team.isActive && team.plan !== "FREE";
-
     const html = await getLimitReachedEmail(teamId, limit, reason);
-
     const subject =
       reason === LimitReason.EMAIL_FREE_PLAN_MONTHLY_LIMIT_REACHED
         ? "ByteSend: You've reached your monthly email limit"
         : "ByteSend: You've reached your daily email limit";
 
-    const text = `Hi ${team.name} team,\n\nYou've reached your ${
-      reason === LimitReason.EMAIL_FREE_PLAN_MONTHLY_LIMIT_REACHED
+    const text = `Hi ${team.name} team,\n\nYou've reached your ${reason === LimitReason.EMAIL_FREE_PLAN_MONTHLY_LIMIT_REACHED
         ? "monthly"
         : "daily"
-    } limit of ${limit.toLocaleString()} emails.\n\nSending is temporarily paused until your limit resets or ${
-      isPaidPlan ? "your team is verified" : "your plan is upgraded"
-    }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
+      } limit of ${limit.toLocaleString()} emails.\n\nSending is temporarily paused until your limit resets or ${isPaidPlan ? "your team is verified" : "your plan is upgraded"
+      }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
 
     const teamUsers = await TeamService.getTeamUsers(teamId);
     const recipients = teamUsers
@@ -459,7 +433,6 @@ export class TeamService {
       "[TeamService]: Sending limit reached notifications",
     );
 
-    // Send individually to all team users
     try {
       await Promise.all(
         recipients.map((to) =>
@@ -479,10 +452,6 @@ export class TeamService {
     }
   }
 
-  /**
-   * Notify all team users that they're nearing their email limit.
-   * Rate limited via Redis to avoid spamming; sends at most once per day per reason.
-   */
   static async sendWarningEmail(
     teamId: number,
     used: number,
@@ -516,19 +485,16 @@ export class TeamService {
 
     const redis = getRedis();
     const cacheKey = redisKey(`limit:warning:${teamId}:${reason}`);
-    // Atomic SET NX to prevent race conditions: only one concurrent caller
-    // can acquire the cooldown key. TTL = 24 hours (one notification per day).
     const acquired = await redis.set(cacheKey, "1", "EX", 24 * 60 * 60, "NX");
     if (acquired !== "OK") {
       logger.info(
         { teamId, cacheKey },
         "[TeamService]: Skipping warning — cooldown active",
       );
-      return; // another request already claimed this window
+      return;
     }
 
     const team = await TeamService.getTeamCached(teamId);
-    // Only consider it a paid plan if the subscription is active
     const isPaidPlan = team.isActive && team.plan !== "FREE";
 
     const period =
@@ -550,11 +516,10 @@ export class TeamService {
         ? "ByteSend: You're nearing your monthly email limit"
         : "ByteSend: You're nearing your daily email limit";
 
-    const text = `Hi ${team.name} team,\n\nYou've used ${used.toLocaleString()} of your ${period} limit of ${limit.toLocaleString()} emails.\n\nConsider ${
-      isPaidPlan
+    const text = `Hi ${team.name} team,\n\nYou've used ${used.toLocaleString()} of your ${period} limit of ${limit.toLocaleString()} emails.\n\nConsider ${isPaidPlan
         ? "verifying your team by replying to this email"
         : "upgrading your plan"
-    }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
+      }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
 
     const teamUsers = await TeamService.getTeamUsers(teamId);
     const recipients = teamUsers

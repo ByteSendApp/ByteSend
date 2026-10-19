@@ -14,9 +14,7 @@ import { sanitizeCustomHeaders } from "~/server/utils/email-headers";
 import { getStripe } from "../billing/payments";
 import { METER_EVENT_NAMES } from "@bytesend/lib";
 import { createOneClickUnsubUrl } from "./campaign-service";
-// Notifications about limits are handled inside LimitService.
 
-// SES error names that are transient and should be retried
 const TRANSIENT_SES_ERRORS = new Set([
   "TooManyRequestsException",
   "ServiceUnavailableException",
@@ -176,13 +174,6 @@ export class EmailQueueService {
     );
   }
 
-  /**
-   * Efficiently queues multiple pre-defined email jobs using BullMQ's addBulk.
-   * Jobs are grouped by region and type (transactional/marketing) before queuing.
-   *
-   * @param jobs - Array of job details to queue.
-   * @returns A promise that resolves when all bulk additions are attempted.
-   */
   public static async queueBulk(
     jobs: {
       emailId: string;
@@ -191,7 +182,7 @@ export class EmailQueueService {
       transactional: boolean;
       unsubUrl?: string;
       delay?: number;
-      timestamp?: number; // Optional: pass timestamp if needed for data
+      timestamp?: number;
     }[]
   ): Promise<void> {
     if (jobs.length === 0) {
@@ -208,7 +199,6 @@ export class EmailQueueService {
       `[EmailQueueService]: Starting bulk queue for jobs.`
     );
 
-    // Group jobs by region and type
     const groupedJobs = jobs.reduce(
       (acc, job) => {
         const key = `${job.region}-${job.transactional ? "transactional" : "marketing"}`;
@@ -245,14 +235,13 @@ export class EmailQueueService {
           { groupKey, count: group?.jobDetails?.length ?? 0 },
           `[EmailQueueService]: Queue not found for group during bulk add. Skipping jobs.`
         );
-        // Optionally: handle these skipped jobs (e.g., mark corresponding emails as failed)
         continue;
       }
 
       const queue = group.queue;
       const isBulk = !group.transactional;
       const bulkData = group.jobDetails.map((job) => ({
-        name: job.emailId, // Use emailId as job name (matches single queue logic)
+        name: job.emailId,
         data: {
           emailId: job.emailId,
           timestamp: job.timestamp ?? Date.now(),
@@ -261,7 +250,7 @@ export class EmailQueueService {
           teamId: job.teamId,
         },
         opts: {
-          jobId: job.emailId, // Use emailId as jobId
+          jobId: job.emailId,
           delay: job.delay,
           ...DEFAULT_QUEUE_OPTIONS,
           attempts: EMAIL_JOB_ATTEMPTS,
@@ -279,7 +268,6 @@ export class EmailQueueService {
             { err: error, queue: queue.name },
             `[EmailQueueService]: Failed to add bulk jobs to queue`
           );
-          // Optionally: handle bulk add failure (e.g., mark corresponding emails as failed)
         })
       );
     }
@@ -360,8 +348,8 @@ async function executeEmail(job: QueueEmailJob) {
 
   const domain = email?.domainId
     ? await db.domain.findUnique({
-        where: { id: email?.domainId },
-      })
+      where: { id: email?.domainId },
+    })
     : null;
 
   if (!email) {
@@ -408,8 +396,6 @@ async function executeEmail(job: QueueEmailJob) {
   const unsubUrl = job.data.unsubUrl;
   const isBulk = job.data.isBulk;
 
-  // Derive one-click unsubscribe URL for tracked marketing emails (campaign sends).
-  // The regular unsubUrl (HTML link) is kept for click-based clients (Outlook etc.).
   const unsubOneClickUrl =
     email.contactId && email.campaignId
       ? createOneClickUnsubUrl(email.contactId, email.campaignId)
@@ -436,7 +422,6 @@ async function executeEmail(job: QueueEmailJob) {
   }
 
   try {
-    // Check limits right before sending (cloud-only)
     const emailType = email.campaignId ? "MARKETING" : "TRANSACTIONAL";
     const limitCheck = await LimitService.checkEmailLimit(email.teamId, emailType);
     logger.info({ limitCheck }, `[EmailQueueService]: Limit check`);
@@ -488,14 +473,11 @@ async function executeEmail(job: QueueEmailJob) {
       `[EmailQueueService]: Email sent`
     );
 
-    // Delete attachments and headers after sending the email
     await db.email.update({
       where: { id: email.id },
       data: { sesEmailId: messageId, text, attachments: null, headers: null },
     });
 
-    // Report email sent to Stripe for metered billing (overage charges)
-    // Only report for cloud deployments with paying customers
     if (env.NEXT_PUBLIC_IS_CLOUD) {
       try {
         const team = await db.team.findUnique({
@@ -525,7 +507,6 @@ async function executeEmail(job: QueueEmailJob) {
           { emailId: email.id, err: meterError },
           "[EmailQueueService]: Failed to report meter event to Stripe — non-fatal, continuing"
         );
-        // Don't throw — metering failure shouldn't fail the email sending
       }
     }
   } catch (error: any) {
@@ -534,11 +515,9 @@ async function executeEmail(job: QueueEmailJob) {
         { emailId: email.id, err: error, attempt: job.attemptsMade + 1, maxAttempts: EMAIL_JOB_ATTEMPTS },
         "[EmailQueueService]: Transient SES error — will retry"
       );
-      // Re-throw so BullMQ retries with exponential backoff
       throw error;
     }
 
-    // Permanent failure — mark and do not retry
     logger.error({ emailId: email.id, err: error }, "[EmailQueueService]: Permanent SES error");
     await db.emailEvent.create({
       data: {

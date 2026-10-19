@@ -10,6 +10,7 @@ import {
   isDomainVerificationDue,
   refreshDomainVerification,
 } from "~/server/service/domain-service";
+import { DomainRegionService } from "~/server/service/domain-region-service";
 
 let initialized = false;
 
@@ -32,6 +33,29 @@ export async function runDueDomainVerifications() {
       logger.error(
         { err: error, domainId: domain.id },
         "[DomainVerificationJob]: Failed to refresh domain verification",
+      );
+    }
+  }
+
+  await runRegionMoves();
+}
+
+async function runRegionMoves() {
+  const domains = await db.domain.findMany({
+    where: { OR: [{ pendingRegion: { not: null } }, { retiredRegion: { not: null } }] },
+  });
+
+  for (const domain of domains) {
+    try {
+      if (domain.pendingRegion) {
+        await DomainRegionService.refresh(domain);
+      } else {
+        await DomainRegionService.retireOldRegionIfDue(domain);
+      }
+    } catch (error) {
+      logger.error(
+        { err: error, domainId: domain.id },
+        "[DomainVerificationJob]: Failed to process region move",
       );
     }
   }

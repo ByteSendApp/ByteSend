@@ -30,14 +30,12 @@ export async function sendSignUpEmail(
 
   const subject = "Sign in to ByteSend";
 
-  // Use jsx-email template for beautiful HTML
   const html = await renderOtpEmail({
     otpCode: token.toUpperCase(),
     loginUrl: url,
     hostName: host,
   });
 
-  // Fallback text version
   const text = `Hey,\n\nYou can sign in to ByteSend by clicking the below URL:\n${url}\n\nYou can also use this OTP: ${token}\n\nThanks,\nByteSend Team`;
 
   await sendMail(email, subject, text, html);
@@ -57,13 +55,11 @@ export async function sendTeamInviteEmail(
 
   const subject = "You have been invited to join ByteSend";
 
-  // Use jsx-email template for beautiful HTML
   const html = await renderTeamInviteEmail({
     teamName,
     inviteUrl: url,
   });
 
-  // Fallback text version
   const text = `Hey,\n\nYou have been invited to join the team ${teamName} on ByteSend.\n\nYou can accept the invitation by clicking the below URL:\n${url}\n\nThanks,\nByteSend Team`;
 
   await sendMail(email, subject, text, html);
@@ -159,7 +155,6 @@ export async function sendMail(
       return;
     }
 
-    // Prefer verified/active domains; fall back to any domain
     const domains = allDomains.filter((d) => d.status === "VERIFIED" || d.status === "ACTIVE");
     const domain = domains[0] ?? allDomains[0]!;
 

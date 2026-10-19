@@ -1,4 +1,4 @@
-import { Prisma, type Plan } from "@prisma/client";
+import { EmailStatus, Prisma, type Plan } from "@prisma/client";
 import { z } from "zod";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
@@ -15,6 +15,21 @@ import { toPlainHtml } from "~/server/utils/email-content";
 import { Target } from "lucide-react";
 import { createCheckoutSessionForTeam, type CheckoutPlan } from "~/server/billing/payments";
 import { TeamService } from "~/server/service/team-service";
+import { AdminOverviewService } from "~/server/service/admin-overview-service";
+import { AdminAuditService, diffFields } from "~/server/service/admin-audit-service";
+import { AdminDeliverabilityService } from "~/server/service/admin-deliverability-service";
+import { AdminDetailService } from "~/server/service/admin-detail-service";
+import { BlacklistService } from "~/server/service/blacklist-service";
+import { DomainRegionService } from "~/server/service/domain-region-service";
+import { AdminSpamService } from "~/server/service/admin-spam-service";
+import { AdminEmailService, ADMIN_EMAIL_MAX_WINDOW_DAYS } from "~/server/service/admin-email-service";
+import { ADMIN_AUDIT_TARGET_TYPES } from "~/lib/constants/admin-audit";
+
+const BLACKLIST_RECHECK_COOLDOWN_MS = 5 * 60 * 1000;
+
+function actorFrom(ctx: { session: { user: { id: number; email?: string | null } } }) {
+  return { id: ctx.session.user.id, email: ctx.session.user.email };
+}
 
 const userAdminSelection = {
   id: true,
@@ -117,6 +132,236 @@ const adminWebhookSelection = {
 } as const;
 
 export const adminRouter = createTRPCRouter({
+  getOverview: adminProcedure
+    .input(z.object({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]) }))
+    .query(async ({ input }) => AdminOverviewService.getOverview(input.days)),
+
+  getSesQuotas: adminProcedure.query(async () => AdminOverviewService.getSesQuotas()),
+
+  listDeliverability: adminProcedure
+    .input(
+      z.object({
+        atRiskOnly: z.boolean().default(false),
+        query: z.string().trim().max(200).optional(),
+        limit: z.number().int().min(1).max(500).default(200),
+      }),
+    )
+    .query(async ({ input }) =>
+      AdminDeliverabilityService.getTeamStats({
+        atRiskOnly: input.atRiskOnly,
+        query: input.query || undefined,
+        limit: input.limit,
+      }),
+    ),
+
+  setTeamBlocked: adminProcedure
+    .input(
+      z.object({
+        teamId: z.number().int(),
+        isBlocked: z.boolean(),
+        reason: z.string().trim().min(3, "Give a short reason").max(500),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const team = await db.team.findUnique({ where: { id: input.teamId }, select: { id: true } });
+      if (!team) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
+      }
+      return AdminDeliverabilityService.setTeamBlocked({ actor: actorFrom(ctx), ...input });
+    }),
+
+  getTeamDetail: adminProcedure
+    .input(z.object({ teamId: z.number().int() }))
+    .query(async ({ input }) => {
+      const team = await AdminDetailService.getTeamDetail(input.teamId);
+      if (!team) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
+      }
+      return team;
+    }),
+
+  getUserDetail: adminProcedure
+    .input(z.object({ userId: z.number().int() }))
+    .query(async ({ input }) => {
+      const user = await AdminDetailService.getUserDetail(input.userId);
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+      return user;
+    }),
+
+  globalSearch: adminProcedure
+    .input(z.object({ query: z.string().trim().min(2).max(200) }))
+    .query(async ({ input }) => AdminDetailService.globalSearch(input.query)),
+
+  listEmails: adminProcedure
+    .input(
+      z
+        .object({
+          cursor: z.string().optional(),
+          limit: z.number().int().min(1).max(100).default(50),
+          from: z.date(),
+          to: z.date(),
+          teamId: z.number().int().optional(),
+          domainId: z.number().int().optional(),
+          statuses: z.array(z.nativeEnum(EmailStatus)).max(20).optional(),
+          recipient: z.string().trim().max(320).optional(),
+          sender: z.string().trim().max(320).optional(),
+          subject: z.string().trim().max(200).optional(),
+        })
+        .refine((value) => value.from <= value.to, { message: "Start must be before end" })
+        .refine(
+          (value) => value.to.getTime() - value.from.getTime() <= ADMIN_EMAIL_MAX_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+          { message: `Pick a window of ${ADMIN_EMAIL_MAX_WINDOW_DAYS} days or less` },
+        ),
+    )
+    .query(async ({ input }) =>
+      AdminEmailService.list({
+        ...input,
+        recipient: input.recipient || undefined,
+        sender: input.sender || undefined,
+        subject: input.subject || undefined,
+      }),
+    ),
+
+  getEmail: adminProcedure
+    .input(z.object({ emailId: z.string().min(1).max(64) }))
+    .query(async ({ input }) => {
+      const email = await AdminEmailService.get(input.emailId);
+      if (!email) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Email not found" });
+      }
+      return email;
+    }),
+
+  viewEmailContent: adminProcedure
+    .input(z.object({ emailId: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      const content = await AdminEmailService.viewContent(input.emailId, actorFrom(ctx));
+      if (!content) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Email not found" });
+      }
+      return content;
+    }),
+
+  getBlacklistOverview: adminProcedure.query(async () => BlacklistService.getOverview()),
+
+  recheckDomainBlacklist: adminProcedure
+    .input(z.object({ domainId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const domain = await db.domain.findUnique({
+        where: { id: input.domainId },
+        select: { id: true, name: true, teamId: true },
+      });
+      if (!domain) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
+      }
+
+      const lastCheck = await db.domainBlacklistCheck.findFirst({
+        where: { domainId: domain.id },
+        orderBy: { checkedAt: "desc" },
+        select: { checkedAt: true },
+      });
+      if (lastCheck && Date.now() - lastCheck.checkedAt.getTime() < BLACKLIST_RECHECK_COOLDOWN_MS) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "This domain was checked in the last 5 minutes",
+        });
+      }
+
+      const { results } = await BlacklistService.checkDomain(domain);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "domain.blacklist_recheck",
+        targetType: "domain",
+        targetId: domain.id,
+        metadata: {
+          domainName: domain.name,
+          teamId: domain.teamId,
+          listed: results.filter((result) => result.status === "LISTED").map((result) => result.list).join(", "),
+        },
+      });
+      return results;
+    }),
+
+  adminStartRegionMove: adminProcedure
+    .input(z.object({ domainId: z.number().int(), region: z.string().min(1).max(32) }))
+    .mutation(async ({ ctx, input }) => {
+      const domain = await db.domain.findUnique({ where: { id: input.domainId } });
+      if (!domain) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
+      }
+      await DomainRegionService.start(domain, input.region);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "domain.region_move.start",
+        targetType: "domain",
+        targetId: domain.id,
+        metadata: { domainName: domain.name, teamId: domain.teamId, from: domain.region, to: input.region },
+      });
+      return { success: true };
+    }),
+
+  adminCancelRegionMove: adminProcedure
+    .input(z.object({ domainId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const domain = await db.domain.findUnique({ where: { id: input.domainId } });
+      if (!domain) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
+      }
+      await DomainRegionService.cancel(domain);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "domain.region_move.cancel",
+        targetType: "domain",
+        targetId: domain.id,
+        metadata: { domainName: domain.name, teamId: domain.teamId, from: domain.region, to: domain.pendingRegion },
+      });
+      return { success: true };
+    }),
+
+  listSpamScans: adminProcedure
+    .input(
+      z.object({
+        filter: z.enum(["held", "flagged", "reviewed"]).default("held"),
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(100).default(25),
+      }),
+    )
+    .query(async ({ input }) => AdminSpamService.list(input)),
+
+  countHeldSpam: adminProcedure.query(async () => AdminSpamService.countHeld()),
+
+  releaseSpamHold: adminProcedure
+    .input(z.object({ scanId: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      await AdminSpamService.release(input.scanId, actorFrom(ctx));
+      return { success: true };
+    }),
+
+  rejectSpamHold: adminProcedure
+    .input(z.object({ scanId: z.string().min(1).max(64), reason: z.string().trim().min(3).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      await AdminSpamService.reject(input.scanId, actorFrom(ctx), input.reason);
+      return { success: true };
+    }),
+
+  listAuditLog: adminProcedure
+    .input(
+      z.object({
+        cursor: z.string().optional(),
+        limit: z.number().int().min(1).max(100).default(50),
+        action: z.string().max(64).optional(),
+        targetType: z.enum(ADMIN_AUDIT_TARGET_TYPES).optional(),
+        targetId: z.string().max(64).optional(),
+        actorId: z.number().int().optional(),
+        query: z.string().trim().max(200).optional(),
+        from: z.date().optional(),
+        to: z.date().optional(),
+      }),
+    )
+    .query(async ({ input }) => AdminAuditService.list(input)),
+
   getSesSettings: adminProcedure.query(async () => {
     return SesSettingsService.getAllSettings();
   }),
@@ -141,13 +386,25 @@ export const adminRouter = createTRPCRouter({
         transactionalQuota: z.number(),
       }),
     )
-    .mutation(async ({ input }) => {
-      return SesSettingsService.createSesSetting({
+    .mutation(async ({ ctx, input }) => {
+      const setting = await SesSettingsService.createSesSetting({
         region: input.region,
         bytesendUrl: input.bytesendUrl,
         sendingRateLimit: input.sendRate,
         transactionalQuota: input.transactionalQuota,
       });
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "ses.create",
+        targetType: "ses",
+        targetId: input.region,
+        metadata: {
+          bytesendUrl: input.bytesendUrl,
+          sendRate: input.sendRate,
+          transactionalQuota: input.transactionalQuota,
+        },
+      });
+      return setting;
     }),
 
   updateSesSettings: adminProcedure
@@ -158,24 +415,47 @@ export const adminRouter = createTRPCRouter({
         transactionalQuota: z.number(),
       }),
     )
-    .mutation(async ({ input }) => {
-      return SesSettingsService.updateSesSetting({
+    .mutation(async ({ ctx, input }) => {
+      const setting = await SesSettingsService.updateSesSetting({
         id: input.settingsId,
         sendingRateLimit: input.sendRate,
         transactionalQuota: input.transactionalQuota,
       });
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "ses.update",
+        targetType: "ses",
+        targetId: input.settingsId,
+        metadata: { sendRate: input.sendRate, transactionalQuota: input.transactionalQuota },
+      });
+      return setting;
     }),
 
   deleteSesSettings: adminProcedure
     .input(z.object({ settingsId: z.string() }))
-    .mutation(async ({ input }) => {
-      return SesSettingsService.deleteSesSetting(input.settingsId);
+    .mutation(async ({ ctx, input }) => {
+      const result = await SesSettingsService.deleteSesSetting(input.settingsId);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "ses.delete",
+        targetType: "ses",
+        targetId: input.settingsId,
+      });
+      return result;
     }),
 
   toggleSesSettingsActive: adminProcedure
     .input(z.object({ settingsId: z.string(), isActive: z.boolean() }))
-    .mutation(async ({ input }) => {
-      return SesSettingsService.toggleSesSettingActive(input.settingsId, input.isActive);
+    .mutation(async ({ ctx, input }) => {
+      const result = await SesSettingsService.toggleSesSettingActive(input.settingsId, input.isActive);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "ses.toggle",
+        targetType: "ses",
+        targetId: input.settingsId,
+        metadata: { isActive: input.isActive },
+      });
+      return result;
     }),
 
   getSetting: adminProcedure
@@ -215,7 +495,7 @@ export const adminRouter = createTRPCRouter({
         isBetaUser: z.boolean(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const user = await db.user.findUnique({
         where: { id: input.userId },
         select: userAdminSelection,
@@ -225,11 +505,19 @@ export const adminRouter = createTRPCRouter({
         throw new Error("User not found");
       }
 
-      return db.user.update({
+      const updated = await db.user.update({
         where: { id: input.userId },
         data: { isBetaUser: input.isBetaUser },
         select: userAdminSelection,
       });
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "user.beta.update",
+        targetType: "user",
+        targetId: input.userId,
+        metadata: { email: user.email, isBetaUser: input.isBetaUser },
+      });
+      return updated;
     }),
 
   setUserAdmin: founderProcedure
@@ -240,7 +528,6 @@ export const adminRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // Prevent the founder from removing their own admin (safety guard)
       const target = await db.user.findUnique({
         where: { id: input.userId },
         select: { id: true, email: true },
@@ -254,11 +541,19 @@ export const adminRouter = createTRPCRouter({
         throw new Error("Cannot modify the founder's admin status");
       }
 
-      return db.user.update({
+      const updated = await db.user.update({
         where: { id: input.userId },
         data: { isAdmin: input.isAdmin },
         select: userAdminSelection,
       });
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "user.admin.update",
+        targetType: "user",
+        targetId: input.userId,
+        metadata: { email: target.email, isAdmin: input.isAdmin },
+      });
+      return updated;
     }),
 
   banUser: adminProcedure
@@ -268,7 +563,7 @@ export const adminRouter = createTRPCRouter({
         isBanned: z.boolean(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const target = await db.user.findUnique({
         where: { id: input.userId },
         select: { id: true, email: true },
@@ -282,11 +577,19 @@ export const adminRouter = createTRPCRouter({
         throw new Error("Cannot ban the founder account");
       }
 
-      return db.user.update({
+      const updated = await db.user.update({
         where: { id: input.userId },
         data: { isBanned: input.isBanned },
         select: userAdminSelection,
       });
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: input.isBanned ? "user.ban" : "user.unban",
+        targetType: "user",
+        targetId: input.userId,
+        metadata: { email: target.email },
+      });
+      return updated;
     }),
 
   listUsers: adminProcedure
@@ -301,9 +604,11 @@ export const adminRouter = createTRPCRouter({
       const { page, pageSize, query } = input;
       const skip = (page - 1) * pageSize;
 
+      const numericId = query && /^\d+$/.test(query) ? Number(query) : null;
       const where: Prisma.UserWhereInput = query
         ? {
           OR: [
+            ...(numericId ? [{ id: numericId }] : []),
             { email: { contains: query, mode: "insensitive" } },
             { name: { contains: query, mode: "insensitive" } },
           ],
@@ -398,9 +703,11 @@ export const adminRouter = createTRPCRouter({
       const { page, pageSize, query } = input;
       const skip = (page - 1) * pageSize;
 
+      const numericId = query && /^\d+$/.test(query) ? Number(query) : null;
       const where: Prisma.TeamWhereInput = query
         ? {
           OR: [
+            ...(numericId ? [{ id: numericId }] : []),
             { name: { contains: query, mode: "insensitive" } },
             { billingEmail: { contains: query, mode: "insensitive" } },
             {
@@ -410,6 +717,8 @@ export const adminRouter = createTRPCRouter({
                 },
               },
             },
+            { domains: { some: { name: { contains: query, mode: "insensitive" } } } },
+            { subscription: { some: { id: { equals: query } } } },
           ],
         }
         : {};
@@ -432,9 +741,7 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         teamId: z.number(),
-        // -1 = unlimited (no rate limit), 1–10000 = custom cap
         apiRateLimit: z.number().int().min(-1).max(10_000),
-        // -1 = unlimited override, 0 = use plan default, positive = custom hard cap
         dailyEmailLimit: z.number().int().min(-1).max(10_000_000),
         isBlocked: z.boolean(),
         plan: z.enum(["FREE", "HOBBY", "LITE", "BASIC", "LIFETIME"]),
@@ -442,12 +749,21 @@ export const adminRouter = createTRPCRouter({
         extraMemberSlots: z.number().int().min(0).max(1_000).optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { teamId, ...data } = input;
 
       const existingTeam = await db.team.findUnique({
         where: { id: teamId },
-        select: { id: true },
+        select: {
+          id: true,
+          name: true,
+          apiRateLimit: true,
+          dailyEmailLimit: true,
+          isBlocked: true,
+          plan: true,
+          extraDomainSlots: true,
+          extraMemberSlots: true,
+        },
       });
 
       if (!existingTeam) {
@@ -462,15 +778,20 @@ export const adminRouter = createTRPCRouter({
 
       await TeamService.invalidateTeamCache(teamId);
 
+      const changes = diffFields(existingTeam, data);
+      if (Object.keys(changes).length > 0) {
+        await AdminAuditService.record({
+          actor: actorFrom(ctx),
+          action: "team.settings.update",
+          targetType: "team",
+          targetId: teamId,
+          metadata: { teamName: existingTeam.name, changes } as Prisma.InputJsonObject,
+        });
+      }
+
       return updatedTeam;
     }),
 
-  /**
-   * Admin-driven plan assignment for cloud deployments.
-   * - "complimentary": sets plan + isActive directly in DB (no Stripe charge)
-   * - "checkout_link": creates a Stripe Checkout session for the team and returns
-   *   the URL for the admin to share with the team (team pays via Stripe)
-   */
   adminAssignPlan: adminProcedure
     .input(
       z.object({
@@ -507,10 +828,16 @@ export const adminRouter = createTRPCRouter({
           { teamId, plan, method: "complimentary" },
           "[AdminRouter]: Plan assigned complimentarily",
         );
+        await AdminAuditService.record({
+          actor: actorFrom(ctx),
+          action: "team.plan.assign",
+          targetType: "team",
+          targetId: teamId,
+          metadata: { teamName: updatedTeam.name, plan },
+        });
         return { method: "complimentary" as const, team: updatedTeam, url: null };
       }
 
-      // checkout_link — create a Stripe Checkout session for the team
       if (plan === "FREE") {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -523,6 +850,13 @@ export const adminRouter = createTRPCRouter({
         { teamId, plan, sessionId: session.id },
         "[AdminRouter]: Checkout session created for team",
       );
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "team.plan.checkout_link",
+        targetType: "team",
+        targetId: teamId,
+        metadata: { plan, checkoutSessionId: session.id },
+      });
       return { method: "checkout_link" as const, team: null, url: session.url };
     }),
 
@@ -664,8 +998,11 @@ export const adminRouter = createTRPCRouter({
 
   adminForceVerifyDomain: adminProcedure
     .input(z.object({ domainId: z.number() }))
-    .mutation(async ({ input }) => {
-      const domain = await db.domain.findUnique({ where: { id: input.domainId } });
+    .mutation(async ({ ctx, input }) => {
+      const domain = await db.domain.findUnique({
+        where: { id: input.domainId },
+        select: { id: true, name: true, status: true, teamId: true },
+      });
       if (!domain) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
       }
@@ -679,33 +1016,57 @@ export const adminRouter = createTRPCRouter({
         select: adminDomainSelection,
       });
       logger.info({ domainId: input.domainId }, "[AdminRouter]: Domain force-verified");
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "domain.force_verify",
+        targetType: "domain",
+        targetId: input.domainId,
+        metadata: { domainName: domain.name, teamId: domain.teamId, previousStatus: domain.status },
+      });
       return updated;
     }),
 
   adminDeleteDomain: adminProcedure
     .input(z.object({ domainId: z.number() }))
-    .mutation(async ({ input }) => {
-      const domain = await db.domain.findUnique({ where: { id: input.domainId } });
+    .mutation(async ({ ctx, input }) => {
+      const domain = await db.domain.findUnique({
+        where: { id: input.domainId },
+        select: { id: true, name: true, teamId: true, region: true },
+      });
       if (!domain) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
       }
       await db.domain.delete({ where: { id: input.domainId } });
       logger.info({ domainId: input.domainId }, "[AdminRouter]: Domain deleted by admin");
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "domain.delete",
+        targetType: "domain",
+        targetId: input.domainId,
+        metadata: { domainName: domain.name, teamId: domain.teamId, region: domain.region },
+      });
       return { success: true };
     }),
 
   adminDeleteTeam: adminProcedure
     .input(z.object({ teamId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const team = await db.team.findUnique({
         where: { id: input.teamId },
-        select: { id: true, name: true },
+        select: { id: true, name: true, plan: true },
       });
       if (!team) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
       }
       await db.team.delete({ where: { id: input.teamId } });
       logger.info({ teamId: input.teamId, teamName: team.name }, "[AdminRouter]: Team deleted by admin");
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: "team.delete",
+        targetType: "team",
+        targetId: input.teamId,
+        metadata: { teamName: team.name, plan: team.plan },
+      });
       return { success: true };
     }),
 
@@ -759,7 +1120,7 @@ export const adminRouter = createTRPCRouter({
           ? Prisma.sql`AND d."date" = ${today}`
           : Prisma.sql`AND d."date" >= ${monthStart}`
         }
-        ${paidOnly ? Prisma.sql`AND t."plan" = 'BASIC'` : Prisma.sql``}
+        ${paidOnly ? Prisma.sql`AND t."plan" <> 'FREE'` : Prisma.sql``}
         GROUP BY d."teamId", t."name", t."plan"
         ORDER BY sent DESC
       `;

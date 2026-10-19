@@ -5,10 +5,6 @@ import { METER_EVENT_NAMES } from "@bytesend/lib";
 
 type EmailUsageType = "marketing" | "transactional";
 
-/**
- * Send usage events to Stripe Billing Meters.
- * Separate meters for marketing and transactional emails.
- */
 export async function sendUsageToStripe(
   customerId: string,
   usage: number,

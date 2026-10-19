@@ -3,8 +3,8 @@ import { canonicalizePayload } from "~/server/utils/idempotency";
 import { ByteSendApiError } from "~/server/public-api/api-error";
 import { logger } from "~/server/logger/log";
 
-const IDEMPOTENCY_RESULT_TTL_SECONDS = 24 * 60 * 60; // 24h
-const IDEMPOTENCY_LOCK_TTL_SECONDS = 60; // 60s
+const IDEMPOTENCY_RESULT_TTL_SECONDS = 24 * 60 * 60;
+const IDEMPOTENCY_LOCK_TTL_SECONDS = 60;
 
 export type IdempotencyRecord = {
   bodyHash: string;
@@ -96,7 +96,6 @@ export const IdempotencyService = {
       logContext,
     } = options;
 
-    // Validate idempotency key length
     if (idemKey !== undefined && (idemKey.length < 1 || idemKey.length > 256)) {
       throw new ByteSendApiError({
         code: "BAD_REQUEST",
@@ -104,15 +103,12 @@ export const IdempotencyService = {
       });
     }
 
-    // If no idempotency key, just execute the operation
     if (!idemKey) {
       return await operation();
     }
 
-    // Calculate payload hash
     const { bodyHash: payloadHash } = canonicalizePayload(payload);
 
-    // Check for existing result
     const existing = await this.getResult(teamId, idemKey);
     if (existing) {
       if (existing.bodyHash === payloadHash) {
@@ -126,10 +122,8 @@ export const IdempotencyService = {
       });
     }
 
-    // Try to acquire lock
     const lockAcquired = await this.acquireLock(teamId, idemKey);
     if (!lockAcquired) {
-      // Check again in case another request completed
       const again = await this.getResult(teamId, idemKey);
       if (again) {
         if (again.bodyHash === payloadHash) {
@@ -154,10 +148,8 @@ export const IdempotencyService = {
     }
 
     try {
-      // Execute the operation
       const result = await operation();
 
-      // Store the result for future idempotency checks
       await this.setResult(teamId, idemKey, {
         bodyHash: payloadHash,
         emailIds: extractEmailIds(result),
@@ -165,7 +157,6 @@ export const IdempotencyService = {
 
       return result;
     } finally {
-      // Always release the lock
       await this.releaseLock(teamId, idemKey);
     }
   },

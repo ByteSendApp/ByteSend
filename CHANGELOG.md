@@ -11,6 +11,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-10-18
+
+### Added
+
+#### Brand
+- **New identity: "Speed Ribbon"** — nested envelope-arrows trailing into motion lines, in the existing four blues (`#85FCFF`, `#00C3D6`, `#1FB5FF`, `#0057FF`) on ink `#05070D`, with a two-tone Sora wordmark; ships in full, compact (≤40px) and glyph (≤20px) detail levels so it stays legible down to a 16px favicon
+- **Brand asset kit** (`public/brand/`) — SVG marks (colour, mono black/white, compact, glyph), light/dark wordmarks, 1024px app icon, social avatar, GitHub social preview (1280×640), Discord banner (960×540) and invite splash (1920×1080), X/Twitter header (1500×500)
+- **`pnpm --filter web brand:generate`** — regenerates every logo, favicon, app icon and banner from the shared geometry in `src/lib/brand.tsx`
+- **Open Graph & Twitter images** — generated `opengraph-image` / `twitter-image` routes for the site and the changelog using `next/og`, replacing the externally hosted share image
+
+#### Admin Panel
+- **Overview dashboard** (`/admin`) — 7/30/90-day KPIs with prior-period deltas, sending and signup charts, SES quota and sandbox status per region, a "Needs attention" panel (teams over bounce/complaint warning thresholds, blocked teams, failing domains) and recent admin activity
+- **Grouped admin navigation** and **Ctrl/⌘+K global search** across users, teams, domains and emails
+- **Audit log** (`/admin/audit`) — every admin mutation is recorded with actor, target and a before/after diff; filterable, and shown per team and per user
+- **Team detail pages** (`/admin/teams/[id]`) — usage, 7-day deliverability gauges, members, domains (with blacklist and region-move status), API keys, webhooks, subscription, limits, plan assignment, audited block/unblock with a reason, and typed-confirmation delete
+- **User detail pages** (`/admin/users/[id]`) — flags, 2FA, sign-in methods, active sessions, backup emails and teams
+- **Deliverability** (`/admin/deliverability`) — every team's 7-day hard-bounce and complaint rates against the enforcement thresholds, with block/unblock
+- **Email explorer** (`/admin/emails`) — cross-team sending history with status, recipient, sender and subject filters and an event timeline; viewing a message body is audited and rendered in a fully sandboxed frame
+- **Domain blacklist monitoring** (`/admin/blacklists`) — verified sending domains checked daily against Spamhaus DBL, SURBL and URIBL with Discord alerts on new listings and manual re-checks; refused public-resolver queries report "Unknown" instead of a false "clean"
+- **Spam review** (`/admin/spam`) — queue of held and flagged outbound messages with rule hits, release and reject
+
+#### Sending
+- **Outbound spam detection** — rule-based scoring for phishing phrases, brand impersonation, mismatched/IP/shortened/punycode links, `javascript:`/`data:` links, executable attachments, hidden text and more; score ≥ 5 is flagged and sent, ≥ 10 is held for review with the new `HELD` email status; campaigns are scanned once at launch; five holds in 24 hours blocks the team automatically
+- **Change sending region** — team admins can move a verified domain to another SES region from the domain page with no downtime: the new identity is registered under a region-specific DKIM selector, sending stays on the old region until the new DKIM and MAIL FROM verify, then switches automatically; the old identity is retired 24 hours later
+
+#### Account
+- **Connected accounts** — connect, reconnect and disconnect GitHub, Google and Discord from account settings; "Use this email" adopts a provider's email through the existing two-step email-change verification
+- Email changes are now available to users who signed up with OAuth
+
+### Changed
+- **Campaign scheduler** — skips the database entirely while no campaign is due (Redis idle flag, cleared whenever a campaign is scheduled, resumed or sent), and registers its tick with `upsertJobScheduler` after removing stale repeatable jobs left by earlier tick intervals
+- **Prisma query logging** is now opt-in in development via `PRISMA_LOG_QUERIES=true`
+- Teams and users admin pages are now searchable lists that open the new detail pages; domains, webhooks, billing and email analytics share the refreshed admin layout
+- Bounce/complaint thresholds moved to `src/lib/constants/deliverability.ts`, shared by `LimitService` and the admin views
+
+### Fixed
+- **Security: OAuth account takeover** — sign-in with GitHub, Google or Discord now requires the provider to have verified the email address; previously an unverified provider email could be linked to an existing ByteSend account
+- Webhook-call cleanup job was never started, so call history was never pruned
+- "Paid users only" in admin email analytics only counted the BASIC plan
+- Admin team settings reset dropped extra domain/member slots after saving; literal `…`/`–` text in the teams page
+- Web manifest pointed at icon paths that did not exist
+- Discord notification icon URL now uses `bytesend.cloud`
+
+### Documentation
+- New guides: [Spam Protection](https://docs.bytesend.cloud/guides/spam-protection), [Changing Sending Region](https://docs.bytesend.cloud/guides/sending-regions), [Connected Accounts](https://docs.bytesend.cloud/guides/connected-accounts) and, for self-hosters, [Admin Panel](https://docs.bytesend.cloud/self-hosting/admin-panel)
+- Team roles corrected to Admin and Member (the guide previously described Editor and Viewer roles that don't exist), and built-in two-factor authentication documented
+- `HELD` added to the email status enums in the OpenAPI spec; TypeScript SDK types regenerated (also picks up the previously missing `/v1/smtp/auth` types)
+- TypeScript SDK README now installs the correct package, `bytesend-js`
+- Docs site and repository README use the new brand
+
+### Migrations
+- `20261018200000_add_admin_audit_log`, `20261018210000_add_domain_blacklist_checks`, `20261018220000_add_account_email`, `20261018230000_add_domain_region_move`, `20261019000000_add_spam_scans`
+
+### Environment
+- `SPAMHAUS_DQS_KEY` (optional) — Spamhaus Data Query Service key for reliable DBL lookups
+- `PRISMA_LOG_QUERIES` (optional, development)
+
+---
+
 ## [0.3.2] - 2026-06-23
 
 ### Added

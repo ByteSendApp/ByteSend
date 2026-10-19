@@ -17,16 +17,15 @@ export async function addApiKey({
   domainId?: number;
 }) {
   try {
-    // Validate domain ownership if domainId is provided
     if (domainId !== undefined) {
       const domain = await db.domain.findUnique({
-        where: { 
+        where: {
           id: domainId,
-          teamId: teamId 
+          teamId: teamId
         },
         select: { id: true },
       });
-      
+
       if (!domain) {
         throw new Error("DOMAIN_NOT_FOUND");
       }

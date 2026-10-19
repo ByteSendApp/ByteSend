@@ -5,9 +5,6 @@ import { EmailContent } from "~/types";
 import { emailSchema } from "../../schemas/email-schema";
 import { IdempotencyService } from "~/server/service/idempotency-service";
 
-// Define the schema for a single email within the bulk request
-// This is similar to the schema in send-email.ts but without the top-level 'required'
-// Removed inline emailSchema definition
 
 const route = createRoute({
   method: "post",
@@ -35,7 +32,6 @@ Entries expire after 24 hours. Use a unique key per logical send (for example, a
       required: true,
       content: {
         "application/json": {
-          // Use the imported schema in an array
           schema: z.array(emailSchema).max(100, {
             message:
               "Cannot send more than 100 emails in a single bulk request",
@@ -48,7 +44,6 @@ Entries expire after 24 hours. Use a unique key per logical send (for example, a
     200: {
       content: {
         "application/json": {
-          // Return an array of objects with the created email IDs
           schema: z.object({
             data: z.array(z.object({ emailId: z.string() })),
           }),
@@ -56,7 +51,6 @@ Entries expire after 24 hours. Use a unique key per logical send (for example, a
       },
       description: "List of successfully created email IDs",
     },
-    // Add other potential error responses based on sendBulkEmails logic if needed
   },
 });
 

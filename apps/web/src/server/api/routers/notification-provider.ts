@@ -6,7 +6,6 @@ import { NotificationProviderService } from "~/server/service/notification-provi
 const PROVIDER_TYPES_ENUM = z.enum(Object.values(NotificationProviderType) as [string, ...string[]]);
 const EVENT_TYPES_ENUM = z.enum(Object.values(NotificationEventType) as [string, ...string[]]);
 
-// Config schemas for each provider type
 const discordConfigSchema = z.object({
   webhookUrl: z.string().url(),
   mentionRole: z.string().optional(),
@@ -35,7 +34,6 @@ const customWebhookConfigSchema = z.object({
   secret: z.string().optional(),
 });
 
-// Union schema that validates based on type
 const configSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("DISCORD"), config: discordConfigSchema }),
   z.object({ type: z.literal("SLACK"), config: slackConfigSchema }),
@@ -45,25 +43,16 @@ const configSchema = z.discriminatedUnion("type", [
 ]).transform((data) => ({ type: data.type, ...data.config }));
 
 export const notificationProviderRouter = createTRPCRouter({
-  /**
-   * List all notification providers for a team
-   */
   list: teamProcedure.query(async ({ ctx }) => {
     return NotificationProviderService.listProviders(ctx.team.id);
   }),
 
-  /**
-   * Get a specific notification provider
-   */
   getById: teamProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       return NotificationProviderService.getProvider(input.id, ctx.team.id);
     }),
 
-  /**
-   * Create a new notification provider
-   */
   create: teamProcedure
     .input(
       z.object({
@@ -91,9 +80,6 @@ export const notificationProviderRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Update a notification provider
-   */
   update: teamProcedure
     .input(
       z.object({
@@ -123,9 +109,6 @@ export const notificationProviderRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Delete a notification provider
-   */
   delete: teamProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -133,9 +116,6 @@ export const notificationProviderRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Test a notification provider by sending a test message
-   */
   test: teamProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -143,9 +123,6 @@ export const notificationProviderRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Get notification logs for a provider
-   */
   getLogs: teamProcedure
     .input(
       z.object({
@@ -156,7 +133,6 @@ export const notificationProviderRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      // Verify provider belongs to team
       await NotificationProviderService.getProvider(input.providerId, ctx.team.id);
 
       return await ctx.db.notificationLog.findMany({
@@ -171,9 +147,6 @@ export const notificationProviderRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Get notification statistics for a team
-   */
   getStats: teamProcedure.query(async ({ ctx }) => {
     const providers = await ctx.db.notificationProvider.findMany({
       where: { teamId: ctx.team.id },

@@ -451,10 +451,10 @@ function VersionInfo() {
   const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/version", { cache: "no-store" })
+    fetch("/api/version")
       .then((r) => r.json())
       .then((data: { version: string }) => setVersion(data.version))
-      .catch(() => setVersion("v0.2.1"));
+      .catch(() => setVersion("unknown"));
   }, []);
 
   return (

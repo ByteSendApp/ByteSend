@@ -58,6 +58,7 @@ export type EmailStatus =
   | "FAILED"
   | "CANCELLED"
   | "SUPPRESSED"
+  | "HELD"
   | "OPENED"
   | "CLICKED"
   | "SCHEDULED";

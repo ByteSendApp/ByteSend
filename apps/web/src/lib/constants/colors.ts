@@ -16,4 +16,5 @@ export const EMAIL_COLORS: Record<EmailStatus | "total", string> = {
   RENDERING_FAILURE: "bg-[#d20f39] dark:bg-[#f38ba8]",
   CANCELLED: "bg-gray-200 dark:bg-gray-400",
   SUPPRESSED: "bg-gray-200 dark:bg-gray-400",
+  HELD: "bg-[#df8e1d] dark:bg-[#F9E2AF]",
 };

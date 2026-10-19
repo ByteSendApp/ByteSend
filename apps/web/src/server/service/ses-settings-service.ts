@@ -45,12 +45,6 @@ export class SesSettingsService {
     return Object.values(this.cache);
   }
 
-  /**
-   * Creates a new setting in AWS for the given region and bytesendUrl
-   *
-   * @param region
-   * @param bytesendUrl
-   */
   public static async createSesSetting({
     region,
     bytesendUrl,
@@ -70,10 +64,6 @@ export class SesSettingsService {
     const parsedUrl = bytesendUrl.endsWith("/")
       ? bytesendUrl.substring(0, bytesendUrl.length - 1)
       : bytesendUrl;
-
-    // Skip URL reachability check in self-hosted mode — the server cannot
-    // reliably fetch itself, and the SNS subscription confirm flow handles
-    // callback validation after the fact.
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       const bytesendUrlValidation = await isValidBytesendUrl(parsedUrl);
       if (!bytesendUrlValidation.isValid) {
@@ -115,8 +105,8 @@ export class SesSettingsService {
       if (isLocalEndpoint) {
         logger.warn(
           { callbackUrl: setting.callbackUrl },
-          "Skipping SNS subscription — AWS does not allow subscribing to localhost/private endpoints. " +
-            "Use a public tunnel (e.g. ngrok) and re-add the SES configuration with the public URL to enable SNS callbacks."
+          "Skipping SNS subscription AWS does not allow subscribing to localhost/private endpoints. " +
+          "Use a public tunnel (e.g. ngrok) and re-add the SES configuration with the public URL to enable SNS callbacks."
         );
       } else {
         await sns.subscribeEndpoint(
@@ -266,14 +256,6 @@ export class SesSettingsService {
   }
 }
 
-/**
- * Creates a new configuration set in AWS for given region
- * Totally consist of 4 configs.
- * 1. General - for general events
- * 2. Click - for click tracking
- * 3. Open - for open tracking
- * 4. Full - for click and open tracking
- */
 async function registerConfigurationSet(setting: SesSetting) {
   if (!setting.topicArn) {
     throw new Error("Setting does not have a topic ARN");

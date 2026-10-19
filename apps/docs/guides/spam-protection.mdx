@@ -1,0 +1,68 @@
+---
+title: Spam Protection
+description: "How ByteSend screens outbound email, what a held message means, and how to avoid false positives"
+icon: shield-halved
+---
+
+## Overview
+
+Every email you send through the API, the SMTP relay or a campaign is scored by ByteSend's spam protection before it is queued. It protects your domain's reputation — and every other customer's — from compromised API keys, phishing and accidental spam.
+
+Most mail never notices it: ordinary transactional email such as password resets, verification codes and receipts scores well below the thresholds.
+
+| Score | What happens |
+| --- | --- |
+| Below **5** | Sent normally |
+| **5 – 9** (flagged) | Sent normally, and recorded for review |
+| **10 or more** (held) | Not sent. The email gets the `HELD` status until ByteSend reviews it |
+
+---
+
+## What is checked
+
+Each signal adds to the score. Scores are capped per category, so a single strong phrase cannot hold a message on its own.
+
+| Signal | Example |
+| --- | --- |
+| Phishing language | "Verify your account", "your account has been suspended", "unusual sign-in activity" |
+| Brand impersonation | A sender name of "PayPal Security" sent from a domain that isn't PayPal's |
+| Misleading links | Link text that shows one domain while the link goes to another |
+| Risky links | Links to raw IP addresses, URL shorteners, punycode look-alike domains, or `javascript:` / `data:` URLs |
+| Dangerous attachments | Executables and macro-enabled documents such as `.exe`, `.js`, `.iso`, `.docm`, `.xlsm` |
+| Spam patterns | "100% free", "act now", ALL-CAPS subjects, `!!!`, image-only bodies, hidden text |
+| Blocklisted links | Links to domains on the Spamhaus Domain Block List (when enabled on the instance) |
+| New account | A small extra weight for teams created in the last 7 days |
+
+---
+
+## Held emails
+
+When an email is held:
+
+- The API still accepts the request and returns the email ID, so your integration does not error.
+- The email's status is `HELD`, and its event timeline explains that it is waiting for review.
+- ByteSend reviews it and either **releases** it (it is queued and sent as normal) or **rejects** it (its status becomes `REJECTED` and it is never sent).
+
+If you subscribe to [webhooks](/guides/webhooks), you receive the normal events for a released email once it is sent.
+
+### Campaigns
+
+Campaigns are scored once, when you start sending. If a campaign is held, it is paused and you see a message explaining that it is waiting for review. Once released, it sends as usual.
+
+<Warning>
+If five of a team's messages are held within 24 hours, sending is blocked for that team until ByteSend reviews the account. Contact support on [Discord](https://discord.gg/Bg3Sf5fqa4) if this happens to legitimate mail.
+</Warning>
+
+---
+
+## Avoiding false positives
+
+- **Make link text match the link.** If the text shows `acme.com/orders/42`, link to that address rather than a different domain. (ByteSend's own click tracking is applied after scanning and doesn't count.)
+- **Avoid URL shorteners.** Link to your own domain. If you want click analytics, turn on click tracking in your domain's settings.
+- **Use a sender name that matches your domain.** Don't put another company's name in your From name.
+- **Don't attach executables or macro documents.** Link to a download on your own site instead.
+- **Include real text.** An email that is a single image with no text looks like spam to every filter, not just ByteSend's.
+
+<Tip>
+Think a legitimate email was held? Contact support on [Discord](https://discord.gg/Bg3Sf5fqa4) with the email ID — reviews also help ByteSend tune the rules.
+</Tip>

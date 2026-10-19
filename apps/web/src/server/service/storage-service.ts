@@ -29,7 +29,7 @@ const getClient = () => {
         accessKeyId: env.S3_COMPATIBLE_ACCESS_KEY,
         secretAccessKey: env.S3_COMPATIBLE_SECRET_KEY,
       },
-      forcePathStyle: true, // needed for minio
+      forcePathStyle: true,
     });
   }
 
@@ -63,10 +63,6 @@ export const getDocumentUploadUrl = async (
   return url;
 };
 
-/**
- * Upload a file directly from the server to S3-compatible storage.
- * Use this instead of presigned URLs to avoid CORS issues.
- */
 export const uploadObject = async (
   key: string,
   body: Buffer | Uint8Array | Readable,

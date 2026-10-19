@@ -13,22 +13,20 @@ export const metadata: Metadata = {
   title: "ByteSend – The email platform for modern teams",
   description:
     "Send product, transactional and marketing emails. Pay only for what you send.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+    ],
+    apple: "/favicon_io/apple-touch-icon.png",
+  },
+  manifest: "/favicon_io/site.webmanifest",
   metadataBase: new URL("https://bytesend.cloud"),
   openGraph: {
     title: "ByteSend – The email platform for modern teams",
     description: "Send product, transactional and marketing emails. Pay only for what you send.",
     url: "https://bytesend.cloud",
     siteName: "ByteSend",
-    images: [
-      {
-        url: "https://embrly.ca/ibNxG/eq0hwI.png/raw",
-        width: 1200,
-        height: 630,
-        alt: "ByteSend – The email platform for modern teams",
-        type: "image/png",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -36,7 +34,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ByteSend – The email platform for modern teams",
     description: "Send product, transactional and marketing emails. Pay only for what you send.",
-    images: ["https://embrly.ca/ibNxG/eq0hwI.png/raw"],
   },
   robots: {
     index: true,

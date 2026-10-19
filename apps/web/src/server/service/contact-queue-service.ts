@@ -70,7 +70,6 @@ class ContactQueueService {
     contacts: ContactInput[],
     teamId?: number,
   ) {
-    // Check contact limit before queuing
     if (teamId) {
       const limitCheck = await LimitService.checkContactsLimit(teamId);
       if (limitCheck.isLimitReached) {

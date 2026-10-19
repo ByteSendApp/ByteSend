@@ -14,8 +14,7 @@ Admin operations allow you to manage billing, team permissions, and advanced acc
 
 **Team Member Management**:
 - Add and remove team members
-- Assign and modify roles (Admin, Editor, Viewer)
-- View member activity and last login information
+- Assign and modify roles (Admin or Member)
 - Manage pending invitations
 
 **Plan & Billing Management**:
@@ -26,10 +25,10 @@ Admin operations allow you to manage billing, team permissions, and advanced acc
 - Set up billing notifications
 
 **Workspace Settings**:
-- Configure account name and branding
+- Configure the team name and image
 - Manage API keys
-- Set security policies
 - Configure notification channels
+- Change a domain's sending region
 
 ## Billing Management
 
@@ -182,73 +181,44 @@ Each invoice includes:
 
 ## Team Permissions & Roles
 
-### Admin Role
+Every team member is either an **Admin** or a **Member**.
 
-**Capabilities**:
-- Add/remove team members
-- Change member roles
-- Access all account settings
-- Manage billing and payment methods
-- View all team activity
-- Create and manage API keys
-- Configure notifications
+| Action | Admin | Member |
+| --- | :---: | :---: |
+| Send email, manage domains, templates, contacts and campaigns | ✓ | ✓ |
+| Create API keys, webhooks and notification providers | ✓ | ✓ |
+| View analytics and email logs | ✓ | ✓ |
+| Invite members and change their roles | ✓ | |
+| Edit the team name, image and SMTP username | ✓ | |
+| Manage billing, plans, add-on slots and the billing email | ✓ | |
+| Change a domain's sending region | ✓ | |
+| Delete the team | ✓ | |
 
-**Best for**: Account owners, billing contacts, senior team members
-
-### Editor Role
-
-**Capabilities**:
-- Create and edit campaigns
-- Manage email templates
-- Verify new domains
-- Create webhooks
-- View analytics and reports
-- Access API with owned keys
-
-**Restrictions**: Cannot manage team members, billing, or settings
-
-**Best for**: Team members actively managing emails
-
-### Viewer Role
-
-**Capabilities**:
-- View campaigns and reports
-- View analytics and dashboards
-- Read-only access to settings
-- Cannot make changes
-
-**Restrictions**: Cannot send emails, create campaigns, or modify settings
-
-**Best for**: Stakeholders, clients, observers
+<Tip>
+Give the Admin role only to people who manage billing or the team itself. Everyone who only sends email can be a Member.
+</Tip>
 
 ## Security & Compliance
 
 ### Two-Factor Authentication
 
-For GitHub OAuth users:
-- Enable 2FA on your GitHub account
-- [GitHub 2FA setup](https://github.com/settings/security)
+Turn on two-factor authentication in **Settings → Account** with any authenticator app. Store the recovery codes somewhere safe — they are the only way back in if you lose your device. If you sign in with GitHub, Google or Discord, enable 2FA on that provider too.
 
 ### API Key Management
 
-Admin admins should:
+Admins should:
 - Regularly audit active API keys
 - Revoke old or unused keys
 - Use different keys for different environments
 - Never share keys with team members
 - Store keys in environment variables
 
-### Audit Logs
+### Activity History
 
-Monitor admin actions:
-- Team member additions/removals
-- Plan changes
-- Payment method updates
-- API key generation/revocation
-
-<Tip>
-Keep audit logs for compliance and security purposes. Consider setting up webhook notifications for admin activity.
-</Tip>
+ByteSend does not yet keep a team-visible audit log. To keep an eye on your account:
+- Review your API keys regularly — the dashboard shows when each key was last used
+- Subscribe a [webhook](/guides/webhooks) or [notification provider](/guides/notification-providers) to email and domain events
+- Check **Settings → Members** for unexpected members or pending invites
 
 ## Compliance & Business Management
 

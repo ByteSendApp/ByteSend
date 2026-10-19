@@ -1,4 +1,6 @@
 import { EmailRenderer } from "@bytesend/email-editor/src/renderer";
+import { wakeCampaignScheduler } from "../queue/campaign-scheduler-state";
+import { SpamScanService } from "./spam-scan-service";
 import { db } from "../db";
 import { createHash } from "crypto";
 import { env } from "~/env";
@@ -445,7 +447,7 @@ export async function getCampaignForTeam({
   return campaign;
 }
 
-export async function sendCampaign(id: string) {
+export async function sendCampaign(id: string, { skipSpamScan = false }: { skipSpamScan?: boolean } = {}) {
   let campaign = await db.campaign.findUnique({
     where: { id },
   });
@@ -475,12 +477,29 @@ export async function sendCampaign(id: string) {
     throw new Error("Campaign must include an unsubscribe link before sending");
   }
 
-  // Count subscribed contacts for total, don't load all into memory
+  if (!skipSpamScan) {
+    const team = await db.team.findUnique({ where: { id: campaign.teamId }, select: { createdAt: true } });
+    const spamResult = await SpamScanService.scan({
+      from: campaign.from,
+      subject: campaign.subject,
+      html,
+      teamCreatedAt: team?.createdAt,
+    });
+    await SpamScanService.record({ teamId: campaign.teamId, campaignId: id, result: spamResult });
+    if (spamResult.verdict === "HOLD") {
+      await db.campaign.update({ where: { id }, data: { status: "PAUSED" } });
+      throw new ByteSendApiError({
+        code: "FORBIDDEN",
+        message:
+          "This campaign was held for review by ByteSend's spam protection. Our team will review it shortly, or contact support.",
+      });
+    }
+  }
+
   const total = await db.contact.count({
     where: { contactBookId: campaign.contactBookId, subscribed: true },
   });
 
-  // Mark as scheduled (or keep running if already running), set totals and scheduledAt if not set
   await db.campaign.update({
     where: { id },
     data: {
@@ -490,8 +509,8 @@ export async function sendCampaign(id: string) {
       lastCursor: campaign.lastCursor ?? null,
     },
   });
+  await wakeCampaignScheduler();
 
-  // Kick off first batch immediately (idempotent by jobId)
   await CampaignBatchService.queueBatch({
     campaignId: id,
     teamId: campaign.teamId,
@@ -595,6 +614,7 @@ export async function scheduleCampaign({
       ...(shouldResetCursor ? { lastCursor: null } : {}),
     },
   });
+  await wakeCampaignScheduler();
 
   return { ok: true };
 }
@@ -654,6 +674,7 @@ export async function resumeCampaign({
       data: { status: "RUNNING" },
     });
   }
+  await wakeCampaignScheduler();
 
   return { ok: true };
 }
@@ -685,7 +706,6 @@ export async function unsubscribeContactFromLink(id: string, hash: string) {
     throw new Error("Invalid unsubscribe link");
   }
 
-  // Verify the hash
   const expectedHash = createHash("sha256")
     .update(`${id}-${env.NEXTAUTH_SECRET}`)
     .digest("hex");
@@ -710,7 +730,6 @@ export async function unsubscribeContact({
   campaignId?: string;
   reason: UnsubscribeReason;
 }) {
-  // Update the contact's subscription status
   try {
     const contact = await db.contact.findUnique({
       where: { id: contactId },
@@ -752,7 +771,6 @@ export async function subscribeContact(id: string, hash: string) {
     throw new Error("Invalid subscribe link");
   }
 
-  // Verify the hash
   const expectedHash = createHash("sha256")
     .update(`${id}-${env.NEXTAUTH_SECRET}`)
     .digest("hex");
@@ -761,7 +779,6 @@ export async function subscribeContact(id: string, hash: string) {
     throw new Error("Invalid subscribe link");
   }
 
-  // Update the contact's subscription status
   try {
     const contact = await db.contact.findUnique({
       where: { id: contactId },
@@ -848,12 +865,10 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     emailConfig.campaignId,
   );
 
-  // Check for suppressed emails before processing
   const toEmails = [contact.email];
   const ccEmails = emailConfig.cc || [];
   const bccEmails = emailConfig.bcc || [];
 
-  // Collect all unique emails to check for suppressions
   const allEmailsToCheck = [
     ...new Set([...toEmails, ...ccEmails, ...bccEmails]),
   ];
@@ -863,7 +878,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     emailConfig.teamId,
   );
 
-  // Filter each field separately
   const filteredToEmails = toEmails.filter(
     (email) => !suppressionResults[email],
   );
@@ -874,7 +888,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     (email) => !suppressionResults[email],
   );
 
-  // Check if the contact's email (TO recipient) is suppressed
   const isContactSuppressed = filteredToEmails.length === 0;
 
   const html = await renderCampaignHtmlForContact({
@@ -885,7 +898,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
   });
 
   if (isContactSuppressed) {
-    // Create suppressed email record
     logger.info(
       {
         contactEmail: contact.email,
@@ -939,7 +951,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     return;
   }
 
-  // Log if any CC/BCC emails were filtered out
   if (ccEmails.length > filteredCcEmails.length) {
     logger.info(
       {
@@ -964,7 +975,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     );
   }
 
-  // Create email with filtered recipients
   const email = await db.email.create({
     data: {
       to: filteredToEmails,
@@ -998,7 +1008,6 @@ async function processContactEmail(jobData: CampaignEmailJob) {
     return;
   }
 
-  // Queue email for sending
   await EmailQueueService.queueEmail(
     email.id,
     emailConfig.teamId,
@@ -1055,10 +1064,6 @@ export async function updateCampaignAnalytics(
   });
 }
 
-// ---------------------------
-// Simple campaign batch queue
-// ---------------------------
-
 type CampaignBatchJob = TeamJob<{ campaignId: string }>;
 
 export class CampaignBatchService {
@@ -1085,14 +1090,11 @@ export class CampaignBatchService {
         campaign.intent === "BROADCAST" && campaign.recipientEmails.length > 0;
       if (!isDirectBroadcast && !campaign.contactBookId) return;
 
-      // Skip paused campaigns
       if (campaign.status === "PAUSED") return;
 
-      // Respect scheduledAt if set
       if (campaign.scheduledAt && campaign.scheduledAt.getTime() > Date.now())
         return;
 
-      // First touch moves SCHEDULED -> RUNNING
       if (campaign.status === "SCHEDULED") {
         await db.campaign.update({
           where: { id: campaignId },
@@ -1101,13 +1103,11 @@ export class CampaignBatchService {
       }
 
       if (isDirectBroadcast) {
-        // Fetch domain for region
         const domain = await db.domain.findUnique({
           where: { id: campaign.domainId },
         });
         if (!domain) return;
 
-        // Suppress already-processed recipients using CampaignEmail
         const alreadySent = new Set(
           (
             await db.campaignEmail.findMany({
@@ -1196,7 +1196,6 @@ export class CampaignBatchService {
           );
         }
 
-        // Advance cursor
         const newCursor = batch[batch.length - 1];
         await db.campaign.update({
           where: { id: campaign.id },
@@ -1217,7 +1216,7 @@ export class CampaignBatchService {
       };
       if (campaign.lastCursor) {
         pagination.cursor = { id: campaign.lastCursor };
-        pagination.skip = 1; // do not include the cursor row
+        pagination.skip = 1;
       }
 
       const contacts = await db.contact.findMany({ where, ...pagination });
@@ -1233,7 +1232,6 @@ export class CampaignBatchService {
       ];
 
       if (contacts.length === 0) {
-        // No more contacts -> mark SENT
         await db.campaign.update({
           where: { id: campaignId },
           data: { status: "SENT" },
@@ -1241,13 +1239,11 @@ export class CampaignBatchService {
         return;
       }
 
-      // Fetch domain for region and id
       const domain = await db.domain.findUnique({
         where: { id: campaign.domainId },
       });
       if (!domain) return;
 
-      // Bulk existence check to avoid duplicates while unique is not enforced
       const existing = await db.campaignEmail.findMany({
         where: {
           campaignId: campaign.id,
@@ -1257,7 +1253,6 @@ export class CampaignBatchService {
       });
       const existingSet = new Set(existing.map((e) => e.contactId));
 
-      // Process each contact in this batch
       for (const contact of contacts) {
         if (existingSet.has(contact.id)) continue;
 
@@ -1280,7 +1275,6 @@ export class CampaignBatchService {
         });
       }
 
-      // Advance cursor and timestamp
       const newCursor = contacts[contacts.length - 1]?.id;
       await db.campaign.update({
         where: { id: campaignId },
@@ -1302,7 +1296,6 @@ export class CampaignBatchService {
     campaignId: string;
     teamId?: number;
   }) {
-    // Defensive check: avoid enqueue if window not elapsed (scheduler already enforces)
     try {
       const campaign = await db.campaign.findUnique({
         where: { id: campaignId },

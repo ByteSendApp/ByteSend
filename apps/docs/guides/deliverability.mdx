@@ -108,6 +108,8 @@ Start with your most engaged users: people who have recently interacted with you
 - Keep your image-to-text ratio reasonable. Pure-image emails perform poorly.
 - Always include a visible, working unsubscribe link
 
+ByteSend also scores every outbound email before it is sent, and holds high-risk messages for review. See [Spam Protection](/guides/spam-protection) for what is checked and how to avoid false positives.
+
 ### 5. Monitor Bounces and Complaints in Real Time
 
 Set up a [webhook](/guides/webhooks) for `email.bounced` and `email.complained` events so you can react immediately:
@@ -196,3 +198,10 @@ If your sending is blocked due to reputation thresholds:
     - Dashboard reputation metrics reviewed weekly
   </Accordion>
 </AccordionGroup>
+
+---
+
+## Related
+
+- [Spam Protection](/guides/spam-protection) — outbound scoring and held emails
+- [Changing Sending Region](/guides/sending-regions) — move a domain to another AWS region without downtime

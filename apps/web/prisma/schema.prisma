@@ -58,6 +58,7 @@ model Account {
   scope                    String?
   id_token                 String? // @db.Text
   session_state            String?
+  email                    String?
   user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -100,6 +101,7 @@ model User {
   twoFactorRecoveryCodes          TwoFactorRecoveryCode[]
   backupEmails                    BackupEmail[]                    @relation("userBackupEmails")
   pendingBackupEmailVerifications PendingBackupEmailVerification[]
+  adminAuditLogs                  AdminAuditLog[]
 }
 
 model PendingEmailChange {
@@ -206,6 +208,7 @@ model Team {
   webhookCalls                  WebhookCall[]
   notificationProviders         NotificationProvider[]
   notificationLogs              NotificationLog[]
+  spamScans                     SpamScan[]
 }
 
 model TeamInvite {
@@ -261,26 +264,35 @@ enum DomainStatus {
 }
 
 model Domain {
-  id            Int          @id @default(autoincrement())
-  name          String       @unique
-  teamId        Int
-  status        DomainStatus @default(PENDING)
-  region        String       @default("us-east-1")
-  clickTracking Boolean      @default(false)
-  openTracking  Boolean      @default(false)
-  publicKey     String
-  dkimSelector  String?      @default("bytesend")
-  dkimStatus    String?
-  spfDetails    String?
-  dmarcAdded    Boolean      @default(false)
-  errorMessage  String?
-  subdomain     String?
-  sesTenantId   String?
-  isVerifying   Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  team          Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  apiKeys       ApiKey[]
+  id                    Int                    @id @default(autoincrement())
+  name                  String                 @unique
+  teamId                Int
+  status                DomainStatus           @default(PENDING)
+  region                String                 @default("us-east-1")
+  clickTracking         Boolean                @default(false)
+  openTracking          Boolean                @default(false)
+  publicKey             String
+  dkimSelector          String?                @default("bytesend")
+  dkimStatus            String?
+  spfDetails            String?
+  dmarcAdded            Boolean                @default(false)
+  errorMessage          String?
+  subdomain             String?
+  sesTenantId           String?
+  isVerifying           Boolean                @default(false)
+  pendingRegion         String?
+  pendingDkimSelector   String?
+  pendingPublicKey      String?
+  pendingDkimStatus     String?
+  pendingMailFromStatus String?
+  regionMoveStartedAt   DateTime?
+  retiredRegion         String?
+  retiredRegionAt       DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  team                  Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  apiKeys               ApiKey[]
+  blacklistChecks       DomainBlacklistCheck[]
 }
 
 enum ApiPermission {
@@ -319,6 +331,7 @@ enum EmailStatus {
   FAILED
   CANCELLED
   SUPPRESSED
+  HELD
 }
 
 model Email {
@@ -662,4 +675,70 @@ model NotificationLog {
 
   @@index([teamId, providerId, status])
   @@index([createdAt(sort: Desc)])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actorId    Int?
+  actorEmail String?
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@index([action])
+}
+
+enum BlacklistStatus {
+  LISTED
+  CLEAN
+  ERROR
+}
+
+model DomainBlacklistCheck {
+  id         String          @id @default(cuid())
+  domainId   Int
+  list       String
+  status     BlacklistStatus
+  returnCode String?
+  checkedAt  DateTime        @default(now())
+  domain     Domain          @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@index([domainId, checkedAt(sort: Desc)])
+  @@index([status, checkedAt(sort: Desc)])
+}
+
+enum SpamVerdict {
+  FLAG
+  HOLD
+}
+
+enum SpamReviewDecision {
+  RELEASED
+  REJECTED
+}
+
+model SpamScan {
+  id             String              @id @default(cuid())
+  teamId         Int
+  emailId        String?
+  campaignId     String?
+  score          Int
+  verdict        SpamVerdict
+  hits           Json
+  createdAt      DateTime            @default(now())
+  reviewedById   Int?
+  reviewedAt     DateTime?
+  reviewDecision SpamReviewDecision?
+  team           Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([verdict, reviewedAt, createdAt(sort: Desc)])
+  @@index([teamId, createdAt(sort: Desc)])
+  @@index([emailId])
+  @@index([campaignId])
 }

@@ -15,6 +15,8 @@ import { TextWithCopyButton } from "@bytesend/ui/src/text-with-copy";
 import React, { use } from "react";
 import { Switch } from "@bytesend/ui/src/switch";
 import DeleteDomain from "./delete-domain";
+import { DnsStatusBadge } from "./dns-status-badge";
+import { RegionMoveCard } from "./region-move-card";
 import { Button } from "@bytesend/ui/src/button";
 import Link from "next/link";
 import { toast } from "@bytesend/ui/src/toaster";
@@ -300,6 +302,8 @@ export default function DomainItemPage({
             </div>
           )}
 
+          <RegionMoveCard domain={domain} />
+
           {/* DNS Records table */}
           <div className="rounded-xl border border-border/60 overflow-hidden">
             <div className="px-4 py-3 border-b border-border/60 bg-muted/20 flex items-center justify-between gap-4">
@@ -482,48 +486,6 @@ const SignalCard: React.FC<{
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  );
-};
-
-const DnsStatusBadge: React.FC<{ status: DomainStatus }> = ({ status }) => {
-  type BadgeConfig = { label: string; className: string; Icon: React.ElementType };
-  const config: Record<DomainStatus, BadgeConfig> = {
-    [DomainStatus.SUCCESS]: {
-      label: "Verified",
-      className: "text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20",
-      Icon: CheckCircle2,
-    },
-    [DomainStatus.FAILED]: {
-      label: "Failed",
-      className: "text-destructive bg-destructive/10 border-destructive/20",
-      Icon: XCircle,
-    },
-    [DomainStatus.PENDING]: {
-      label: "Pending",
-      className: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
-      Icon: Clock,
-    },
-    [DomainStatus.TEMPORARY_FAILURE]: {
-      label: "Temp failure",
-      className: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
-      Icon: AlertTriangle,
-    },
-    [DomainStatus.NOT_STARTED]: {
-      label: "Not set up",
-      className: "text-muted-foreground bg-muted border-border/40",
-      Icon: Clock,
-    },
-  };
-
-  const { label, className, Icon } = config[status] ?? config[DomainStatus.NOT_STARTED];
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${className}`}
-    >
-      <Icon className="h-3 w-3" />
-      {label}
-    </span>
   );
 };
 

@@ -98,7 +98,7 @@ export function Features() {
                     </p>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to send email</h2>
                     <p className="mt-4 text-muted-foreground">
-                        Receipts, password resets, newsletters and everything in between — on one platform, with one bill.
+                        Receipts, password resets, newsletters and everything in between, on one platform, with one bill.
                     </p>
                 </Reveal>
 

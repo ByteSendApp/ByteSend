@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Check primary email first — they should use OAuth or Email OTP
+        // Check primary email first: they should use OAuth or Email OTP
         const primaryUser = await db.user.findUnique({
             where: { email },
             select: {

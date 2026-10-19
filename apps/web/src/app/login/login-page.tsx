@@ -68,7 +68,7 @@ export default function LoginPage({
     }
   }, [isVerifying]);
 
-  // Countdown timer — runs whenever the code entry UI is shown
+  // Countdown timer: runs whenever the code entry UI is shown
   useEffect(() => {
     if (!isVerifying && !emailSent) return;
 
@@ -120,7 +120,7 @@ export default function LoginPage({
       if (result?.error) {
         setBackupError(result.error);
       } else if (result?.ok) {
-        // Success — NextAuth will handle session creation and redirect
+        // Success: NextAuth will handle session creation and redirect
         // If 2FA is enabled, the middleware/dashboard will redirect to 2FA
         window.location.href = result.url || callbackUrl;
       }
@@ -231,7 +231,7 @@ export default function LoginPage({
           </div>
         </div>
 
-        {/* Email verification with code entry — shown after email is submitted OR after magic link redirect */}
+        {/* Email verification with code entry: shown after email is submitted OR after magic link redirect */}
         {(isVerifying || emailSent) ? (
           <div className="rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-6 space-y-4">
             <div className="text-center space-y-3">

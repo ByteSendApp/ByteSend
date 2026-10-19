@@ -5,8 +5,8 @@ description: "An end-to-end guide on how to self-host ByteSend using Docker or a
 
 ByteSend is fully self-hostable. This guide covers two deployment paths:
 
-- **[Docker (recommended)](#docker-deployment)** — spin up the entire stack with a single `docker compose` command
-- **[Manual / bare-metal](#manual-deployment)** — install directly on a Linux server using Node.js and pnpm
+- **[Docker (recommended)](#docker-deployment)**: spin up the entire stack with a single `docker compose` command
+- **[Manual / bare-metal](#manual-deployment)**: install directly on a Linux server using Node.js and pnpm
 
 If you have questions, join [#self-host](https://discord.gg/C2Q4GHXKQA) on Discord.
 
@@ -58,7 +58,7 @@ At minimum, set the following variables:
 NEXTAUTH_URL=https://your-domain.com
 NEXTAUTH_SECRET=<run: openssl rand -base64 32>
 
-# Database (managed by compose — change password)
+# Database (managed by compose: change password)
 POSTGRES_PASSWORD=<strong-password>
 DATABASE_URL=postgresql://bytesend:<strong-password>@postgres:5432/bytesend
 
@@ -70,11 +70,11 @@ AWS_ACCESS_KEY=<your-access-key-id>
 AWS_SECRET_KEY=<your-secret-access-key>
 AWS_DEFAULT_REGION=eu-west-1
 
-# GitHub OAuth (optional — enables social sign-in)
+# GitHub OAuth (optional: enables social sign-in)
 GITHUB_ID=
 GITHUB_SECRET=
 
-# Stripe (optional — enables billing)
+# Stripe (optional: enables billing)
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 ```
@@ -110,7 +110,7 @@ docker compose -f docker/prod/compose.yml --env-file docker/prod/.env logs -f we
 
 The app is now accessible at **http://your-server-ip:3000**.
 
-<Note>Port 3000 should not be exposed directly in production. Set up a reverse proxy (nginx or Traefik) in front of it and configure HTTPS. See [Reverse Proxy Setup](./reverse-proxy) for the SMTP server guide — the same nginx patterns apply.</Note>
+<Note>Port 3000 should not be exposed directly in production. Set up a reverse proxy (nginx or Traefik) in front of it and configure HTTPS. See [Reverse Proxy Setup](./reverse-proxy) for the SMTP server guide. The same nginx patterns apply.</Note>
 
 ---
 

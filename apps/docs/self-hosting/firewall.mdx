@@ -26,13 +26,13 @@ sudo ufw allow 22/tcp
 Open the ports your clients need. At minimum allow 587; add the others as required:
 
 ```bash
-# Port 25 — MTA / inter-server (often blocked by cloud providers)
+# Port 25: MTA / inter-server (often blocked by cloud providers)
 sudo ufw allow 25/tcp
 
-# Port 465 — Implicit TLS (SMTPS)
+# Port 465: Implicit TLS (SMTPS)
 sudo ufw allow 465/tcp
 
-# Port 587 — Submission with STARTTLS (most common)
+# Port 587: Submission with STARTTLS (most common)
 sudo ufw allow 587/tcp
 
 # Alternate ports used by ByteSend SMTP (optional)

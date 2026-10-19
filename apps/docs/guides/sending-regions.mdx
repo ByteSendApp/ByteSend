@@ -6,7 +6,7 @@ icon: globe
 
 ## Overview
 
-Every domain sends from one AWS SES region, chosen when you add it. You can move a verified domain to another region — for example to keep data in the EU, or to sit closer to your recipients — without any downtime.
+Every domain sends from one AWS SES region, chosen when you add it. You can move a verified domain to another region without any downtime, for example to keep data in the EU or to sit closer to your recipients.
 
 Only team **Admins** can change a domain's region.
 
@@ -21,7 +21,7 @@ Your domain keeps sending from its current region for the whole move. ByteSend r
     Open the domain in the dashboard, select **Change region** in the **Sending region** card and choose the new region.
   </Step>
   <Step title="Add the new DKIM record">
-    Add the new `TXT` record shown on the domain page. Its name includes the region (for example `bytesend-eu-west-2._domainkey`), so it sits **alongside** your existing DKIM record — don't delete the old one yet.
+    Add the new `TXT` record shown on the domain page. Its name includes the region (for example `bytesend-eu-west-2._domainkey`), so it sits **alongside** your existing DKIM record. Don't delete the old one yet.
   </Step>
   <Step title="Update your MX record">
     Change the `MX` record on your `mail.` subdomain to the new region's value, for example `feedback-smtp.eu-west-2.amazonses.com`. Replace the old value; don't add a second record. Your SPF record does not change.

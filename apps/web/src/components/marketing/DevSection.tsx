@@ -164,7 +164,7 @@ puts res.body`;
                                 "REST API with Bearer auth and an OpenAPI spec",
                                 "Idempotency keys for safe retries",
                                 "Signed webhooks for every event",
-                                "Drop-in SMTP relay — one config change",
+                                "Drop-in SMTP relay: one config change",
                             ].map((item) => (
                                 <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
                                     <CheckIcon className="h-4 w-4 text-brand-teal shrink-0" />

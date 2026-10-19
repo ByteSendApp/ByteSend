@@ -34,7 +34,7 @@ export function Hero() {
                 </h1>
 
                 <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    Send transactional and marketing email through one API, SMTP relay and SDKs — with
+                    Send transactional and marketing email through one API, SMTP relay and SDKs, with
                     deliverability guardrails built in. Start free, pay only for what you send, or self-host it.
                 </p>
 

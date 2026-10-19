@@ -45,8 +45,8 @@ The server supports two TLS configurations:
   - **STARTTLS** on ports 25, 587, 2587 (clients upgrade to encrypted)
   - **Implicit TLS (SMTPS)** on ports 465, 2465 (encrypted from the start)
 - Requires:
-  - `SMTP_TLS_CERT_PATH` — full certificate chain (PEM format)
-  - `SMTP_TLS_KEY_PATH` — private key (PEM format)
+  - `SMTP_TLS_CERT_PATH`: full certificate chain (PEM format)
+  - `SMTP_TLS_KEY_PATH`: private key (PEM format)
   - Certificates reload automatically when files change (zero-downtime renewal)
 
 ---
@@ -175,8 +175,8 @@ If you prefer to build the image locally:
 | `SMTP_AUTH_USERNAME` | `bytesend` | Optional legacy fallback if SMTP client omits username |
 | `BYTESEND_BASE_URL` | `https://bytesend.cloud` | URL to your ByteSend instance (e.g., `https://api.example.com`) |
 | `SMTP_TLS_MODE` | `none` | TLS mode: `none` or `manual` |
-| `SMTP_TLS_CERT_PATH` | — | Path to certificate file (required if `SMTP_TLS_MODE=manual`) |
-| `SMTP_TLS_KEY_PATH` | — | Path to private key file (required if `SMTP_TLS_MODE=manual`) |
+| `SMTP_TLS_CERT_PATH` | None | Path to certificate file (required if `SMTP_TLS_MODE=manual`) |
+| `SMTP_TLS_KEY_PATH` | None | Path to private key file (required if `SMTP_TLS_MODE=manual`) |
 | `NODE_ENV` | `production` | Set to `production` for production use |
 
 ### Using `.env` Files
@@ -233,7 +233,7 @@ To run the SMTP server behind nginx or Traefik (with `SMTP_TLS_MODE=none`), see 
 
 ## Firewall Setup
 
-To configure UFW rules for SMTP ports — including the Docker + UFW bypass issue — see the [Firewall Setup](./firewall) guide.
+To configure UFW rules for SMTP ports, including the Docker + UFW bypass issue, see the [Firewall Setup](./firewall) guide.
 
 ---
 

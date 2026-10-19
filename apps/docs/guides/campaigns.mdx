@@ -23,7 +23,7 @@ Campaigns are different from **transactional emails** (which go to a single reci
 | ------- | --------- | ------------- |
 | Recipients | Contact book | Individual `to` address |
 | Personalization | Contact properties (`{{firstName}}`) | Custom per-request |
-| Scheduling | Yes — schedule ahead | No |
+| Scheduling | Yes, schedule ahead | No |
 | Unsubscribe | Automatic opt-out handling | Manual |
 | Use case | Marketing, newsletters | Receipts, alerts, auth codes |
 | Dashboard | Campaign analytics | Email logs |
@@ -37,9 +37,9 @@ Campaigns are different from **transactional emails** (which go to a single reci
 1. Go to [Campaigns](https://bytesend.cloud/campaigns)
 2. Click **New Campaign**
 3. Fill in:
-   - **Name** — internal label (not visible to recipients)
-   - **Subject** — email subject line
-   - **From address** — must use a [verified domain](https://bytesend.cloud/domains)
+   - **Name**: internal label (not visible to recipients)
+   - **Subject**: email subject line
+   - **From address**: must use a [verified domain](https://bytesend.cloud/domains)
    - **Reply-to** (optional)
 4. Design your email in the built-in editor or paste HTML
 5. Select the **contact book** to send to
@@ -126,7 +126,7 @@ Subject: Hi {{firstName}}, here's what's new this month
 
 ```html
 <p>Hey {{firstName}},</p>
-<p>You're on the <strong>{{plan}}</strong> plan — here's what's new for you.</p>
+<p>You're on the <strong>{{plan}}</strong> plan. Here's what's new for you.</p>
 ```
 
 If a contact doesn't have a value for a variable, it renders as an empty string. See [Campaign Personalization](/guides/campaign-personalization) for advanced usage and fallback values.
@@ -148,12 +148,12 @@ ByteSend automatically handles unsubscribes:
 
 After sending, view per-campaign metrics in the dashboard:
 
-- **Delivered** — successfully reached the inbox
-- **Opened** — recipient opened the email
-- **Clicked** — recipient clicked a link
-- **Bounced** — permanently undeliverable addresses
-- **Complained** — marked as spam
-- **Unsubscribed** — opted out via the unsubscribe link
+- **Delivered**: successfully reached the inbox
+- **Opened**: recipient opened the email
+- **Clicked**: recipient clicked a link
+- **Bounced**: permanently undeliverable addresses
+- **Complained**: marked as spam
+- **Unsubscribed**: opted out via the unsubscribe link
 
 You can also pull these via the [Analytics API](/api-reference/analytics/email-time-series).
 

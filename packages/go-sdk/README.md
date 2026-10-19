@@ -1,6 +1,6 @@
 # bytesend-go
 
-The official Go SDK for [ByteSend](https://bytesend.cloud) — a transactional email and campaign platform.
+The official Go SDK for [ByteSend](https://bytesend.cloud): a transactional email and campaign platform.
 
 ## Table of Contents
 
@@ -167,7 +167,7 @@ resp, err := client.Emails.Batch(ctx, []bytesend.SendEmailPayload{
     {From: "hello@acme.com", To: []string{"a@example.com"}, Subject: "Hi A", HTML: "<p>Hi A</p>"},
     {From: "hello@acme.com", To: []string{"b@example.com"}, Subject: "Hi B", HTML: "<p>Hi B</p>"},
 }, "batch-idempotency-key") // idempotency key is optional
-// resp.Data — []CreateEmailResponse
+// resp.Data: []CreateEmailResponse
 ```
 
 #### List emails
@@ -180,15 +180,15 @@ resp, err := client.Emails.List(ctx, bytesend.ListEmailsParams{
     EndDate:   "2026-01-31T23:59:59Z",
     DomainID:  "123",
 })
-// resp.Data  — []EmailSummary
-// resp.Count — total number of emails
+// resp.Data : []EmailSummary
+// resp.Count: total number of emails
 ```
 
 #### Get a single email
 
 ```go
 email, err := client.Emails.Get(ctx, "em_abc123")
-// email.EmailEvents — full delivery event history
+// email.EmailEvents: full delivery event history
 ```
 
 #### Reschedule a scheduled email
@@ -229,8 +229,8 @@ resp, err := client.Contacts.Create(ctx, "cb_bookid", bytesend.CreateContactPayl
 contacts, err := client.Contacts.List(ctx, "cb_bookid", bytesend.ListContactsParams{
     Page:  "1",
     Limit: "100",
-    // Emails: "a@example.com,b@example.com" — filter by email addresses
-    // IDs:    "ct_1,ct_2"                   — filter by contact IDs
+    // Emails: "a@example.com,b@example.com": filter by email addresses
+    // IDs:    "ct_1,ct_2"                  : filter by contact IDs
 })
 ```
 
@@ -272,7 +272,7 @@ resp, err := client.Contacts.BulkCreate(ctx, "cb_bookid", []bytesend.CreateConta
     {Email: "a@example.com", FirstName: "Alice"},
     {Email: "b@example.com", FirstName: "Bob"},
 })
-// resp.Count — number of contacts created
+// resp.Count: number of contacts created
 ```
 
 #### Bulk delete contacts (up to 1,000)
@@ -281,7 +281,7 @@ resp, err := client.Contacts.BulkCreate(ctx, "cb_bookid", []bytesend.CreateConta
 resp, err := client.Contacts.BulkDelete(ctx, "cb_bookid", bytesend.BulkDeleteContactsPayload{
     ContactIDs: []string{"ct_1", "ct_2"},
 })
-// resp.Count — number of contacts deleted
+// resp.Count: number of contacts deleted
 ```
 
 ---
@@ -292,7 +292,7 @@ resp, err := client.Contacts.BulkDelete(ctx, "cb_bookid", bytesend.BulkDeleteCon
 
 ```go
 books, err := client.ContactBooks.List(ctx)
-// books — []ContactBook, each with books[i].Count.Contacts
+// books: []ContactBook, each with books[i].Count.Contacts
 ```
 
 #### Create a contact book
@@ -309,7 +309,7 @@ book, err := client.ContactBooks.Create(ctx, bytesend.CreateContactBookPayload{
 
 ```go
 book, err := client.ContactBooks.Get(ctx, "cb_bookid")
-// book.Count.Contacts — total contact count
+// book.Count.Contacts: total contact count
 ```
 
 #### Update a contact book
@@ -355,14 +355,14 @@ domain, err := client.Domains.Create(ctx, bytesend.CreateDomainPayload{
     Name:   "mail.acme.com",
     Region: "us-east-1",
 })
-// domain.DNSRecords — DNS records to add at your DNS provider
+// domain.DNSRecords: DNS records to add at your DNS provider
 ```
 
 #### Get a domain
 
 ```go
 domain, err := client.Domains.Get(ctx, "1")
-// domain.Status — NOT_STARTED | PENDING | SUCCESS | FAILED | TEMPORARY_FAILURE
+// domain.Status: NOT_STARTED | PENDING | SUCCESS | FAILED | TEMPORARY_FAILURE
 ```
 
 #### Verify a domain
@@ -404,7 +404,7 @@ campaign, err := client.Campaigns.Create(ctx, bytesend.CreateCampaignPayload{
 campaign, err := client.Campaigns.Create(ctx, bytesend.CreateCampaignPayload{
     Name:          "Flash Sale",
     From:          "Acme <hello@acme.com>",
-    Subject:       "Flash sale — 24 hours only",
+    Subject:       "Flash sale: 24 hours only",
     ContactBookID: "cb_bookid",
     HTML:          "<p>Sale is live!</p>",
     SendNow:       true,
@@ -419,7 +419,7 @@ resp, err := client.Campaigns.List(ctx, bytesend.ListCampaignsParams{
     Status: "DRAFT", // DRAFT | SCHEDULED | RUNNING | PAUSED | SENT
     Search: "newsletter",
 })
-// resp.Campaigns — []CampaignSummary
+// resp.Campaigns: []CampaignSummary
 // resp.TotalPage
 ```
 
@@ -472,8 +472,8 @@ resp, err := client.Analytics.EmailTimeSeries(ctx, bytesend.EmailTimeSeriesParam
     Days:     "30", // "7" or "30"
     DomainID: "123",
 })
-// resp.Result      — []EmailTimeSeriesEntry{Date, Sent, Delivered, Opened, Clicked, Bounced, Complained}
-// resp.TotalCounts — EmailTotals (aggregate over the period)
+// resp.Result     : []EmailTimeSeriesEntry{Date, Sent, Delivered, Opened, Clicked, Bounced, Complained}
+// resp.TotalCounts: EmailTotals (aggregate over the period)
 ```
 
 #### Reputation metrics

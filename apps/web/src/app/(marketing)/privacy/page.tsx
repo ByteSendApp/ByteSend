@@ -135,7 +135,7 @@ export default function PrivacyPage() {
             <ul className="space-y-2">
               {[
                 { basis: "Contract performance", desc: "Processing necessary to provide the service you have signed up for, including authentication and transactional emails." },
-                { basis: "Legitimate interests", desc: "Operating and securing our infrastructure, detecting abuse, and measuring aggregate product usage — balanced against your rights and interests." },
+                { basis: "Legitimate interests", desc: "Operating and securing our infrastructure, detecting abuse, and measuring aggregate product usage, balanced against your rights and interests." },
                 { basis: "Legal obligation", desc: "Retaining records where required by law, and responding to lawful requests from authorities." },
                 { basis: "Consent", desc: "Where we rely on consent (e.g. optional communications), you may withdraw it at any time." },
               ].map(({ basis, desc }) => (

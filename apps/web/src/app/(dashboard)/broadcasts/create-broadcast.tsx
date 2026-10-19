@@ -83,7 +83,7 @@ export default function CreateBroadcast() {
                                     <FormLabel>Name</FormLabel>
                                     <FormControl>
                                         <Input
-                                            placeholder="Product Update — June"
+                                            placeholder="Product Update: June"
                                             {...field}
                                         />
                                     </FormControl>

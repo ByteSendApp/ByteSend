@@ -39,9 +39,9 @@ sudo certbot certonly --webroot \
   -d smtp.example.com
 ```
 
-### Method 3: DNS challenge (recommended — no open ports required)
+### Method 3: DNS challenge (recommended: no open ports required)
 
-The DNS challenge is the cleanest approach for an SMTP server. It requires no open HTTP port at any point — certbot proves domain ownership by adding a temporary DNS TXT record instead.
+The DNS challenge is the cleanest approach for an SMTP server. It requires no open HTTP port at any point: certbot proves domain ownership by adding a temporary DNS TXT record instead.
 
 **Manual (one-time / test):**
 
@@ -74,7 +74,7 @@ sudo certbot certonly \
   -d smtp.example.com
 ```
 
-Other provider plugins: `certbot-dns-route53`, `certbot-dns-digitalocean`, `certbot-dns-google`, etc. — see the [certbot documentation](https://certbot.eff.org/docs/using.html#dns-plugins) for a full list.
+Other provider plugins: `certbot-dns-route53`, `certbot-dns-digitalocean`, `certbot-dns-google`, etc. See the [certbot documentation](https://certbot.eff.org/docs/using.html#dns-plugins) for a full list.
 
 <Tip>Use a scoped API token with only **Zone → DNS → Edit** permissions for the target zone. Never use a global API key.</Tip>
 
@@ -112,7 +112,7 @@ EOF
 sudo chmod +x /etc/letsencrypt/renewal-hooks/post/bytesend-smtp.sh
 ```
 
-The ByteSend SMTP Server watches certificate files for changes and reloads TLS automatically — no restart required.
+The ByteSend SMTP Server watches certificate files for changes and reloads TLS automatically, so no restart is required.
 
 ---
 
@@ -136,8 +136,8 @@ openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
 ```
 
 This produces:
-- `fullchain.pem` — self-signed certificate
-- `privkey.pem` — private key
+- `fullchain.pem`: self-signed certificate
+- `privkey.pem`: private key
 
 Configure the server:
 
@@ -247,7 +247,7 @@ The process running the server must be able to read both files. Private keys are
 **Systemd service (runs as `smtp` user):**
 
 ```bash
-# Grant read access using ACLs (recommended — preserves existing permissions)
+# Grant read access using ACLs (recommended: preserves existing permissions)
 sudo setfacl -R -m u:smtp:rx /etc/letsencrypt/live/smtp.example.com/
 sudo setfacl -R -m u:smtp:rx /etc/letsencrypt/archive/smtp.example.com/
 

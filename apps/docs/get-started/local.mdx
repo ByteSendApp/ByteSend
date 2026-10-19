@@ -25,7 +25,7 @@ packages/
 
 - [Node.js](https://nodejs.org) 20 or later
 - [pnpm](https://pnpm.io) 9 or later (`corepack enable` installs it automatically)
-- [Docker](https://docs.docker.com/engine/install/) — used to run Postgres and Redis locally
+- [Docker](https://docs.docker.com/engine/install/): used to run Postgres and Redis locally
 - An [AWS](https://aws.amazon.com) account with SES access (free tier works)
 
 ## Fork and Clone the Repo
@@ -77,7 +77,7 @@ packages/
     ln -s ../../.env apps/web/.env
     ```
     ```powershell
-    # Windows (PowerShell — run as administrator)
+    # Windows (PowerShell: run as administrator)
     New-Item -ItemType SymbolicLink -Path apps\web\.env -Target ..\..\env
     ```
   </Step>

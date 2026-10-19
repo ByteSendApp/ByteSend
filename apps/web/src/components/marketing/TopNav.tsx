@@ -11,13 +11,13 @@ export function TopNav() {
       {/* Blur layer is pointer-events-none to prevent iOS Safari from intercepting touches on page content */}
       <div className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-xl supports-backdrop-filter:bg-background/60" />
       <div className="relative mx-auto max-w-5xl px-6 flex items-center justify-between gap-4 text-sm">
-        {/* Logo — server-rendered, zero client JS */}
+        {/* Logo: server-rendered, zero client JS */}
         <Link href="/" className="flex items-center gap-2 group">
           <Image src="/logo-squircle.png" alt="ByteSend" width={28} height={28} />
           <span className="text-foreground font-semibold text-base group-hover:text-primary transition-colors">ByteSend</span>
         </Link>
 
-        {/* Desktop nav links — server-rendered */}
+        {/* Desktop nav links: server-rendered */}
         <nav className="hidden sm:flex items-center gap-6 text-muted-foreground">
           {isCloud && <Link href="/#features" className="hover:text-foreground transition-colors text-[13px]">Features</Link>}
           {isCloud && <Link href="/#pricing" className="hover:text-foreground transition-colors text-[13px]">Pricing</Link>}
@@ -26,7 +26,7 @@ export function TopNav() {
           <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors text-[13px]">Docs</a>
         </nav>
 
-        {/* Session CTA + mobile hamburger/menu — tiny client island */}
+        {/* Session CTA + mobile hamburger/menu: tiny client island */}
         <TopNavClient isCloud={!!isCloud} />
       </div>
     </header>

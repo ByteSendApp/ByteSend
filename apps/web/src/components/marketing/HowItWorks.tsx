@@ -9,7 +9,7 @@ const steps = [
     {
         title: "Send your first email",
         description:
-            "Create an API key and send with one call from an SDK or the REST API — or point an existing app at the SMTP relay.",
+            "Create an API key and send with one call from an SDK or the REST API, or point an existing app at the SMTP relay.",
     },
     {
         title: "Watch it land",

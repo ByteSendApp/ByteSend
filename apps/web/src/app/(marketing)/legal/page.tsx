@@ -25,7 +25,7 @@ const policies = [
   {
     href: "/acceptable-use",
     title: "Acceptable Use Policy",
-    description: "Rules for sending email via ByteSend — consent, suppression, prohibited content, and enforcement.",
+    description: "Rules for sending email via ByteSend: consent, suppression, prohibited content, and enforcement.",
     updated: "7 May 2026",
   },
   {

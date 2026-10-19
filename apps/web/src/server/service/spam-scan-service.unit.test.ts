@@ -12,7 +12,7 @@ import { SpamScanService, extractLinks, scanContent, verdictFor } from "~/server
 
 const rules = (hits: Array<{ rule: string }>) => hits.map((hit) => hit.rule);
 
-describe("scanContent — legitimate mail", () => {
+describe("scanContent: legitimate mail", () => {
   it("does not flag a password reset email", async () => {
     const result = await SpamScanService.scan({
       from: "Acme <no-reply@acme.io>",
@@ -48,7 +48,7 @@ describe("scanContent — legitimate mail", () => {
   });
 });
 
-describe("scanContent — phishing and abuse", () => {
+describe("scanContent: phishing and abuse", () => {
   it("holds credential phishing that impersonates a brand with a mismatched link", async () => {
     const result = await SpamScanService.scan({
       from: "PayPal Security <alerts@secure-login-help.xyz>",

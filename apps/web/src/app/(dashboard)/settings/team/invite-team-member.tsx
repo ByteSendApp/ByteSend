@@ -268,7 +268,7 @@ export default function InviteTeamMember() {
             )}
             {!isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
-                Need more seats? Purchase extra member slots — CA$2/mo each.
+                Need more seats? Purchase extra member slots for CA$2/mo each.
               </p>
             )}
             <Button

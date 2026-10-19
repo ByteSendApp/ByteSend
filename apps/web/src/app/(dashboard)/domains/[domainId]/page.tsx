@@ -95,7 +95,7 @@ export default function DomainItemPage({
       {
         onSuccess: () => {
           toast.success(
-            "DKIM keys regenerated — update the TXT record in your DNS with the new value below, then click Verify.",
+            "DKIM keys regenerated. Update the TXT record in your DNS with the new value below, then click Verify.",
           );
           utils.domain.getDomain.invalidate({ id: Number(domainId) });
         },
@@ -297,7 +297,7 @@ export default function DomainItemPage({
             <div className="flex items-start gap-3 rounded-lg border border-blue-500/20 bg-blue-500/8 px-4 py-3">
               <Clock className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
               <p className="text-sm text-blue-500 dark:text-blue-400">
-                DKIM record not yet found in DNS. Propagation can take up to 48 hours — make sure you&apos;ve added the TXT record exactly as shown below.
+                DKIM record not yet found in DNS. Propagation can take up to 48 hours, so make sure you&apos;ve added the TXT record exactly as shown below.
               </p>
             </div>
           )}
@@ -554,7 +554,7 @@ const DomainSettings: React.FC<{ domain: DomainResponse }> = ({ domain }) => {
             <div>
               <p className="text-sm font-medium text-foreground">Open tracking</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Embed a 1×1 pixel to detect opens — may affect deliverability
+                Embed a 1×1 pixel to detect opens. May affect deliverability
               </p>
             </div>
             <Switch

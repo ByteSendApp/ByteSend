@@ -260,8 +260,8 @@ fmt.Println("Contact ID:", resp.ContactID)
 resp, err := client.Contacts.List(ctx, "cb_contactbook_id", bytesend.ListContactsParams{
     Page:  "1",
     Limit: "100",
-    // Emails: "a@example.com,b@example.com"  — filter by email addresses
-    // IDs:    "ct_1,ct_2"                     — filter by contact IDs
+    // Emails: "a@example.com,b@example.com" : filter by email addresses
+    // IDs:    "ct_1,ct_2"                    : filter by contact IDs
 })
 if err != nil {
     log.Fatal(err)
@@ -317,7 +317,7 @@ if err != nil {
     log.Fatal(err)
 }
 for _, domain := range resp {
-    fmt.Printf("%s — Status: %s\n", domain.Name, domain.Status)
+    fmt.Printf("%s (%s)\n", domain.Name, domain.Status)
 }
 ```
 

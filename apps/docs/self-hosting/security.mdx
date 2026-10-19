@@ -137,7 +137,7 @@ However, the ByteSend SMTP Server currently binds to all interfaces. For isolati
 
 1. **Firewall rules** (ufw, cloud security groups) to restrict access by IP
 2. **Reverse proxy** (nginx, Traefik) in front to terminate TLS and apply rate limits
-3. **VPN/private network** — run the server on an internal network and expose via VPN only
+3. **VPN/private network**: run the server on an internal network and expose via VPN only
 
 ### Restrict by IP
 
@@ -163,7 +163,7 @@ sudo ufw delete allow 25/tcp
 
 - Use **Let's Encrypt** (free, trusted by all clients)
 - Avoid **self-signed certs** in production
-- Renew **before expiry** — set up certbot auto-renewal
+- Renew **before expiry**: set up certbot auto-renewal
 
 See the [Certificate Setup](./certificates) guide for full details.
 
@@ -259,7 +259,7 @@ Port 25 is the standard MTA port and is often targeted by spammers. If you're no
 
 1. **Disable port 25** and use only 465/587 for outbound submission
 2. **Implement SPF/DKIM/DMARC** records to help other servers validate your emails
-3. **Monitor bounce rates** — reject undeliverable emails early to reduce spam bounce-back
+3. **Monitor bounce rates**: reject undeliverable emails early to reduce spam bounce-back
 
 Most cloud providers block port 25 outbound by default, so if you only need outbound SMTP, use port 587 instead.
 
@@ -285,7 +285,7 @@ Detailed AppArmor/SELinux profiles for ByteSend SMTP are beyond the scope here, 
 
 Although the SMTP server is stateless, consider backing up:
 
-- `.env` file (contains API keys — encrypt before backup!)
+- `.env` file (contains API keys, so encrypt before backup!)
 - Certificate files (for reference)
 - Logs (for audit/forensics)
 

@@ -46,7 +46,7 @@ function StartMoveDialog({
 
   const start = api.domain.startRegionMove.useMutation({
     onSuccess: async () => {
-      toast.success("Region move started — add the new DNS records below");
+      toast.success("Region move started. Add the new DNS records below.");
       onOpenChange(false);
       await utils.domain.getDomain.invalidate({ id: domain.id });
     },
@@ -116,7 +116,7 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
         toast.info(
           missing.length
             ? `Not visible in DNS yet: ${missing.join(" and ")}. DNS changes can take up to an hour.`
-            : "Records found — waiting for AWS to confirm. This usually takes a few minutes.",
+            : "Records found. Waiting for AWS to confirm. This usually takes a few minutes.",
         );
       }
       await utils.domain.getDomain.invalidate({ id: domain.id });

@@ -94,10 +94,10 @@ export default function DpaPage() {
                   {[
                     { term: "Personal Data", def: "Any information relating to an identified or identifiable natural person, as defined in the UK GDPR." },
                     { term: "Processing", def: "Any operation performed on personal data, including collection, storage, use, disclosure, or deletion." },
-                    { term: "Controller", def: "The entity that determines the purposes and means of processing personal data — you, the ByteSend customer." },
-                    { term: "Processor", def: "The entity that processes personal data on behalf of the Controller — NodeByte LTD." },
+                    { term: "Controller", def: "The entity that determines the purposes and means of processing personal data. That's you, the ByteSend customer." },
+                    { term: "Processor", def: "The entity that processes personal data on behalf of the Controller. That's NodeByte LTD." },
                     { term: "Sub-Processor", def: "A third party engaged by the Processor to assist in processing personal data on behalf of the Controller." },
-                    { term: "Data Subject", def: "The individual whose personal data is being processed — typically your email recipients or contacts." },
+                    { term: "Data Subject", def: "The individual whose personal data is being processed, typically your email recipients or contacts." },
                   ].map(({ term, def }) => (
                     <tr key={term}>
                       <td className="px-4 py-3 font-medium w-36 align-top">{term}</td>

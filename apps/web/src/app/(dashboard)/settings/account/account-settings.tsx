@@ -19,6 +19,7 @@ import { Input } from "@bytesend/ui/src/input";
 import { toast } from "@bytesend/ui/src/toaster";
 
 import { api } from "~/trpc/react";
+import { ConnectedAccounts } from "./connected-accounts";
 
 const accountEmailSchema = z.object({
     email: z.string().trim().toLowerCase().email("Please enter a valid email address"),
@@ -265,15 +266,6 @@ export default function AccountSettings() {
                     This email is used for login and account notifications. Changes require verification of both your current and new email.
                 </p>
 
-                {profileQuery.data?.accounts?.some((a) => a.type === "oauth") ? (
-                    <div className="rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                        Your account is linked to{" "}
-                        <span className="font-medium text-foreground">
-                            {profileQuery.data.accounts.filter((a) => a.type === "oauth").map((a) => a.provider).join(", ")}
-                        </span>
-                        . Email changes are managed through your OAuth provider.
-                    </div>
-                ) : (
                     <>
                         <Form {...emailForm}>
                             <form onSubmit={emailForm.handleSubmit(onSaveEmail)} className="flex gap-3">
@@ -357,8 +349,16 @@ export default function AccountSettings() {
                             </div>
                         ) : null}
                     </>
-                )}
             </div>
+
+            <ConnectedAccounts
+                currentEmail={profileQuery.data?.email}
+                isUsingEmail={requestEmailChangeMutation.isPending}
+                onUseEmail={(email) => {
+                    emailForm.setValue("email", email, { shouldDirty: true });
+                    void onSaveEmail({ email });
+                }}
+            />
 
             {/* ── Backup Emails ── */}
             <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">

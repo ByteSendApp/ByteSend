@@ -30,7 +30,7 @@ export function SiteFooter() {
             <a href="https://github.com/NodeByteLTD/ByteSend" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
               <FaGithub className="size-4.5" />
             </a>
-            <a href="https://discord.gg/Bg3Sf5fqa4" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
+            <a href="https://discord.gg/C2Q4GHXKQA" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
               <FaDiscord className="size-4.5" />
             </a>
             <a href="https://x.com/TryByteSend" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="X (Twitter)">

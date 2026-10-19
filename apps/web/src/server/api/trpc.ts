@@ -1,12 +1,3 @@
-/**
- * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
- * 1. You want to modify request context (see Part 1).
- * 2. You want to create a new middleware or type of procedure (see Part 3).
- *
- * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
- * need to use are documented accordingly near the end.
- */
-
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
@@ -18,22 +9,9 @@ import { db } from "~/server/db";
 import { getChildLogger, logger, withLogger } from "../logger/log";
 import { randomUUID } from "crypto";
 
-/**
- * 1. CONTEXT
- *
- * This section defines the "contexts" that are available in the backend API.
- *
- * These allow you to access things when processing a request, like the database, the session, etc.
- *
- * This helper generates the "internals" for a tRPC context. The API handler and RSC clients each
- * wrap this and provides the required context.
- *
- * @see https://trpc.io/docs/server/context
- */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await getServerAuthSession();
 
-  // Check 2FA cookie
   let twoFactorVerified = false;
   if (session?.user?.id) {
     const cookieStore = await cookies();
@@ -42,7 +20,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
       const { validateTwoFactorCookie } = await import("~/app/api/auth/2fa/route");
       twoFactorVerified = validateTwoFactorCookie(cookieVal, session.user.id);
     }
-    // If user doesn't have 2FA enabled, treat as verified
     if (!twoFactorVerified) {
       const userRecord = await db.user.findUnique({
         where: { id: session.user.id },
@@ -60,13 +37,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   };
 };
 
-/**
- * 2. INITIALIZATION
- *
- * This is where the tRPC API is initialized, connecting the context and transformer. We also parse
- * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
- * errors on the backend.
- */
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
@@ -81,41 +51,12 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
 });
 
-/**
- * Create a server-side caller.
- *
- * @see https://trpc.io/docs/server/server-side-calls
- */
 export const createCallerFactory = t.createCallerFactory;
 
-/**
- * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
- *
- * These are the pieces you use to build your tRPC API. You should import these a lot in the
- * "/src/server/api/routers" directory.
- */
-
-/**
- * This is how you create new routers and sub-routers in your tRPC API.
- *
- * @see https://trpc.io/docs/router
- */
 export const createTRPCRouter = t.router;
 
-/**
- * Public (unauthenticated) procedure
- *
- * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
- * guarantee that a user querying is authorized, but you can still access user session data if they
- * are logged in.
- */
 export const publicProcedure = t.procedure;
 
-/**
- * Authenticated (session-required) procedure
- *
- * Ensures a session exists. Useful for flows where users need access.
- */
 export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.session || !ctx.session.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -140,22 +81,10 @@ export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
   });
 });
 
-/**
- * Protected (authenticated) procedure
- *
- * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees `ctx.session.user` is not null.
- *
- * @see https://trpc.io/docs/procedures
- */
 export const protectedProcedure = authedProcedure.use(({ ctx, next }) => {
   return next();
 });
 
-/**
- * 2FA-protected procedure.
- * Requires either: user has no 2FA enabled, or the 2FA cookie is valid.
- */
 export const twoFactorProtectedProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.twoFactorVerified) {
     throw new TRPCError({
@@ -167,8 +96,6 @@ export const twoFactorProtectedProcedure = protectedProcedure.use(({ ctx, next }
 });
 
 export const teamProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  // Respect the active team chosen by the client (sent as x-team-id header).
-  // Falls back to the user's first team if the header is absent or invalid.
   const requestedTeamId = ctx.headers.get("x-team-id");
   const numericTeamId = requestedTeamId ? parseInt(requestedTeamId, 10) : NaN;
 
@@ -311,10 +238,6 @@ export const templateProcedure = teamProcedure
     return next({ ctx: { ...ctx, template } });
   });
 
-/**
- * Admin procedure — accessible by FOUNDER_EMAIL, ADMIN_EMAIL env vars, or DB isAdmin=true users.
- * Grants access to SES config, team management, and email analytics.
- */
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   if (env.NEXT_PUBLIC_IS_CLOUD && !ctx.session.user.isAdmin) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -322,10 +245,6 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   return next();
 });
 
-/**
- * Founder procedure — exclusively for the FOUNDER_EMAIL holder.
- * Grants access to user management and admin assignment on top of all admin capabilities.
- */
 export const founderProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   if (!ctx.session.user.isFounder) {
     throw new TRPCError({ code: "UNAUTHORIZED" });

@@ -5,9 +5,6 @@ import { getTeamAndApiKey } from "../service/api-service";
 import { isSelfHosted } from "~/utils/common";
 import { logger } from "../logger/log";
 
-/**
- * Gets the team from the token. Also will check if the token is valid.
- */
 export const getTeamFromToken = async (c: Context) => {
   const authHeader = c.req.header("Authorization");
 
@@ -45,7 +42,6 @@ export const getTeamFromToken = async (c: Context) => {
     });
   }
 
-  // Block API access if the team is blocked
   if (team.isBlocked) {
     throw new ByteSendApiError({
       code: "FORBIDDEN",
@@ -53,7 +49,6 @@ export const getTeamFromToken = async (c: Context) => {
     });
   }
 
-  // Block API access if any admin on the team is banned
   const bannedAdmin = await db.teamUser.findFirst({
     where: {
       teamId: team.id,
@@ -70,7 +65,6 @@ export const getTeamFromToken = async (c: Context) => {
     });
   }
 
-  // No await so it won't block the request. Need to be moved to a queue in future
   db.apiKey
     .update({
       where: {

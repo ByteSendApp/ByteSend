@@ -5,7 +5,6 @@ import { api } from "~/trpc/react";
 
 const ACTIVE_TEAM_KEY = "bytesend:active-team-id";
 
-// Define the Team type based on the Prisma schema
 type Team = {
   id: number;
   name: string;
@@ -39,7 +38,6 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return stored ? parseInt(stored, 10) : null;
   });
 
-  // When teams load, validate the stored ID still exists; default to first team if not.
   useEffect(() => {
     if (!teams || teams.length === 0) return;
     const valid = activeTeamId && teams.some((t) => t.id === activeTeamId);
@@ -56,7 +54,6 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   function setCurrentTeam(teamId: number) {
     setActiveTeamId(teamId);
     window.localStorage.setItem(ACTIVE_TEAM_KEY, String(teamId));
-    // Invalidate all team-scoped queries so they re-fetch with the new x-team-id header.
     utils.invalidate();
   }
 

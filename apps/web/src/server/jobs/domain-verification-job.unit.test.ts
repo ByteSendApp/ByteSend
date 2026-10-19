@@ -48,6 +48,10 @@ vi.mock("~/server/logger/log", () => ({
   },
 }));
 
+vi.mock("~/server/service/domain-region-service", () => ({
+  DomainRegionService: { refresh: vi.fn(), retireOldRegionIfDue: vi.fn() },
+}));
+
 vi.mock("~/server/service/domain-service", () => ({
   isDomainVerificationDue: mockIsDomainVerificationDue,
   refreshDomainVerification: mockRefreshDomainVerification,
@@ -78,6 +82,14 @@ function createDomain(id: number, status: DomainStatus): Domain {
     isVerifying: status !== DomainStatus.SUCCESS,
     createdAt: new Date("2026-03-01T00:00:00.000Z"),
     updatedAt: new Date("2026-03-01T00:00:00.000Z"),
+    pendingRegion: null,
+    pendingDkimSelector: null,
+    pendingPublicKey: null,
+    pendingDkimStatus: null,
+    pendingMailFromStatus: null,
+    regionMoveStartedAt: null,
+    retiredRegion: null,
+    retiredRegionAt: null,
   };
 }
 

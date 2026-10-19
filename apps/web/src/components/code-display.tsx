@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BundledLanguage, codeToHtml } from "shiki";
+import { highlightCode, type HighlightLang } from "~/lib/highlighter";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
 
 interface CodeDisplayProps {
   code: string;
-  language?: BundledLanguage;
+  language?: HighlightLang;
   className?: string;
   maxHeight?: string;
 }
@@ -27,14 +27,9 @@ export function CodeDisplay({
 
     async function highlight() {
       try {
-        const highlighted = await codeToHtml(code, {
+        const highlighted = await highlightCode(code, {
           lang: language,
-          themes: {
-            dark: "catppuccin-mocha",
-            light: "catppuccin-latte",
-          },
-          decorations: [],
-          cssVariablePrefix: "--shiki-",
+          themes: { dark: "catppuccin-mocha", light: "catppuccin-latte" },
         });
 
         if (isMounted) {

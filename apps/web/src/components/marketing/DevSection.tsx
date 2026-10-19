@@ -3,8 +3,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { BundledLanguage } from "shiki";
-import { codeToHtml } from "shiki";
+import { highlightCode, type HighlightLang } from "~/lib/highlighter";
 import { useTheme } from "@bytesend/ui";
 import { Button } from "@bytesend/ui/src/button";
 import { LangToggle } from "~/components/marketing/CodeLangToggle";
@@ -135,7 +134,7 @@ req.body = {
 res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
 puts res.body`;
 
-    const languages = [
+    const languages: Array<{ key: string; label: string; kind: string; shikiLang: HighlightLang; code: string; file: string }> = [
         { key: "ts", label: "TypeScript", kind: "ts", shikiLang: "ts", code: TS_SNIPPET, file: "send-email.ts" },
         { key: "py", label: "Python", kind: "py", shikiLang: "python", code: PY_SNIPPET, file: "send_email.py" },
         { key: "go", label: "Go", kind: "go", shikiLang: "go", code: GO_SNIPPET, file: "send_email.go" },
@@ -221,7 +220,7 @@ puts res.body`;
     );
 }
 
-function HighlightedSnippet({ code, lang, theme }: { code: string; lang: BundledLanguage; theme?: string }) {
+function HighlightedSnippet({ code, lang, theme }: { code: string; lang: HighlightLang; theme?: string }) {
     const [html, setHtml] = useState("");
     const [loading, setLoading] = useState(true);
     const shikiTheme = theme === "light" ? "catppuccin-latte" : "catppuccin-mocha";
@@ -231,11 +230,7 @@ function HighlightedSnippet({ code, lang, theme }: { code: string; lang: Bundled
 
         async function highlight() {
             try {
-                const highlighted = await codeToHtml(code, {
-                    lang,
-                    theme: shikiTheme,
-                    cssVariablePrefix: "--shiki-",
-                });
+                const highlighted = await highlightCode(code, { lang, theme: shikiTheme });
 
                 if (mounted) {
                     setHtml(highlighted);

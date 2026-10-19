@@ -157,7 +157,7 @@ const EmailPreview = ({ html }: { html: string }) => {
   );
 };
 
-const EmailStatusText = ({
+export const EmailStatusText = ({
   status,
   data,
 }: {

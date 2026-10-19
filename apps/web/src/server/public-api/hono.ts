@@ -10,7 +10,6 @@ import { ByteSendApiError } from "./api-error";
 import { Team, ApiKey } from "@prisma/client";
 import { logger } from "../logger/log";
 
-// Define AppEnv for Hono context
 export type AppEnv = {
   Variables: {
     team: Team & { apiKeyId: number; apiKey: { domainId: number | null } };
@@ -22,7 +21,6 @@ export function getApp() {
 
   app.onError(handleError);
 
-  // Auth and Team Middleware (runs before rate limiter)
   app.use("*", async (c: Context<AppEnv>, next: Next) => {
     if (
       c.req.path.startsWith("/api/v1/doc") ||
@@ -49,15 +47,12 @@ export function getApp() {
     await next();
   });
 
-  // Custom Rate Limiter Middleware
   const RATE_LIMIT_WINDOW_SECONDS = 1;
 
   app.use("*", async (c: Context<AppEnv>, next: Next) => {
-    // Skip for self-hosted, or if team is not set (e.g. for public/doc paths not caught earlier)
-    // or if the path is one of the explicitly skipped paths for auth.
     if (
       isSelfHosted() ||
-      !c.var.team || // Team should be set by auth middleware for protected routes
+      !c.var.team ||
       c.req.path.startsWith("/api/v1/doc") ||
       c.req.path.startsWith("/api/v1/ui") ||
       c.req.path === "/api/health" ||
@@ -67,28 +62,22 @@ export function getApp() {
     }
 
     const team = c.var.team;
-    const limit = team.apiRateLimit ?? 2; // Default limit from your previous setup
-    const key = redisKey(`rl:${team.id}`); // Rate limit key for Redis
+    const limit = team.apiRateLimit ?? 2;
+    const key = redisKey(`rl:${team.id}`);
     const redis = getRedis();
 
     let currentRequests: number;
     let ttl: number;
 
     try {
-      // Increment the key. If the key does not exist, it is created and set to 1.
       currentRequests = await redis.incr(key);
 
       if (currentRequests === 1) {
-        // This is the first request in the window, set the expiry.
         await redis.expire(key, RATE_LIMIT_WINDOW_SECONDS);
       }
-      // Get the TTL (time to live) of the key to know when it resets.
-      // If the key does not exist or has no expiry, TTL returns -1 or -2.
-      // We rely on expire being set for new keys.
       ttl = await redis.ttl(key);
     } catch (error) {
       logger.error({ err: error }, "Redis error during rate limiting");
-      // Alternatively, you could fail closed by throwing an error here.
       return next();
     }
 
@@ -115,7 +104,6 @@ export function getApp() {
     await next();
   });
 
-  // The OpenAPI documentation will be available at /doc
   app.doc("/v1/doc", (c) => ({
     openapi: "3.0.0",
     info: {

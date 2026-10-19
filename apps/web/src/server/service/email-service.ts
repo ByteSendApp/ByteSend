@@ -11,6 +11,7 @@ import { logger } from "../logger/log";
 import { SuppressionService } from "./suppression-service";
 import { sanitizeCustomHeaders } from "~/server/utils/email-headers";
 import { Prisma } from "@prisma/client";
+import { SpamScanService, type SpamResult } from "./spam-scan-service";
 
 async function checkIfValidEmail(emailId: string) {
   const email = await db.email.findUnique({
@@ -38,6 +39,46 @@ async function checkIfValidEmail(emailId: string) {
   return { email, domain };
 }
 
+async function scanForSpam(params: {
+  teamId: number;
+  from: string;
+  subject: string;
+  html?: string | null;
+  text?: string | null;
+  attachmentNames?: string[];
+}): Promise<SpamResult | null> {
+  try {
+    const team = await db.team.findUnique({ where: { id: params.teamId }, select: { createdAt: true } });
+    return await SpamScanService.scan({ ...params, teamCreatedAt: team?.createdAt });
+  } catch (error) {
+    logger.error({ err: error, teamId: params.teamId }, "[EmailService]: Spam scan failed; sending unscanned");
+    return null;
+  }
+}
+
+async function recordSpamResult(teamId: number, emailId: string, result: SpamResult | null) {
+  if (!result?.verdict) return;
+  try {
+    await SpamScanService.record({ teamId, emailId, result });
+    if (result.verdict === "HOLD") {
+      await db.emailEvent.create({
+        data: {
+          emailId,
+          status: "HELD",
+          data: {
+            reason: "Held for review by ByteSend's spam protection",
+            score: result.score,
+            rules: result.hits.map((hit) => hit.rule),
+          },
+          teamId,
+        },
+      });
+    }
+  } catch (error) {
+    logger.error({ err: error, teamId, emailId }, "[EmailService]: Failed to record spam result");
+  }
+}
+
 export const replaceVariables = (
   text: string,
   variables: Record<string, string>
@@ -49,9 +90,6 @@ export const replaceVariables = (
   }, text);
 };
 
-/**
- Send transactional email
- */
 export async function sendEmail(
   emailContent: EmailContent & { teamId: number; apiKeyId?: number }
 ) {
@@ -78,7 +116,6 @@ export async function sendEmail(
 
   let domain: Awaited<ReturnType<typeof validateDomainFromEmail>>;
 
-  // If this is an API call with an API key, validate domain access
   if (apiKeyId) {
     const apiKey = await db.apiKey.findUnique({
       where: { id: apiKeyId },
@@ -94,16 +131,13 @@ export async function sendEmail(
 
     domain = await validateApiKeyDomainAccess(from, teamId, apiKey);
   } else {
-    // For non-API calls (dashboard, etc.), use regular domain validation
     domain = await validateDomainFromEmail(from, teamId);
   }
 
-  // Check for suppressed emails before sending
   const toEmails = Array.isArray(to) ? to : [to];
   const ccEmails = cc ? (Array.isArray(cc) ? cc : [cc]) : [];
   const bccEmails = bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : [];
 
-  // Collect all unique emails to check for suppressions
   const allEmailsToCheck = [
     ...new Set([...toEmails, ...ccEmails, ...bccEmails]),
   ];
@@ -113,7 +147,6 @@ export async function sendEmail(
     teamId
   );
 
-  // Filter each field separately
   const filteredToEmails = toEmails.filter(
     (email) => !suppressionResults[email]
   );
@@ -124,7 +157,6 @@ export async function sendEmail(
     (email) => !suppressionResults[email]
   );
 
-  // Only block the email if all TO recipients are suppressed
   if (filteredToEmails.length === 0) {
     logger.info(
       {
@@ -165,7 +197,6 @@ export async function sendEmail(
     return email;
   }
 
-  // Log if any CC/BCC emails were filtered out
   if (ccEmails.length > filteredCcEmails.length) {
     logger.info(
       {
@@ -246,6 +277,16 @@ export async function sendEmail(
     ? Math.max(0, scheduledAtDate.getTime() - Date.now())
     : undefined;
 
+  const spamResult = await scanForSpam({
+    teamId,
+    from,
+    subject: subject ?? "",
+    html,
+    text,
+    attachmentNames: attachments?.map((attachment) => attachment.filename),
+  });
+  const isHeld = spamResult?.verdict === "HOLD";
+
   const email = await db.email.create({
     data: {
       to: filteredToEmails,
@@ -264,12 +305,17 @@ export async function sendEmail(
       domainId: domain.id,
       attachments: attachments ? JSON.stringify(attachments) : undefined,
       scheduledAt: scheduledAtDate,
-      latestStatus: scheduledAtDate ? "SCHEDULED" : "QUEUED",
+      latestStatus: isHeld ? "HELD" : scheduledAtDate ? "SCHEDULED" : "QUEUED",
       apiId: apiKeyId,
       inReplyToId,
       headers: headers ? JSON.stringify(headers) : undefined,
     },
   });
+
+  await recordSpamResult(teamId, email.id, spamResult);
+  if (isHeld) {
+    return email;
+  }
 
   try {
     await EmailQueueService.queueEmail(
@@ -361,10 +407,6 @@ export async function cancelEmail(emailId: string) {
   });
 }
 
-/**
- * Send multiple emails in bulk (up to 100 at a time)
- * Handles template rendering, variable replacement, and efficient bulk queuing
- */
 export async function sendBulkEmails(
   emailContents: Array<
     EmailContent & {
@@ -387,7 +429,6 @@ export async function sendBulkEmails(
     });
   }
 
-  // Filter out suppressed emails
   const emailChecks = await Promise.all(
     emailContents.map(async (content, index) => {
       const toEmails = Array.isArray(content.to) ? content.to : [content.to];
@@ -401,8 +442,6 @@ export async function sendBulkEmails(
           ? content.bcc
           : [content.bcc]
         : [];
-
-      // Collect all unique emails to check for suppressions
       const allEmailsToCheck = [
         ...new Set([...toEmails, ...ccEmails, ...bccEmails]),
       ];
@@ -412,7 +451,6 @@ export async function sendBulkEmails(
         content.teamId
       );
 
-      // Filter each field separately
       const filteredToEmails = toEmails.filter(
         (email) => !suppressionResults[email]
       );
@@ -423,7 +461,6 @@ export async function sendBulkEmails(
         (email) => !suppressionResults[email]
       );
 
-      // Only consider it suppressed if all TO recipients are suppressed
       const hasSuppressedToEmails = filteredToEmails.length === 0;
 
       return {
@@ -449,7 +486,6 @@ export async function sendBulkEmails(
   const validEmails = emailChecks.filter((check) => !check.suppressed);
   const suppressedEmailsInfo = emailChecks.filter((check) => check.suppressed);
 
-  // Log suppressed emails for reporting
   if (suppressedEmailsInfo.length > 0) {
     logger.info(
       {
@@ -464,10 +500,8 @@ export async function sendBulkEmails(
     );
   }
 
-  // Update emailContents to only include valid emails
   const filteredEmailContents = validEmails.map((check) => check.content);
 
-  // Create suppressed email records
   const suppressedEmails = [];
   for (const suppressedInfo of suppressedEmailsInfo) {
     const originalContent = emailContents[suppressedInfo.originalIndex];
@@ -494,10 +528,8 @@ export async function sendBulkEmails(
     let subject = subjectFromApiCall;
     let html = htmlFromApiCall;
 
-    // Validate domain for suppressed email too
     const domain = await validateDomainFromEmail(from, teamId);
 
-    // Process template if specified
     if (templateId) {
       const template = await db.template.findUnique({
         where: { id: templateId },
@@ -509,7 +541,6 @@ export async function sendBulkEmails(
 
         subject = replaceVariables(template.subject || "", variables || {});
 
-        // {{}} for link replacements
         const modifiedVariables = {
           ...variables,
           ...Object.keys(variables || {}).reduce(
@@ -587,11 +618,9 @@ export async function sendBulkEmails(
   }
 
   if (filteredEmailContents.length === 0) {
-    // Return only suppressed emails if no valid emails to send
     return suppressedEmails.map((item) => item.email);
   }
 
-  // Group emails by domain to minimize domain validations
   const emailsByDomain = new Map<
     string,
     {
@@ -600,7 +629,6 @@ export async function sendBulkEmails(
     }
   >();
 
-  // First pass: validate domains and group emails
   for (const content of filteredEmailContents) {
     const { from } = content;
     if (!emailsByDomain.has(from)) {
@@ -610,18 +638,17 @@ export async function sendBulkEmails(
     emailsByDomain.get(from)?.emails.push(content);
   }
 
-  // Cache templates to avoid repeated database queries
   const templateCache = new Map<
     number,
     { subject: string; content: any; renderer: EmailRenderer }
   >();
 
   const createdEmails = [];
+
+  const heldEmailIds = new Set<string>();
   const queueJobs = [];
 
-  // Process each domain group
   for (const { domain, emails } of emailsByDomain.values()) {
-    // Process emails in each domain group
     for (const content of emails) {
       const {
         to,
@@ -641,7 +668,6 @@ export async function sendBulkEmails(
         headers,
       } = content;
 
-      // Find the original index for this email
       const originalIndex =
         validEmails.find((check) => check.content === content)?.originalIndex ??
         -1;
@@ -649,7 +675,6 @@ export async function sendBulkEmails(
       let subject = subjectFromApiCall;
       let html = htmlFromApiCall;
 
-      // Process template if specified
       if (templateId) {
         let templateData = templateCache.get(Number(templateId));
         if (!templateData) {
@@ -670,7 +695,6 @@ export async function sendBulkEmails(
         if (templateData) {
           subject = replaceVariables(templateData.subject, variables || {});
 
-          // {{}} for link replacements
           const modifiedVariables = {
             ...variables,
             ...Object.keys(variables || {}).reduce(
@@ -701,6 +725,16 @@ export async function sendBulkEmails(
         ? Math.max(0, scheduledAtDate.getTime() - Date.now())
         : undefined;
 
+      const spamResult = await scanForSpam({
+        teamId,
+        from,
+        subject: subject ?? "",
+        html,
+        text,
+        attachmentNames: attachments?.map((attachment) => attachment.filename),
+      });
+      const isHeld = spamResult?.verdict === "HOLD";
+
       try {
         const email = await db.email.create({
           data: {
@@ -720,20 +754,24 @@ export async function sendBulkEmails(
             domainId: domain.id,
             attachments: attachments ? JSON.stringify(attachments) : undefined,
             scheduledAt: scheduledAtDate,
-            latestStatus: scheduledAtDate ? "SCHEDULED" : "QUEUED",
+            latestStatus: isHeld ? "HELD" : scheduledAtDate ? "SCHEDULED" : "QUEUED",
             apiId: apiKeyId,
             headers: headers ? JSON.stringify(headers) : undefined,
           },
         });
 
         createdEmails.push({ email, originalIndex });
+        await recordSpamResult(teamId, email.id, spamResult);
+        if (isHeld) {
+          heldEmailIds.add(email.id);
+          continue;
+        }
 
-        // Prepare queue job
         queueJobs.push({
           emailId: email.id,
           teamId,
           region: domain.region,
-          transactional: true, // Bulk emails are still transactional
+          transactional: true,
           delay,
           timestamp: Date.now(),
         });
@@ -742,25 +780,24 @@ export async function sendBulkEmails(
           { err: error, to },
           `Failed to create email record for recipient`
         );
-        // Continue processing other emails
       }
     }
   }
 
-  if (queueJobs.length === 0) {
+  if (queueJobs.length === 0 && heldEmailIds.size === 0) {
     throw new ByteSendApiError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to create any email records",
     });
   }
 
-  // Bulk queue all jobs
   try {
-    await EmailQueueService.queueBulk(queueJobs);
+    if (queueJobs.length > 0) {
+      await EmailQueueService.queueBulk(queueJobs);
+    }
   } catch (error: any) {
-    // Mark all created emails as failed
     await Promise.all(
-      createdEmails.map(async (email) => {
+      createdEmails.filter((email) => !heldEmailIds.has(email.email.id)).map(async (email) => {
         await db.emailEvent.create({
           data: {
             emailId: email.email.id,
@@ -780,10 +817,8 @@ export async function sendBulkEmails(
     throw error;
   }
 
-  // Combine and sort all emails by original index to preserve order
   const allEmails = [...suppressedEmails, ...createdEmails];
   allEmails.sort((a, b) => a.originalIndex - b.originalIndex);
 
-  // Return just the email objects in the correct order
   return allEmails.map((item) => item.email);
 }

@@ -6,11 +6,6 @@ const RESERVED_EMAIL_HEADERS = new Set(
 
 const HEADER_INJECTION_PATTERN = /[\r\n]/;
 
-/**
- * Removes reserved headers and values that could result in header injection.
- * Returns `undefined` when the resulting object is empty so downstream callers
- * can skip persisting redundant data.
- */
 export function sanitizeHeader(
   rawName: unknown,
   rawValue: unknown
@@ -70,9 +65,7 @@ export function buildHeaders({
 }: {
   emailId?: string | undefined;
   headers?: Record<string, string> | undefined;
-  /** User-facing unsubscribe page URL (GET link in email body / fallback). */
   unsubUrl?: string;
-  /** RFC 8058 one-click endpoint URL (accepts HTTP POST from mailbox providers). */
   unsubOneClickUrl?: string;
   isBulk?: boolean;
   inReplyToMessageId?: string | undefined;
@@ -94,8 +87,6 @@ export function buildHeaders({
 
   if ((unsubUrl ?? unsubOneClickUrl) && !sanitizedHeaderNames.has("list-unsubscribe")) {
     if (unsubOneClickUrl && unsubUrl) {
-      // RFC 8058: one-click URL first (mailbox providers POST to the first URL),
-      // regular page second (fallback for click-based clients like Outlook).
       defaultHeaders["List-Unsubscribe"] = `<${unsubOneClickUrl}>, <${unsubUrl}>`;
     } else {
       defaultHeaders["List-Unsubscribe"] = `<${unsubOneClickUrl ?? unsubUrl}>`;

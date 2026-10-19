@@ -13,7 +13,7 @@ import (
 )
 
 const defaultBaseURL = "https://bytesend.cloud/api/v1"
-const userAgent = "bytesend-go/0.1.0"
+const userAgent = "bytesend-go/0.3.2"
 const maxResponseBodyBytes int64 = 10 * 1024 * 1024 // 10 MB
 
 type Client struct {

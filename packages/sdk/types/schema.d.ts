@@ -457,7 +457,7 @@ export interface paths {
                             emailEvents: {
                                 emailId: string;
                                 /** @enum {string} */
-                                status: "SCHEDULED" | "QUEUED" | "SENT" | "DELIVERY_DELAYED" | "BOUNCED" | "REJECTED" | "RENDERING_FAILURE" | "DELIVERED" | "OPENED" | "CLICKED" | "COMPLAINED" | "FAILED" | "CANCELLED" | "SUPPRESSED";
+                                status: "SCHEDULED" | "QUEUED" | "SENT" | "DELIVERY_DELAYED" | "BOUNCED" | "REJECTED" | "RENDERING_FAILURE" | "DELIVERED" | "OPENED" | "CLICKED" | "COMPLAINED" | "FAILED" | "CANCELLED" | "SUPPRESSED" | "HELD";
                                 createdAt: string;
                                 data?: unknown;
                             }[];
@@ -546,7 +546,7 @@ export interface paths {
                                 createdAt: string;
                                 updatedAt: string;
                                 /** @enum {string|null} */
-                                latestStatus: "SCHEDULED" | "QUEUED" | "SENT" | "DELIVERY_DELAYED" | "BOUNCED" | "REJECTED" | "RENDERING_FAILURE" | "DELIVERED" | "OPENED" | "CLICKED" | "COMPLAINED" | "FAILED" | "CANCELLED" | "SUPPRESSED" | null;
+                                latestStatus: "SCHEDULED" | "QUEUED" | "SENT" | "DELIVERY_DELAYED" | "BOUNCED" | "REJECTED" | "RENDERING_FAILURE" | "DELIVERED" | "OPENED" | "CLICKED" | "COMPLAINED" | "FAILED" | "CANCELLED" | "SUPPRESSED" | "HELD" | null;
                                 /** Format: date-time */
                                 scheduledAt: string | null;
                                 domainId: number | null;
@@ -1992,6 +1992,68 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/smtp/auth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Authenticate SMTP credentials (used by SMTP relay server) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description SMTP username (typically the custom team username or default 'bytesend') */
+                        username: string;
+                        /** @description API key used as password for SMTP authentication */
+                        password: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Credentials are valid */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            valid: true;
+                        };
+                    };
+                };
+                /** @description Invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            valid: false;
+                            /** @description Error message explaining why authentication failed */
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

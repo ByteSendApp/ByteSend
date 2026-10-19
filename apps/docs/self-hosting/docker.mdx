@@ -154,4 +154,6 @@ docker compose -f docker/prod/compose.yml --env-file docker/prod/.env up -d
 | `GOOGLE_CLIENT_SECRET` | No | Google OAuth app client secret |
 | `STRIPE_SECRET_KEY` | No | Stripe secret key (billing) |
 | `STRIPE_WEBHOOK_SECRET` | No | Stripe webhook signing secret |
+| `DISCORD_WEBHOOK_URL` | No | Discord webhook for platform alerts (signups, blocked teams, blocklisted domains) |
+| `SPAMHAUS_DQS_KEY` | No | Spamhaus Data Query Service key for reliable blocklist and link-reputation checks |
 

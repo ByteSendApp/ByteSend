@@ -1,0 +1,73 @@
+---
+title: Admin Panel
+description: "Run your ByteSend instance: platform health, teams, deliverability, spam review and the audit log"
+icon: gauge
+---
+
+## Access
+
+Open **Admin Panel** from the account menu at the bottom of the sidebar, or go to `/admin`.
+
+- **Self-hosted:** every signed-in user can open the admin panel.
+- **Cloud mode** (`NEXT_PUBLIC_IS_CLOUD=true`): only users with the admin flag, or the addresses in `FOUNDER_EMAIL` / `ADMIN_EMAIL`. Granting admin and beta access is limited to the founder.
+
+Press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>K</kbd> anywhere in the admin panel to search users, teams, domains and emails (by ID, or by recipient for the last 30 days).
+
+Some sections only appear in cloud mode; they are marked below.
+
+---
+
+## Sections
+
+| Section | What it's for |
+| --- | --- |
+| **Overview** | Sends, delivery, bounce and complaint rates, signups and paid teams over 7, 30 or 90 days; SES quota and sandbox status per region; teams that need attention; recent admin activity |
+| **Users** *(cloud)* | Find a user and manage their access: ban, admin and beta flags, plus their 2FA, sign-in methods, sessions and teams |
+| **Teams** *(cloud)* | A page per team: usage, deliverability, members, domains, API keys, webhooks, subscription, limits, plan, block/unblock and delete |
+| **Domains** *(cloud)* | Every domain on the instance; force-verify a stuck domain or delete one |
+| **Emails** | Sending history across all teams, filtered by time, status, recipient, sender, subject or team, with each email's event timeline |
+| **Email analytics** *(cloud)* | Per-team totals for today or this month |
+| **Deliverability** | Every team's 7-day hard-bounce and complaint rates against the limits that block sending |
+| **Blacklists** *(cloud)* | Daily blocklist status for verified domains |
+| **Spam review** | Held and flagged outbound messages: release or reject held ones |
+| **Billing** *(cloud)* | Plans and Stripe subscription state per team |
+| **SES regions** | The AWS SES regions the instance sends through, with quotas and callback status |
+| **Webhooks** *(cloud)* | Customer webhook endpoints and their delivery health |
+| **Audit log** | Every change made through the admin panel |
+
+---
+
+## Audit log
+
+Every admin action is recorded with who did it, when and to what, including a before/after diff for team settings. That covers:
+
+- Banning or unbanning users and changing admin or beta access
+- Team settings, plan assignments, blocks and deletions
+- Force-verifying or deleting domains, starting or cancelling region moves and blocklist re-checks
+- Releasing or rejecting held messages
+- Viewing an email's content in the email explorer
+
+Message bodies are hidden in the email explorer until you choose **View content**, and every view is logged.
+
+---
+
+## Blocklist monitoring
+
+Every day at 04:30 UTC, ByteSend checks each verified sending domain against the Spamhaus Domain Block List, SURBL and URIBL, and posts newly listed domains to the Discord webhook in `DISCORD_WEBHOOK_URL`. Checks are kept for 30 days.
+
+These lists refuse queries that come through large public DNS resolvers, which most cloud servers use. ByteSend shows those results as **Unknown** rather than reporting a false "clean". For reliable Spamhaus results, set `SPAMHAUS_DQS_KEY` — see [environment variables](/self-hosting/docker#environment-variable-reference).
+
+<Note>
+ByteSend sends through Amazon's shared SES IP addresses, so only your sending **domains** are checked, not IPs.
+</Note>
+
+---
+
+## Spam review
+
+Outbound email is scored before it is queued ([how scoring works](/guides/spam-protection)). Messages scoring 5 or more are flagged and still sent; messages scoring 10 or more are held with the `HELD` status until you review them in **Spam review**:
+
+- **Release** queues the email (or resumes the campaign) and sends it normally.
+- **Reject** never sends it; the email's status becomes `REJECTED`. You must give a reason, which is saved to the audit log.
+
+A team with five held messages in 24 hours is blocked automatically. Unblock it from the team's page once you have reviewed it.

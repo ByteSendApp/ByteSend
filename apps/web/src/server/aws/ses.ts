@@ -60,13 +60,13 @@ function getSesClient(region: string) {
 
 function generateKeyPair() {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", {
-    modulusLength: 2048, // Minimum recommended RSA key length
+    modulusLength: 2048,
     publicKeyEncoding: {
-      type: "spki", // Recommended to be 'spki' by the Node.js docs
+      type: "spki",
       format: "pem",
     },
     privateKeyEncoding: {
-      type: "pkcs8", // Recommended to be 'pkcs8' by the Node.js docs
+      type: "pkcs8",
       format: "pem",
     },
   });
@@ -198,11 +198,6 @@ export async function getDomainIdentity(domain: string, region: string) {
   return response;
 }
 
-/**
- * Regenerates the DKIM signing key pair for a domain identity and re-registers
- * it with SES. This forces SES to do a fresh DNS lookup for the new TXT record.
- * Returns the new public key that the user must publish in DNS.
- */
 export async function reregisterDkimSigning(
   domain: string,
   region: string,
@@ -251,7 +246,7 @@ export async function sendRawEmail({
 }: Partial<EmailContent> & {
   region: string;
   configurationSetName: string;
-  attachments?: { filename: string; content: string }[]; // Made attachments optional
+  attachments?: { filename: string; content: string }[];
   cc?: string[];
   bcc?: string[];
   replyTo?: string[];
@@ -312,8 +307,6 @@ export async function sendRawEmail({
     return response.MessageId;
   } catch (error) {
     logger.error({ err: error }, "Failed to send email");
-    // It's better to throw the original error or a new error with more context
-    // throw new Error("Failed to send email");
     throw error;
   }
 }
@@ -344,8 +337,8 @@ export async function addWebhookConfiguration(
   }
 
   const command = new CreateConfigurationSetEventDestinationCommand({
-    ConfigurationSetName: configName, // required
-    EventDestinationName: "bytesend_destination", // required
+    ConfigurationSetName: configName,
+    EventDestinationName: "bytesend_destination",
     EventDestination: {
       Enabled: true,
       MatchingEventTypes: eventTypes,
@@ -359,10 +352,6 @@ export async function addWebhookConfiguration(
   return response.$metadata.httpStatusCode === 200;
 }
 
-/**
- * Remove email from AWS SES account-level suppression list
- * Returns true if successful or email wasn't suppressed, false on error
- */
 export async function deleteFromSesSuppressionList(
   email: string,
   region: string
@@ -376,7 +365,6 @@ export async function deleteFromSesSuppressionList(
     logger.info({ email, region }, "Removed email from SES suppression list");
     return true;
   } catch (error: any) {
-    // NotFoundException means email wasn't in SES suppression list - that's fine
     if (error.name === "NotFoundException") {
       logger.debug(
         { email, region },

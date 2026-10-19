@@ -58,9 +58,6 @@ export interface NotificationMessage {
 }
 
 export class NotificationProviderService {
-  /**
-   * Create a new notification provider
-   */
   public static async createProvider(params: {
     teamId: number;
     type: NotificationProviderType;
@@ -69,7 +66,6 @@ export class NotificationProviderService {
     config: NotificationProviderConfig;
     eventTypes?: NotificationEventType[];
   }) {
-    // Validate config based on type
     this.validateConfig(params.type, params.config);
 
     const provider = await db.notificationProvider.create({
@@ -92,9 +88,6 @@ export class NotificationProviderService {
     return provider;
   }
 
-  /**
-   * Update an existing notification provider
-   */
   public static async updateProvider(params: {
     id: string;
     teamId: number;
@@ -116,7 +109,6 @@ export class NotificationProviderService {
       throw new ByteSendApiError("UNAUTHORIZED", "Provider not found");
     }
 
-    // Merge configs if partial update
     const updatedConfig = params.config
       ? { ...provider.config, ...params.config }
       : undefined;
@@ -142,9 +134,6 @@ export class NotificationProviderService {
     return updated;
   }
 
-  /**
-   * Get all providers for a team
-   */
   public static async listProviders(teamId: number) {
     return db.notificationProvider.findMany({
       where: { teamId },
@@ -152,9 +141,6 @@ export class NotificationProviderService {
     });
   }
 
-  /**
-   * Get a specific provider
-   */
   public static async getProvider(id: string, teamId: number) {
     const provider = await db.notificationProvider.findUnique({
       where: { id },
@@ -171,9 +157,6 @@ export class NotificationProviderService {
     return provider;
   }
 
-  /**
-   * Delete a notification provider
-   */
   public static async deleteProvider(id: string, teamId: number) {
     const provider = await db.notificationProvider.findUnique({
       where: { id },
@@ -194,9 +177,6 @@ export class NotificationProviderService {
     logger.info({ providerId: id }, "Notification provider deleted");
   }
 
-  /**
-   * Send a notification to a provider
-   */
   public static async sendNotification(
     teamId: number,
     providerId: string,
@@ -211,7 +191,6 @@ export class NotificationProviderService {
       throw new ByteSendApiError("NOT_FOUND", "Provider not found or inactive");
     }
 
-    // Check if provider handles this event type
     if (provider.eventTypes.length > 0 && !provider.eventTypes.includes(eventType)) {
       throw new ByteSendApiError(
         "BAD_REQUEST",
@@ -284,9 +263,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Test a provider by sending a test message
-   */
   public static async testProvider(id: string, teamId: number) {
     const provider = await this.getProvider(id, teamId);
 
@@ -321,9 +297,6 @@ export class NotificationProviderService {
     logger.info({ providerId: id }, "Test notification sent");
   }
 
-  /**
-   * Send batch notifications to all active providers for an event
-   */
   public static async broadcastNotification(
     teamId: number,
     eventType: NotificationEventType,
@@ -334,7 +307,7 @@ export class NotificationProviderService {
         teamId,
         isActive: true,
         OR: [
-          { eventTypes: { isEmpty: true } }, // Empty array means all events
+          { eventTypes: { isEmpty: true } },
           { eventTypes: { has: eventType } },
         ],
       },
@@ -352,7 +325,6 @@ export class NotificationProviderService {
       }
     }
 
-    // Fan-out to admin observer webhook if configured and not already a team provider
     const adminUrl = env.ADMIN_DISCORD_WEBHOOK_URL;
     if (adminUrl) {
       const alreadyCovered = providers.some((p) => {
@@ -386,9 +358,6 @@ export class NotificationProviderService {
     return { sent, failed };
   }
 
-  /**
-   * Dispatch notification to the appropriate provider
-   */
   private static async dispatchNotification(
     provider: any,
     message: NotificationMessage
@@ -409,9 +378,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Send to Discord
-   */
   private static async sendToDiscord(
     config: DiscordConfig,
     message: NotificationMessage
@@ -424,7 +390,7 @@ export class NotificationProviderService {
       timestamp: message.timestamp ? new Date().toISOString() : undefined,
       footer: {
         text: "ByteSend",
-        icon_url: "https://bytesend.io/favicon.ico",
+        icon_url: "https://bytesend.cloud/favicon.ico",
       },
     };
 
@@ -448,9 +414,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Send to Slack
-   */
   private static async sendToSlack(
     config: SlackConfig,
     message: NotificationMessage
@@ -465,25 +428,25 @@ export class NotificationProviderService {
       },
       ...(message.description
         ? [
-            {
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: message.description,
-              },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: message.description,
             },
-          ]
+          },
+        ]
         : []),
       ...(message.fields && message.fields.length > 0
         ? [
-            {
-              type: "section",
-              fields: message.fields.map((field) => ({
-                type: "mrkdwn",
-                text: `*${field.name}*\n${field.value}`,
-              })),
-            },
-          ]
+          {
+            type: "section",
+            fields: message.fields.map((field) => ({
+              type: "mrkdwn",
+              text: `*${field.name}*\n${field.value}`,
+            })),
+          },
+        ]
         : []),
     ];
 
@@ -515,9 +478,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Send to Microsoft Teams
-   */
   private static async sendToMicrosoftTeams(
     config: MicrosoftTeamsConfig,
     message: NotificationMessage
@@ -556,9 +516,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Send to Telegram
-   */
   private static async sendToTelegram(
     config: TelegramConfig,
     message: NotificationMessage
@@ -595,9 +552,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Send to custom webhook
-   */
   private static async sendToCustomWebhook(
     config: CustomWebhookConfig,
     message: NotificationMessage
@@ -607,7 +561,6 @@ export class NotificationProviderService {
       ...config.headers,
     };
 
-    // Add HMAC signature if secret provided
     if (config.secret) {
       const payload = JSON.stringify(message);
       const signature = createHmac("sha256", config.secret)
@@ -629,9 +582,6 @@ export class NotificationProviderService {
     }
   }
 
-  /**
-   * Validate provider configuration
-   */
   private static assertNotAdminWebhook(webhookUrl: string) {
     const adminUrl = env.ADMIN_DISCORD_WEBHOOK_URL;
     if (adminUrl && webhookUrl === adminUrl) {

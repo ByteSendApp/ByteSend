@@ -304,7 +304,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Discord">
-                  <Link href="https://discord.gg/Bg3Sf5fqa4" target="_blank">
+                  <Link href="https://discord.gg/C2Q4GHXKQA" target="_blank">
                     <SiDiscord className="size-4 shrink-0" />
                     <span>Discord</span>
                   </Link>
@@ -451,10 +451,10 @@ function VersionInfo() {
   const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/version", { cache: "no-store" })
+    fetch("/api/version")
       .then((r) => r.json())
       .then((data: { version: string }) => setVersion(data.version))
-      .catch(() => setVersion("v0.2.1"));
+      .catch(() => setVersion("unknown"));
   }, []);
 
   return (

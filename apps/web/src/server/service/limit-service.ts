@@ -7,17 +7,17 @@ import { db } from "../db";
 import { logger } from "../logger/log";
 import { Plan, Team } from "@prisma/client";
 import { sendToDiscord } from "./notification-service";
-
-// Thresholds aligned with Google/Yahoo sender requirements
-const BOUNCE_RATE_HARD_LIMIT = 0.02;      // 2%  — block sending
-const BOUNCE_RATE_WARN_LIMIT = 0.015;     // 1.5% — warn only
-const COMPLAINT_RATE_HARD_LIMIT = 0.001;  // 0.1% — block sending
-const COMPLAINT_RATE_WARN_LIMIT = 0.0008; // 0.08% — warn only
-// Only enforce when the team has enough volume to produce a meaningful rate
-const BOUNCE_RATE_MIN_VOLUME = 100;
+import {
+  BOUNCE_RATE_HARD_LIMIT,
+  BOUNCE_RATE_WARN_LIMIT,
+  COMPLAINT_RATE_HARD_LIMIT,
+  COMPLAINT_RATE_WARN_LIMIT,
+  BOUNCE_RATE_MIN_VOLUME,
+  DELIVERABILITY_WINDOW_DAYS,
+} from "~/lib/constants/deliverability";
 
 function isLimitExceeded(current: number, limit: number): boolean {
-  if (limit === -1) return false; // unlimited
+  if (limit === -1) return false;
   return current >= limit;
 }
 
@@ -51,10 +51,7 @@ function hasMarketingEnabled(team: Team): boolean {
 }
 
 export class LimitService {
-  /**
-   * Returns true if the team has the admin or founder as a member.
-   * These teams are exempt from all limits.
-   */
+
   private static async isAdminOrFounderTeam(teamId: number): Promise<boolean> {
     const adminEmails = [env.ADMIN_EMAIL, env.FOUNDER_EMAIL]
       .filter(Boolean)
@@ -75,7 +72,6 @@ export class LimitService {
     currentCount: number;
     reason?: LimitReason;
   }> {
-    // Limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1, currentCount: 0 };
     }
@@ -84,7 +80,6 @@ export class LimitService {
     const currentCount = await db.domain.count({ where: { teamId } });
 
     const baseDomainLimit = PLAN_LIMITS[getActivePlan(team)].domains;
-    // Extra domain slots purchasable as add-on (not available on FREE — hard cap)
     const extraSlots = getActivePlan(team) !== "FREE" ? (team.extraDomainSlots ?? 0) : 0;
     const limit = baseDomainLimit === -1 ? -1 : baseDomainLimit + extraSlots;
     if (isLimitExceeded(currentCount, limit)) {
@@ -109,7 +104,6 @@ export class LimitService {
     currentCount: number;
     reason?: LimitReason;
   }> {
-    // Limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1, currentCount: 0 };
     }
@@ -137,7 +131,6 @@ export class LimitService {
     limit: number;
     reason?: LimitReason;
   }> {
-    // Limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1, currentCount: 0 };
     }
@@ -166,7 +159,6 @@ export class LimitService {
     currentCount: number;
     reason?: LimitReason;
   }> {
-    // Limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1, currentCount: 0 };
     }
@@ -229,7 +221,6 @@ export class LimitService {
     currentCount: number;
     reason?: LimitReason;
   }> {
-    // Limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1, currentCount: 0 };
     }
@@ -262,8 +253,7 @@ export class LimitService {
     complained: number;
   }> {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 7);
-    // DailyEmailUsage.date is stored as 'YYYY-MM-DD' string; ISO prefix comparison is correct
+    cutoff.setDate(cutoff.getDate() - DELIVERABILITY_WINDOW_DAYS);
     const cutoffDate = cutoff.toISOString().slice(0, 10);
 
     const result = await db.dailyEmailUsage.aggregate({
@@ -278,11 +268,6 @@ export class LimitService {
     };
   }
 
-  // Checks email sending limits and also triggers usage notifications.
-  // Side effects:
-  // - Sends "warning" emails when nearing daily/monthly limits (rate-limited in TeamService)
-  // - Sends "limit reached" notifications when limits are exceeded (rate-limited in TeamService)
-  // - Teams with inactive subscriptions are treated like FREE plans for monthly limit alerts
   static async checkEmailLimit(
     teamId: number,
     emailType?: "MARKETING" | "TRANSACTIONAL",
@@ -292,7 +277,6 @@ export class LimitService {
     reason?: LimitReason;
     available?: number;
   }> {
-    // Block flag enforced in all deployment modes
     const team = await TeamService.getTeamCached(teamId);
 
     if (team.isBlocked) {
@@ -303,17 +287,14 @@ export class LimitService {
       };
     }
 
-    // Remaining limits only apply in cloud mode
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
       return { isLimitReached: false, limit: -1 };
     }
 
-    // Admin/founder teams have no limits
     if (await LimitService.isAdminOrFounderTeam(teamId)) {
       return { isLimitReached: false, limit: -1 };
     }
 
-    // Bounce / complaint rate enforcement (7-day rolling window)
     const recentStats = await LimitService.getRecentBounceStats(teamId);
     if (recentStats.delivered >= BOUNCE_RATE_MIN_VOLUME) {
       const bounceRate = recentStats.hardBounced / recentStats.delivered;
@@ -349,7 +330,6 @@ export class LimitService {
         };
       }
 
-      // Warn when approaching thresholds
       if (bounceRate >= BOUNCE_RATE_WARN_LIMIT || complaintRate >= COMPLAINT_RATE_WARN_LIMIT) {
         logger.warn(
           { teamId, bounceRate, complaintRate, recentStats },
@@ -363,7 +343,6 @@ export class LimitService {
 
     const activePlan = getActivePlan(team);
 
-    // Block marketing emails on plans where they are not available (e.g. FREE)
     if (emailType === "MARKETING" && !hasMarketingEnabled(team)) {
       return {
         isLimitReached: true,
@@ -372,7 +351,6 @@ export class LimitService {
       };
     }
 
-    // Enforce daily sending limit (team-specific)
     const usage = await withCache(
       `usage:this-month:${teamId}`,
       () => getThisMonthUsage(teamId),
@@ -388,7 +366,6 @@ export class LimitService {
     );
 
     if (isLimitExceeded(dailyUsage, dailyLimit)) {
-      // Notify: daily limit reached
       try {
         await TeamService.maybeNotifyEmailLimitReached(
           teamId,
@@ -457,13 +434,11 @@ export class LimitService {
       }
     }
 
-    // Apply monthly limit logic for FREE plan or inactive subscriptions
     if (getActivePlan(team) === "FREE") {
       const monthlyUsage = usage.month.reduce(
         (acc, curr) => acc + curr.sent,
         0,
       );
-      // Use FREE plan limits for inactive subscriptions
       const monthlyLimit = PLAN_LIMITS.FREE.emailsPerMonth;
 
       logger.info(
@@ -486,7 +461,6 @@ export class LimitService {
       );
 
       if (isLimitExceeded(monthlyUsage, monthlyLimit)) {
-        // Notify: monthly (free plan or inactive subscription) limit reached
         try {
           await TeamService.maybeNotifyEmailLimitReached(
             teamId,
@@ -509,7 +483,6 @@ export class LimitService {
       }
     }
 
-    // Warn: nearing daily limit (e.g., < 20% available)
     if (
       dailyLimit !== -1 &&
       dailyLimit > 0 &&
@@ -535,11 +508,6 @@ export class LimitService {
     };
   }
 
-  /**
-   * Returns true if the team's active plan includes marketing/campaign emails.
-   * No side effects — safe to call at request time without triggering notifications.
-   * Admin/founder teams and self-hosted instances are always allowed.
-   */
   static async checkMarketingAccess(teamId: number): Promise<boolean> {
     if (!env.NEXT_PUBLIC_IS_CLOUD) return true;
     if (await LimitService.isAdminOrFounderTeam(teamId)) return true;

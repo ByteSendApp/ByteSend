@@ -36,7 +36,7 @@ export function TopNavClient({ isCloud }: { isCloud?: boolean }) {
             {isCloud && <Link href="/#features" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Features</Link>}
             {isCloud && <Link href="/#pricing" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Pricing</Link>}
             {isCloud && <Link href="/changelog" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Changelog</Link>}
-            <a href="https://discord.gg/Bg3Sf5fqa4" target="_blank" rel="noopener noreferrer" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Discord</a>
+            <a href="https://discord.gg/C2Q4GHXKQA" target="_blank" rel="noopener noreferrer" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Discord</a>
             <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Docs</a>
             <Button className="w-full mt-2 rounded-lg" asChild>
               <Link href={ctaHref} onClick={() => setOpen(false)}>{ctaLabel}</Link>

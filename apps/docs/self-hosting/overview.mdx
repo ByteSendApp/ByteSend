@@ -8,7 +8,7 @@ ByteSend is fully self-hostable. This guide covers two deployment paths:
 - **[Docker (recommended)](#docker-deployment)** — spin up the entire stack with a single `docker compose` command
 - **[Manual / bare-metal](#manual-deployment)** — install directly on a Linux server using Node.js and pnpm
 
-If you have questions, join [#self-host](https://discord.gg/nodebyte) on Discord.
+If you have questions, join [#self-host](https://https://discord.gg/C2Q4GHXKQA) on Discord.
 
 ---
 
@@ -272,6 +272,8 @@ sudo journalctl -u bytesend -f
 | `S3_COMPATIBLE_*` | No | S3-compatible storage (defaults to bundled MinIO) |
 | `SMTP_HOST` / `SMTP_USER` | No | External SMTP relay for account emails |
 | `ADMIN_EMAIL` | No | Grants admin panel access to this address |
+| `DISCORD_WEBHOOK_URL` | No | Discord webhook for platform alerts (signups, blocked teams, blocklisted domains) |
+| `SPAMHAUS_DQS_KEY` | No | Spamhaus Data Query Service key for reliable blocklist and link-reputation checks |
 | `API_RATE_LIMIT` | No | API requests per second per key (default `1`) |
 | `AUTH_EMAIL_RATE_LIMIT` | No | Magic-link emails per minute (default `5`) |
 
@@ -286,4 +288,5 @@ sudo journalctl -u bytesend -f
 | Firewall (UFW) | [Firewall Setup](./firewall) |
 | Reverse proxy | [Nginx / Traefik](./reverse-proxy) |
 | Security hardening | [Security](./security) |
+| Running the instance | [Admin Panel](./admin-panel) |
 

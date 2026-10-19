@@ -40,7 +40,7 @@ const worker = new Worker(
 await webhookCleanupQueue.upsertJobScheduler(
   "webhook-cleanup-daily",
   {
-    pattern: "0 3 * * *", // daily at 03:00 UTC
+    pattern: "0 3 * * *",
     tz: "UTC",
   },
   {

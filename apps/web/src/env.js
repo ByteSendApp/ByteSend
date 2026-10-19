@@ -2,10 +2,6 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
-  /**
-   * Specify your server-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars.
-   */
   server: {
     DATABASE_URL: z
       .string()
@@ -22,10 +18,7 @@ export const env = createEnv({
         ? z.string()
         : z.string().optional(),
     NEXTAUTH_URL: z.preprocess(
-      // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
-      // Since NextAuth.js automatically uses the VERCEL_URL if present.
       (str) => process.env.VERCEL_URL ?? str,
-      // VERCEL_URL doesn't include `https` so it cant be validated as a URL
       process.env.VERCEL ? z.string() : z.string().url(),
     ),
     GITHUB_ID: z.string().optional(),
@@ -54,36 +47,29 @@ export const env = createEnv({
     DISCORD_WEBHOOK_URL: z.string().optional(),
     ADMIN_DISCORD_WEBHOOK_URL: z.string().url().optional(),
     REDIS_URL: z.string(),
+    SPAMHAUS_DQS_KEY: z.string().optional(),
+    PRISMA_LOG_QUERIES: z.enum(["true", "false"]).optional(),
     REDIS_KEY_PREFIX: z.string().default(""),
     S3_COMPATIBLE_ACCESS_KEY: z.string().optional(),
     S3_COMPATIBLE_SECRET_KEY: z.string().optional(),
     S3_COMPATIBLE_API_URL: z.string().optional(),
     S3_COMPATIBLE_PUBLIC_URL: z.string().optional(),
     S3_COMPATIBLE_BUCKET: z.string().optional(),
-    // Stripe — only the API key and webhook secret are needed at runtime.
-    // All price/product IDs are stored in the AppSetting table after running `pnpm stripe:seed`.
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     SMTP_HOST: z.string().default("smtp.bytesend.cloud"),
     SMTP_USER: z.string().default("bytesend"),
     CONTACT_BOOK_ID: z.string().optional(),
     EMAIL_CLEANUP_DAYS: z
-        .string()
-        .optional()
-        .transform((str) => (str ? parseInt(str, 10) : undefined)),
+      .string()
+      .optional()
+      .transform((str) => (str ? parseInt(str, 10) : undefined)),
     GITHUB_RELEASE_TOKEN: z.string().optional(),
     GITLAB_URL: z.string().url().optional(),
     GITLAB_REPO_ID: z.string().optional(),
     GITLAB_RELEASE_TOKEN: z.string().optional(),
   },
-
-  /**
-   * Specify your client-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars. To expose them to the client, prefix them with
-   * `NEXT_PUBLIC_`.
-   */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_IS_CLOUD: z
       .string()
       .default("false")
@@ -91,11 +77,6 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_VERSION: z.string().optional(),
     NEXT_PUBLIC_GIT_SHA: z.string().optional(),
   },
-
-  /**
-   * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
-   * middlewares) or client-side so we need to destruct manually.
-   */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
@@ -123,6 +104,8 @@ export const env = createEnv({
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
     ADMIN_DISCORD_WEBHOOK_URL: process.env.ADMIN_DISCORD_WEBHOOK_URL,
     REDIS_URL: process.env.REDIS_URL,
+    SPAMHAUS_DQS_KEY: process.env.SPAMHAUS_DQS_KEY,
+    PRISMA_LOG_QUERIES: process.env.PRISMA_LOG_QUERIES,
     REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX,
     FROM_EMAIL: process.env.FROM_EMAIL,
     S3_COMPATIBLE_ACCESS_KEY: process.env.S3_COMPATIBLE_ACCESS_KEY,
@@ -141,14 +124,6 @@ export const env = createEnv({
     GITLAB_REPO_ID: process.env.GITLAB_REPO_ID,
     GITLAB_RELEASE_TOKEN: process.env.GITLAB_RELEASE_TOKEN,
   },
-  /**
-   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
-   * useful for Docker builds.
-   */
   skipValidation: process.env.SKIP_ENV_VALIDATION === "true",
-  /**
-   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
-   * `SOME_VAR=''` will throw an error.
-   */
   emptyStringAsUndefined: true,
 });

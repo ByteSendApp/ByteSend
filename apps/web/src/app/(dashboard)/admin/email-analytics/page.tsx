@@ -21,6 +21,7 @@ import {
 } from "@bytesend/ui/src/table";
 import Spinner from "@bytesend/ui/src/spinner";
 import { api } from "~/trpc/react";
+import { AdminPageHeader } from "../_components/admin-page-header";
 import { isCloud } from "~/utils/common";
 import { timeframeOptions } from "./constants";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -63,7 +64,7 @@ export default function AdminEmailAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Email analytics</h2>
+      <AdminPageHeader title="Email analytics" description="Per-team sending totals for today or this month" />
       <div className="flex flex-wrap gap-4">
         <div className="w-48">
           <Label htmlFor="timeframe">Timeframe</Label>

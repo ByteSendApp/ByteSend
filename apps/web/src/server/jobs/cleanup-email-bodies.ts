@@ -1,22 +1,18 @@
-import {Queue, Worker} from "bullmq";
-import {db} from "~/server/db";
-import {getRedis, BULL_PREFIX} from "~/server/redis";
-import {logger} from "../logger/log";
-import {DEFAULT_QUEUE_OPTIONS} from "../queue/queue-constants";
-import {env} from "~/env";
-import {isSelfHosted, isEmailCleanupEnabled} from "~/utils/common";
+import { Queue, Worker } from "bullmq";
+import { db } from "~/server/db";
+import { getRedis, BULL_PREFIX } from "~/server/redis";
+import { logger } from "../logger/log";
+import { DEFAULT_QUEUE_OPTIONS } from "../queue/queue-constants";
+import { env } from "~/env";
+import { isSelfHosted, isEmailCleanupEnabled } from "~/utils/common";
 
 const CLEANUP_QUEUE_NAME = "cleanup-email-bodies";
 
-const CLEANUP_CRON = "0 0 * * *"; // default: midnight UTC
+const CLEANUP_CRON = "0 0 * * *";
 
-// Only initialize if self hosted and cleanup enabled
 if (isSelfHosted() && isEmailCleanupEnabled()) {
     const CLEANUP_DAYS = env.EMAIL_CLEANUP_DAYS!;
 
-    /**
-     * Initialize Queue
-     */
     const cleanupQueue = new Queue(CLEANUP_QUEUE_NAME, {
         connection: getRedis(),
         prefix: BULL_PREFIX,
@@ -33,10 +29,10 @@ if (isSelfHosted() && isEmailCleanupEnabled()) {
 
             const result = await db.email.updateMany({
                 where: {
-                    createdAt: {lt: cutoffDate},
+                    createdAt: { lt: cutoffDate },
                     OR: [
-                        {text: {not: null}},
-                        {html: {not: null}},
+                        { text: { not: null } },
+                        { html: { not: null } },
                     ],
                 },
                 data: {
@@ -68,10 +64,10 @@ if (isSelfHosted() && isEmailCleanupEnabled()) {
     );
 
     worker.on("completed", (job) => {
-        logger.info({jobId: job.id}, ` Email Body cleanup job completed`);
+        logger.info({ jobId: job.id }, ` Email Body cleanup job completed`);
     });
 
     worker.on("failed", (job, err) => {
-        logger.error({err, jobId: job?.id}, `Email Body cleanup job failed`);
+        logger.error({ err, jobId: job?.id }, `Email Body cleanup job failed`);
     });
 }

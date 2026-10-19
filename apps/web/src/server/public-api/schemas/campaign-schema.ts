@@ -10,13 +10,11 @@ const stringOrStringArray = z.union([
 export const parseScheduledAt = (scheduledAt?: string): Date | undefined => {
   if (!scheduledAt) return undefined;
 
-  // Try parsing as ISO date first
   const isoDate = new Date(scheduledAt);
   if (!isNaN(isoDate.getTime())) {
     return isoDate;
   }
 
-  // Try parsing with chrono for natural language
   const chronoDate = chrono.parseDate(scheduledAt);
   if (chronoDate) {
     return chronoDate;

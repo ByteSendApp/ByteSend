@@ -95,7 +95,6 @@ export async function createCheckoutSessionForTeam(
     });
   }
 
-  // HOBBY, LITE, BASIC — subscription
   if (!priceIds.monthly) {
     throw new Error(`Stripe not seeded: run \`pnpm stripe:seed\` to create ${plan} price IDs in DB`);
   }
@@ -115,9 +114,6 @@ export async function createCheckoutSessionForTeam(
   });
 }
 
-/**
- * Creates a Stripe Checkout session for purchasing additional domain slots.
- */
 export async function createCustomCheckoutSessionForTeam(
   teamId: number,
   contract: CustomPlanContract,
@@ -165,9 +161,6 @@ export async function createCustomCheckoutSessionForTeam(
   });
 }
 
-/**
- * Creates a Stripe Checkout session for purchasing additional domain slots.
- */
 export async function createAddonCheckoutSession(
   teamId: number,
   quantity: number = 1,
@@ -256,17 +249,14 @@ export async function syncStripeData(customerId: string) {
     expand: ["data.default_payment_method"],
   });
 
-  // Identify add-on price IDs from DB
   const addonPriceIds = await getAddonPriceIds();
   const addonPricesByType = await getAddonPriceIdsByType();
 
-  // Plan subscription = first sub whose items contain at least one non-addon price
   const planSubscription =
     subscriptions.data.find((sub) =>
       sub.items.data.some((item) => item.price?.id && !addonPriceIds.has(item.price.id)),
     ) ?? null;
 
-  // Sum extra domain slots and member slots from ACTIVE add-on subscriptions
   let extraDomainSlots = 0;
   let extraMemberSlots = 0;
   for (const sub of subscriptions.data) {
@@ -375,10 +365,6 @@ export async function syncStripeData(customerId: string) {
   }
 }
 
-/**
- * Handles a completed LIFETIME one-time payment checkout.
- * Sets the team's plan to LIFETIME permanently — no subscription involved.
- */
 export async function syncLifetimePayment(customerId: string) {
   const team = await db.team.findUnique({ where: { stripeCustomerId: customerId } });
 

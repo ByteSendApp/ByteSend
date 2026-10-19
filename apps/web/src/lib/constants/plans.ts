@@ -27,62 +27,61 @@ export const PLAN_LIMITS: Record<
     teamMembers: number;
     webhooks: number;
     campaigns: number;
-    /** Whether marketing/campaign emails are available on this plan. */
     marketingEmailsIncluded: boolean;
   }
 > = {
   FREE: {
     emailsPerMonth: PLANS.FREE.limits.monthlyEmailLimit,
-    emailsPerDay: PLANS.FREE.limits.dailyEmailLimit,   // Hard cap — must wait or upgrade
+    emailsPerDay: PLANS.FREE.limits.dailyEmailLimit,
     domains: PLANS.FREE.limits.maxDomains,
     contactBooks: PLANS.FREE.limits.maxContactBooks,
-    contacts: PLANS.FREE.limits.contactsLimit,         // Hard cap across all contact books
+    contacts: PLANS.FREE.limits.contactsLimit,
     campaigns: PLANS.FREE.limits.campaignsLimit,
-    teamMembers: PLANS.FREE.limits.maxTeamMembers,        // Hard cap — upgrade required
+    teamMembers: PLANS.FREE.limits.maxTeamMembers,
     webhooks: PLANS.FREE.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.FREE.limits.marketingEmailsIncluded,
   },
   HOBBY: {
-    emailsPerMonth: PLANS.HOBBY.limits.monthlyEmailLimit, // Included; overage billed monthly
-    emailsPerDay: -1, // Unlimited daily on paid plans
+    emailsPerMonth: PLANS.HOBBY.limits.monthlyEmailLimit,
+    emailsPerDay: -1,
     domains: PLANS.HOBBY.limits.maxDomains,
     contactBooks: PLANS.HOBBY.limits.maxContactBooks,
     contacts: PLANS.HOBBY.limits.contactsLimit,
     campaigns: PLANS.HOBBY.limits.campaignsLimit,
-    teamMembers: PLANS.HOBBY.limits.maxTeamMembers,        // Hard cap — upgrade required
+    teamMembers: PLANS.HOBBY.limits.maxTeamMembers,
     webhooks: PLANS.HOBBY.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.HOBBY.limits.marketingEmailsIncluded,
   },
   LITE: {
-    emailsPerMonth: PLANS.LITE.limits.monthlyEmailLimit, // Included; overage billed monthly
-    emailsPerDay: -1, // Unlimited daily on paid plans
+    emailsPerMonth: PLANS.LITE.limits.monthlyEmailLimit,
+    emailsPerDay: -1,
     domains: PLANS.LITE.limits.maxDomains,
     contactBooks: PLANS.LITE.limits.maxContactBooks,
     contacts: PLANS.LITE.limits.contactsLimit,
     campaigns: PLANS.LITE.limits.campaignsLimit,
-    teamMembers: PLANS.LITE.limits.maxTeamMembers,        // Hard cap — upgrade required
+    teamMembers: PLANS.LITE.limits.maxTeamMembers,
     webhooks: PLANS.LITE.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.LITE.limits.marketingEmailsIncluded,
   },
   BASIC: {
-    emailsPerMonth: PLANS.BASIC.limits.monthlyEmailLimit, // Included; overage billed at CA$0.01/ea
-    emailsPerDay: -1, // Unlimited daily
+    emailsPerMonth: PLANS.BASIC.limits.monthlyEmailLimit,
+    emailsPerDay: -1,
     domains: PLANS.BASIC.limits.maxDomains,
     contactBooks: PLANS.BASIC.limits.maxContactBooks,
-    contacts: -1, // Unlimited
+    contacts: -1,
     campaigns: PLANS.BASIC.limits.campaignsLimit,
-    teamMembers: -1, // Unlimited
+    teamMembers: -1,
     webhooks: PLANS.BASIC.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.BASIC.limits.marketingEmailsIncluded,
   },
   LIFETIME: {
-    emailsPerMonth: -1, // Unlimited
-    emailsPerDay: -1,  // Unlimited
+    emailsPerMonth: -1,
+    emailsPerDay: -1,
     domains: PLANS.LIFETIME.limits.maxDomains,
     contactBooks: PLANS.LIFETIME.limits.maxContactBooks,
-    contacts: -1, // Unlimited
+    contacts: -1,
     campaigns: PLANS.LIFETIME.limits.campaignsLimit,
-    teamMembers: -1, // Unlimited
+    teamMembers: -1,
     webhooks: PLANS.LIFETIME.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.LIFETIME.limits.marketingEmailsIncluded,
   },

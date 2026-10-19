@@ -84,7 +84,7 @@ const route = createRoute({
             name: "domainId",
             in: "query",
           },
-          example: "123", // or ["123", "456"]
+          example: "123",
         }),
     }),
   },

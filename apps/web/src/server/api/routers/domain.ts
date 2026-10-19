@@ -17,10 +17,17 @@ import {
   clearDkimReregisteredFlag,
 } from "~/server/service/domain-service";
 import { sendEmail } from "~/server/service/email-service";
+import { DomainRegionService, getRegionMoveSummary } from "~/server/service/domain-region-service";
 import { SesSettingsService } from "~/server/service/ses-settings-service";
 import { env } from "~/env";
 import { LimitService } from "~/server/service/limit-service";
 import { TRPCError } from "@trpc/server";
+
+function assertTeamAdmin(role: string) {
+  if (role !== "ADMIN") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Only team admins can change a domain's region" });
+  }
+}
 
 function isAdminOrFounder(email: string | null | undefined) {
   const adminEmails = [env.ADMIN_EMAIL, env.FOUNDER_EMAIL].filter(Boolean);
@@ -36,7 +43,6 @@ export const domainRouter = createTRPCRouter({
   createDomain: teamProcedure
     .input(z.object({ name: z.string(), region: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Check domain limit server-side
       const limitCheck = await LimitService.checkDomainLimit(ctx.team.id);
       if (limitCheck.isLimitReached) {
         throw new TRPCError({
@@ -68,7 +74,27 @@ export const domainRouter = createTRPCRouter({
   }),
 
   getDomain: domainProcedure.query(async ({ input, ctx }) => {
-    return getDomain(input.id, ctx.team.id);
+    const domain = await getDomain(input.id, ctx.team.id);
+    return { ...domain, regionMove: getRegionMoveSummary(domain) };
+  }),
+
+  startRegionMove: domainProcedure
+    .input(z.object({ region: z.string().min(1).max(32) }))
+    .mutation(async ({ ctx, input }) => {
+      assertTeamAdmin(ctx.teamUser.role);
+      await DomainRegionService.start(ctx.domain, input.region);
+      return { success: true };
+    }),
+
+  cancelRegionMove: domainProcedure.mutation(async ({ ctx }) => {
+    assertTeamAdmin(ctx.teamUser.role);
+    await DomainRegionService.cancel(ctx.domain);
+    return { success: true };
+  }),
+
+  checkRegionMove: domainProcedure.mutation(async ({ ctx }) => {
+    const result = await DomainRegionService.refresh(ctx.domain);
+    return { switched: result.switched, dnsPrecheck: result.dnsPrecheck };
   }),
 
   updateDomain: domainProcedure

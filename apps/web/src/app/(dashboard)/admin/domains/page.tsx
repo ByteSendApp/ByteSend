@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@bytesend/ui/src/button";
-import { Input } from "@bytesend/ui/src/input";
 import Spinner from "@bytesend/ui/src/spinner";
 import {
   Table,
@@ -17,6 +17,9 @@ import {
 import { Badge } from "@bytesend/ui/src/badge";
 import { toast } from "@bytesend/ui/src/toaster";
 import { api } from "~/trpc/react";
+import { AdminPageHeader } from "../_components/admin-page-header";
+import { Pagination } from "../_components/pagination";
+import { SearchInput } from "../_components/search-input";
 import { isCloud } from "~/utils/common";
 import { DomainStatusBadge } from "../../domains/domain-badge";
 import type { AppRouter } from "~/server/api/root";
@@ -28,8 +31,8 @@ type AdminDomain = NonNullable<RouterOutputs["admin"]["listAdminDomains"]>["doma
 export default function AdminDomainsPage() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
-  const [queryInput, setQueryInput] = useState("");
 
+  const utils = api.useUtils();
   const domainsQuery = api.admin.listAdminDomains.useQuery(
     { page, pageSize: 20, query: query || undefined },
     { placeholderData: (prev) => prev },
@@ -39,6 +42,7 @@ export default function AdminDomainsPage() {
     onSuccess: () => {
       toast.success("Domain force-verified");
       void domainsQuery.refetch();
+      void utils.admin.listAuditLog.invalidate();
     },
     onError: (error) => toast.error(error.message ?? "Failed to verify domain"),
   });
@@ -47,6 +51,7 @@ export default function AdminDomainsPage() {
     onSuccess: () => {
       toast.success("Domain deleted");
       void domainsQuery.refetch();
+      void utils.admin.listAuditLog.invalidate();
     },
     onError: (error) => toast.error(error.message ?? "Failed to delete domain"),
   });
@@ -60,36 +65,19 @@ export default function AdminDomainsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Domains</h2>
-        <div className="flex items-center gap-2">
-          <Input
-            value={queryInput}
-            onChange={(event) => setQueryInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setPage(1);
-                setQuery(queryInput);
-              }
-            }}
-            placeholder="Filter by domain, team, or region"
-            className="h-9 w-[280px]"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setPage(1);
-              setQuery(queryInput);
-            }}
-          >
-            Filter
-          </Button>
-        </div>
-      </div>
+    <>
+      <AdminPageHeader title="Domains" description="Every sending domain across all teams" />
+      <SearchInput
+        onSearch={(value) => {
+          setPage(1);
+          setQuery(value);
+        }}
+        placeholder="Filter by domain, team, or region"
+        label="Search domains"
+        className="sm:max-w-md"
+      />
 
-      <div className="overflow-x-auto rounded-xl border shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
@@ -132,7 +120,7 @@ export default function AdminDomainsPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{domain.team.name}</p>
+                      <Link href={`/admin/teams/${domain.team.id}`} className="font-medium hover:underline">{domain.team.name}</Link>
                       <p className="text-xs text-muted-foreground">{domain.team.plan}</p>
                     </div>
                   </TableCell>
@@ -191,33 +179,9 @@ export default function AdminDomainsPage() {
         </Table>
       </div>
 
-      {domainsQuery.data && domainsQuery.data.total > 20 ? (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {(page - 1) * 20 + 1}–{Math.min(page * 20, domainsQuery.data.total)} of {domainsQuery.data.total}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page * 20 >= domainsQuery.data.total}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {domainsQuery.data ? (
+        <Pagination page={page} pageSize={20} total={domainsQuery.data.total} onPageChange={setPage} />
       ) : null}
-    </div>
+    </>
   );
 }

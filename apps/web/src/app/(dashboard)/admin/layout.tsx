@@ -1,61 +1,55 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { SettingsNavButton } from "../dev-settings/settings-nav-button";
-import { isCloud } from "~/utils/common";
+import { H1 } from "@bytesend/ui";
+import Spinner from "@bytesend/ui/src/spinner";
+import { isCloud, isSelfHosted } from "~/utils/common";
+import { AdminCommandSearch } from "./_components/admin-command-search";
+import { AdminNav } from "./_components/admin-nav";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const isAdmin = session?.user.isAdmin ?? false;
+  const canAccess = isSelfHosted() || isAdmin;
+
+  useEffect(() => {
+    if (status === "authenticated" && !canAccess) {
+      router.replace("/dashboard");
+    }
+  }, [status, canAccess, router]);
+
+  if (status === "loading" || !canAccess) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner className="h-5 w-5" innerSvgClass="stroke-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage infrastructure, users, and platform configuration
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <H1>Admin</H1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Platform health, customers, and infrastructure
+          </p>
+        </div>
+        {isCloud() ? <AdminCommandSearch /> : null}
       </div>
-      <div className="flex flex-wrap gap-1 border-b border-border/60 pb-0">
-        <SettingsNavButton href="/admin">
-          SES Configurations
-        </SettingsNavButton>
-        {isCloud() ? (
-          <SettingsNavButton href="/admin/email-analytics">
-            Email Analytics
-          </SettingsNavButton>
-        ) : null}
-        {isCloud() ? (
-          <SettingsNavButton href="/admin/domains">
-            Domains
-          </SettingsNavButton>
-        ) : null}
-        {isCloud() ? (
-          <SettingsNavButton href="/admin/webhooks">
-            Webhooks
-          </SettingsNavButton>
-        ) : null}
-        {isCloud() ? (
-          <SettingsNavButton href="/admin/billing">
-            Billing
-          </SettingsNavButton>
-        ) : null}
-        {isCloud() ? (
-          <SettingsNavButton href="/admin/teams">
-            Teams
-          </SettingsNavButton>
-        ) : null}
-        {isCloud() && isAdmin ? (
-          <SettingsNavButton href="/admin/users">
-            Users
-          </SettingsNavButton>
-        ) : null}
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+        <aside className="lg:w-52 lg:shrink-0">
+          <AdminNav isAdmin={isAdmin} />
+        </aside>
+        <div className="min-w-0 flex-1 space-y-6">{children}</div>
       </div>
-      <div>{children}</div>
     </div>
   );
 }

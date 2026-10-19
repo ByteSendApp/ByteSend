@@ -1,0 +1,48 @@
+---
+title: Changing Sending Region
+description: "Move a verified domain to a different AWS region without interrupting delivery"
+icon: globe
+---
+
+## Overview
+
+Every domain sends from one AWS SES region, chosen when you add it. You can move a verified domain to another region — for example to keep data in the EU, or to sit closer to your recipients — without any downtime.
+
+Only team **Admins** can change a domain's region.
+
+---
+
+## How a move works
+
+Your domain keeps sending from its current region for the whole move. ByteSend registers it in the new region alongside the old one and only switches over once the new region is fully verified.
+
+<Steps>
+  <Step title="Start the move">
+    Open the domain in the dashboard, select **Change region** in the **Sending region** card and choose the new region.
+  </Step>
+  <Step title="Add the new DKIM record">
+    Add the new `TXT` record shown on the domain page. Its name includes the region (for example `bytesend-eu-west-2._domainkey`), so it sits **alongside** your existing DKIM record — don't delete the old one yet.
+  </Step>
+  <Step title="Update your MX record">
+    Change the `MX` record on your `mail.` subdomain to the new region's value, for example `feedback-smtp.eu-west-2.amazonses.com`. Replace the old value; don't add a second record. Your SPF record does not change.
+  </Step>
+  <Step title="Wait for the switch">
+    ByteSend checks the new records automatically every hour, or immediately when you select **Check now**. As soon as DKIM and the custom MAIL FROM domain are verified in the new region, the domain switches over and all new email sends from there.
+  </Step>
+  <Step title="Clean up">
+    The old region stays registered for 24 hours after the switch so that any email already in flight still delivers. After that you can delete the old DKIM `TXT` record. The domain page tells you when.
+  </Step>
+</Steps>
+
+---
+
+## What to expect during a move
+
+- **No downtime.** Email keeps sending from the old region until the switch.
+- **Between steps 3 and 4**, the old region temporarily uses Amazon's default MAIL FROM domain instead of your `mail.` subdomain. Email still delivers and still passes DMARC through DKIM; only SPF alignment is briefly lost.
+- **DNS takes time.** Most providers update within minutes, but changes can take up to an hour to be visible. **Check now** tells you which record isn't visible yet.
+- **You can cancel** at any time before the switch. The domain stays on its current region; remove the new DKIM record and change the `MX` record back if you already changed them.
+
+<Note>
+You can't start another move until 24 hours after the previous one finished, while the old region is still being retired.
+</Note>

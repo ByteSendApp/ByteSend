@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1] - 2026-10-19
+
+### Fixed
+- Emails move to `SENT` as soon as SES accepts them instead of staying `QUEUED` until SES's first event arrives
+- SES callbacks from an unrecognised SNS topic are now logged in production; previously they were dropped silently, leaving statuses, bounces and complaints unprocessed
+- Removed a per-email Stripe call that always failed (it used the meter-event *adjustment* API); usage continues to be reported by the daily usage job
+- Docker Compose files now pass `SPAMHAUS_DQS_KEY` (and `ADMIN_DISCORD_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`) through to the app, so blocklist checks and platform alerts can use them
+- Admin navigation no longer overlaps on narrow screens
+
+---
+
 ## [0.4.0] - 2026-10-18
 
 ### Added

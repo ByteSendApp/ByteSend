@@ -46,6 +46,10 @@ services:
       # Email & Communication
       - FROM_EMAIL=${FROM_EMAIL}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - ADMIN_DISCORD_WEBHOOK_URL=${ADMIN_DISCORD_WEBHOOK_URL}
+
+      # Deliverability
+      - SPAMHAUS_DQS_KEY=${SPAMHAUS_DQS_KEY}
       
       # Admin
       - ADMIN_EMAIL=${ADMIN_EMAIL}

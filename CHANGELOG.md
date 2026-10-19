@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-10-19
+
+### Added
+- **ByteSend Discord bot** (`apps/discord-bot`, Go) for the support server:
+  - **Presence** mirrors status.bytesend.cloud
+  - **Commands:** `/docs`, `/faq`, `/status`, `/stats`, `/links` and `/roles`
+  - **Moderation:** `/purge`, `/warn`, `/timeout`, `/untimeout`, `/kick` and `/ban`, with a mod log; they refuse to act on anyone whose top role is at or above the moderator's
+  - **AutoMod** for invite links, mass mentions and repeated messages
+  - **Automatic FAQ answers** in support channels
+  - **Custom emojis** from the application
+- `GET /api/stats` (Cloud only): the open stats as JSON, cached for an hour
+- **Discord linked roles**: members connect their ByteSend account at `/api/discord/linked-roles` to claim roles based on having an account, being on a paid plan, emails sent, or account age. Enable with `DISCORD_LINKED_ROLES_CLIENT_ID` and `DISCORD_LINKED_ROLES_CLIENT_SECRET`
+
+---
+
 ## [0.4.4] - 2026-10-19
 
 ### Added
@@ -916,7 +931,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.1...v0.4.2

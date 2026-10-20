@@ -9,15 +9,11 @@ import {
   TableCell,
 } from "@bytesend/ui/src/table";
 import { api } from "~/trpc/react";
-import {
-  Mail,
-  MailCheck,
-  MailOpen,
-  MailSearch,
-  MailWarning,
-  MailX,
-  Download,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Mail } from "lucide-react";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { FilterBar, SearchInput } from "@bytesend/ui/src/search-input";
+import { toast } from "@bytesend/ui/src/toaster";
 import { formatDate, formatDistanceToNow } from "date-fns";
 import { EmailStatus } from "@prisma/client";
 import { EmailStatusBadge } from "./email-status-badge";
@@ -32,16 +28,8 @@ import {
   SelectTrigger,
 } from "@bytesend/ui/src/select";
 import Spinner from "@bytesend/ui/src/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@bytesend/ui/src/tooltip";
-import { Input } from "@bytesend/ui/src/input";
 import { DEFAULT_QUERY_LIMIT } from "~/lib/constants";
 import { useDebouncedCallback } from "use-debounce";
-import { useState } from "react";
 import { SheetTitle, SheetDescription } from "@bytesend/ui/src/sheet";
 
 const DynamicSheetWithNoSSR = dynamic(
@@ -53,6 +41,19 @@ const DynamicSheetContentWithNoSSR = dynamic(
   () => import("@bytesend/ui/src/sheet").then((mod) => mod.SheetContent),
   { ssr: false },
 );
+
+const STATUS_FILTERS = [
+  "SENT",
+  "SCHEDULED",
+  "QUEUED",
+  "DELIVERED",
+  "BOUNCED",
+  "CLICKED",
+  "OPENED",
+  "DELIVERY_DELAYED",
+  "COMPLAINED",
+  "SUPPRESSED",
+] as const;
 
 export default function EmailsList() {
   const [selectedEmail, setSelectedEmail] = useUrlState("emailId");
@@ -157,261 +158,172 @@ export default function EmailsList() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Export failed", err);
+      toast.error(err instanceof Error ? err.message : "Export failed");
     }
   };
 
+  const emails = emailsQuery.data?.emails ?? [];
+  const hasFilters = Boolean(status || search || domain || apiKey);
+  const hasNextPage = emails.length === DEFAULT_QUERY_LIMIT;
+  const selectTrigger = "h-8 w-full text-[13px] sm:w-40";
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <Input
-          placeholder="Search by subject or email"
+    <div className="flex flex-col gap-3">
+      <FilterBar>
+        <SearchInput
+          placeholder="Search subject or recipient"
           className="w-full sm:w-72"
           defaultValue={search ?? ""}
           onChange={(e) => debouncedSearch(e.target.value)}
         />
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-          <Select
-            value={apiKey ?? "All API Keys"}
-            onValueChange={(val) => handleApiKey(val)}
-          >
-            <SelectTrigger className="w-full sm:w-45">
-              {apiKey
-                ? apiKeysQuery?.find((apikey) => apikey.id === Number(apiKey))
-                    ?.name
-                : "All API Keys"}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All API Keys">All API Keys</SelectItem>
-              {apiKeysQuery &&
-                apiKeysQuery.map((apikey) => (
-                  <SelectItem key={apikey.id} value={apikey.id.toString()}>
-                    {apikey.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={domain ?? "All Domains"}
-            onValueChange={(val) => handleDomain(val)}
-          >
-            <SelectTrigger className="w-full sm:w-45">
-              {domain
-                ? domainsQuery?.find((d) => d.id === Number(domain))?.name
-                : "All Domains"}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All Domains" className=" capitalize">
-                All Domains
-              </SelectItem>
-              {domainsQuery &&
-                domainsQuery.map((domain) => (
-                  <SelectItem key={domain.id} value={domain.id.toString()}>
-                    {domain.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={status ?? "All statuses"}
-            onValueChange={(val) =>
-              setStatus(val === "All statuses" ? null : val)
-            }
-          >
-            <SelectTrigger className="w-full sm:w-45 capitalize">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+          <Select value={status ?? "All statuses"} onValueChange={(val) => setStatus(val === "All statuses" ? null : val)}>
+            <SelectTrigger className={`${selectTrigger} capitalize`}>
               {status ? status.toLowerCase().replace("_", " ") : "All statuses"}
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All statuses" className=" capitalize">
-                All statuses
-              </SelectItem>
-              {Object.values([
-                "SENT",
-                "SCHEDULED",
-                "QUEUED",
-                "DELIVERED",
-                "BOUNCED",
-                "CLICKED",
-                "OPENED",
-                "DELIVERY_DELAYED",
-                "COMPLAINED",
-                "SUPPRESSED",
-              ]).map((status) => (
-                <SelectItem key={status} value={status} className=" capitalize">
-                  {status.toLowerCase().replace("_", " ")}
+              <SelectItem value="All statuses">All statuses</SelectItem>
+              {STATUS_FILTERS.map((value) => (
+                <SelectItem key={value} value={value} className="capitalize">
+                  {value.toLowerCase().replace("_", " ")}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={exportQuery.isFetching}
-            className="w-full sm:w-auto"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
+          <Select value={domain ?? "All Domains"} onValueChange={(val) => handleDomain(val)}>
+            <SelectTrigger className={selectTrigger}>
+              <span className="truncate">{domain ? domainsQuery?.find((d) => d.id === Number(domain))?.name : "All domains"}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Domains">All domains</SelectItem>
+              {domainsQuery?.map((d) => (
+                <SelectItem key={d.id} value={d.id.toString()}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={apiKey ?? "All API Keys"} onValueChange={(val) => handleApiKey(val)}>
+            <SelectTrigger className={selectTrigger}>
+              <span className="truncate">{apiKey ? apiKeysQuery?.find((k) => k.id === Number(apiKey))?.name : "All API keys"}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All API Keys">All API keys</SelectItem>
+              {apiKeysQuery?.map((k) => (
+                <SelectItem key={k.id} value={k.id.toString()}>
+                  {k.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exportQuery.isFetching}>
+            {exportQuery.isFetching ? <Spinner className="size-3.5" /> : <Download className="size-3.5" />}
+            Export CSV
           </Button>
         </div>
-      </div>
-      <div className="flex flex-col rounded-xl border border-border/60">
-        <Table className="">
-          <TableHeader className="">
-            <TableRow className=" bg-muted dark:bg-muted/70">
-              <TableHead className="rounded-tl-xl">To</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead className="text-right rounded-tr-xl">
-                Sent at
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {emailsQuery.isLoading ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={4} className="text-center py-4">
-                  <Spinner
-                    className="w-6 h-6 mx-auto"
-                    innerSvgClass="stroke-primary"
-                  />
-                </TableCell>
-              </TableRow>
-            ) : emailsQuery.data?.emails.length ? (
-              emailsQuery.data?.emails.map((email) => (
-                <TableRow
-                  key={email.id}
-                  onClick={() => handleSelectEmail(email.id)}
-                  className=" cursor-pointer"
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex gap-4 items-center">
-                      {/* <EmailIcon status={email.latestStatus ?? "Sent"} /> */}
-                      <p> {email.to}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {email.latestStatus === "SCHEDULED" && email.scheduledAt ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <EmailStatusBadge
-                              status={email.latestStatus ?? "Sent"}
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Scheduled at{" "}
-                            {formatDate(
-                              email.scheduledAt,
-                              "MMM dd'th', hh:mm a",
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <EmailStatusBadge status={email.latestStatus ?? "Sent"} />
-                    )}
-                  </TableCell>
-                  <TableCell className="">
-                    <div className=" max-w-xs truncate">{email.subject}</div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {email.latestStatus !== "SCHEDULED"
-                      ? formatDate(
-                          email.scheduledAt ?? email.createdAt,
-                          "MMM do, hh:mm a",
-                        )
-                      : "--"}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow className="h-32">
-                <TableCell colSpan={4} className="text-center py-4">
-                  No emails found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      </FilterBar>
 
-        <DynamicSheetWithNoSSR
-          open={!!selectedEmail}
-          onOpenChange={handleSheetChange}
-        >
-          <DynamicSheetContentWithNoSSR className="sm:max-w-3xl overflow-y-auto no-scrollbar">
-            <SheetTitle className="sr-only">Email Details</SheetTitle>
-            <SheetDescription className="sr-only">
-              Detailed view of the selected email.
-            </SheetDescription>
-            {selectedEmail ? <EmailDetails emailId={selectedEmail} /> : null}
-          </DynamicSheetContentWithNoSSR>
-        </DynamicSheetWithNoSSR>
-      </div>
-      <div className="flex gap-4 justify-end">
-        <Button
-          size="sm"
-          onClick={() => setPage((pageNumber - 1).toString())}
-          disabled={pageNumber === 1}
-        >
-          Previous
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setPage((pageNumber + 1).toString())}
-          disabled={emailsQuery.data?.emails.length !== DEFAULT_QUERY_LIMIT}
-        >
-          Next
-        </Button>
-      </div>
+      <Panel
+        flush
+        footer={
+          emails.length || pageNumber > 1 ? (
+            <>
+              <span className="text-xs text-muted-foreground">Page {pageNumber}</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setPage((pageNumber - 1).toString())} disabled={pageNumber === 1}>
+                  <ChevronLeft className="size-3.5" />
+                  Previous
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setPage((pageNumber + 1).toString())} disabled={!hasNextPage}>
+                  Next
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            </>
+          ) : null
+        }
+      >
+        {emailsQuery.isLoading ? (
+          <ListSkeleton rows={8} />
+        ) : emails.length === 0 ? (
+          <EmptyState
+            icon={<Mail />}
+            title={hasFilters ? "No emails match these filters" : "No emails yet"}
+            description={
+              hasFilters
+                ? "Try a different status, domain or search."
+                : "Emails you send through the API, SMTP or a campaign show up here with their delivery status."
+            }
+            action={
+              hasFilters ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setStatus(null);
+                    setSearch(null);
+                    setDomain(null);
+                    setApiKey(null);
+                  }}
+                >
+                  Clear filters
+                </Button>
+              ) : (
+                <Button asChild size="sm" variant="outline">
+                  <a href="https://docs.bytesend.cloud/get-started/examples" target="_blank" rel="noopener noreferrer">
+                    Send your first email
+                  </a>
+                </Button>
+              )
+            }
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Recipient</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                <TableHead className="hidden md:table-cell">Subject</TableHead>
+                <TableHead className="w-36 text-right">Sent</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {emails.map((email) => {
+                const when = email.scheduledAt ?? email.createdAt;
+                return (
+                  <TableRow key={email.id} onClick={() => handleSelectEmail(email.id)} className="cursor-pointer">
+                    <TableCell className="max-w-0">
+                      <p className="truncate font-medium text-foreground">{email.to}</p>
+                      <p className="truncate text-xs text-muted-foreground md:hidden">{email.subject}</p>
+                    </TableCell>
+                    <TableCell>
+                      <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+                    </TableCell>
+                    <TableCell className="hidden max-w-0 text-muted-foreground md:table-cell">
+                      <p className="truncate">{email.subject}</p>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      <span title={formatDate(when, "PPpp")}>
+                        {email.latestStatus === "SCHEDULED"
+                          ? `for ${formatDate(when, "MMM d, HH:mm")}`
+                          : formatDistanceToNow(when, { addSuffix: true })}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
+
+      <DynamicSheetWithNoSSR open={!!selectedEmail} onOpenChange={handleSheetChange}>
+        <DynamicSheetContentWithNoSSR className="overflow-y-auto no-scrollbar sm:max-w-2xl">
+          <SheetTitle className="sr-only">Email details</SheetTitle>
+          <SheetDescription className="sr-only">Delivery details and events for the selected email.</SheetDescription>
+          {selectedEmail ? <EmailDetails emailId={selectedEmail} /> : null}
+        </DynamicSheetContentWithNoSSR>
+      </DynamicSheetWithNoSSR>
     </div>
   );
 }
-
-const EmailIcon: React.FC<{ status: EmailStatus }> = ({ status }) => {
-  switch (status) {
-    case "SENT":
-      return (
-        // <div className="border border-gray-400/60 p-2 rounded-lg bg-gray-400/10">
-        <Mail className="w-6 h-6 text-gray" />
-        // </div>
-      );
-    case "DELIVERED":
-      return (
-        // <div className="border border-emerald-600/60 p-2 rounded-lg bg-emerald-500/10">
-        <MailCheck className="w-6 h-6 text-green" />
-        // </div>
-      );
-    case "BOUNCED":
-    case "FAILED":
-      return (
-        // <div className="border border-red-600/60 p-2 rounded-lg bg-red-500/10">
-        <MailX className="w-6 h-6 text-red" />
-        // </div>
-      );
-    case "CLICKED":
-      return (
-        // <div className="border border-cyan-600/60 p-2 rounded-lg bg-cyan-500/10">
-        <MailSearch className="w-6 h-6 text-blue" />
-        // </div>
-      );
-    case "OPENED":
-      return (
-        // <div className="border border-indigo-600/60 p-2 rounded-lg bg-indigo-500/10">
-        <MailOpen className="w-6 h-6 text-purple" />
-        // </div>
-      );
-    case "DELIVERY_DELAYED":
-    case "COMPLAINED":
-      return (
-        // <div className="border border-yellow-600/60 p-2 rounded-lg bg-yellow-500/10">
-        <MailWarning className="w-6 h-6 text-yellow" />
-        // </div>
-      );
-    default:
-      return (
-        // <div className="border border-gray-400/60 p-2 rounded-lg">
-        <Mail className="w-6 h-6" />
-        // </div>
-      );
-  }
-};

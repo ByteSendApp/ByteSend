@@ -17,7 +17,7 @@ export function RecentActivityCard() {
   const entries = activityQuery.data?.entries ?? [];
 
   return (
-    <div className="flex flex-col rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="flex flex-col rounded-lg border border-border bg-card p-4">
       <div className="mb-4 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-medium text-foreground">Recent admin activity</h3>

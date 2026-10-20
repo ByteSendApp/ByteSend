@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { Button } from "@bytesend/ui/src/button";
 import { Card } from "@bytesend/ui/src/card";
+import { Callout } from "@bytesend/ui/src/callout";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { Panel } from "@bytesend/ui/src/panel";
+import { ExternalLink } from "lucide-react";
 import { Spinner } from "@bytesend/ui/src/spinner";
 import { format } from "date-fns";
 import { useTeam } from "~/providers/team-context";
@@ -65,31 +69,29 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <Card className=" rounded-xl mt-10 p-8 px-8">
-        <PlanDetails />
-        <div className="mt-4">
-          {currentTeam?.plan !== "FREE" ? (
-            <Button
-              onClick={onManageClick}
-              className="mt-4 w-30"
-              disabled={manageSessionUrl.isPending}
-            >
-              {manageSessionUrl.isPending ? (
-                <Spinner className="w-4 h-4" />
-              ) : (
-                "Manage"
-              )}
+    <div className="space-y-5">
+      <PageHeader
+        title="Billing"
+        description="Your plan, invoices and payment details. Prices are in USD, or GBP/EUR at checkout in the UK and Europe."
+        actions={
+          currentTeam?.plan !== "FREE" ? (
+            <Button size="sm" variant="outline" onClick={onManageClick} isLoading={manageSessionUrl.isPending}>
+              <ExternalLink className="size-3.5" />
+              Invoices and payment
             </Button>
-          ) : null}
-        </div>
-      </Card>
+          ) : null
+        }
+      />
 
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Available Plans</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Select monthly marketing and transactional limits, then lock in that exact Stripe contract here.
-        </p>
+      <Panel title="Current plan">
+        <PlanDetails />
+      </Panel>
+
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Change plan</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Upgrades apply straight away. Downgrades apply at the end of your billing period.</p>
+        </div>
         <div className="space-y-4">
           <BillingPlanSelector
             currentPlan={currentTeam.plan}
@@ -98,18 +100,15 @@ export default function SettingsPage() {
           />
 
           {currentTeam.plan === "LIFETIME" || currentTeam.plan === "LITE" ? (
-            <Card className="rounded-xl border border-border/70 p-4 sm:p-5">
-              <h4 className="text-sm font-semibold">You&apos;re on a legacy plan</h4>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {PLANS[currentTeam.plan].displayName} is no longer sold, but you keep it, its limits and your price for as
-                long as you stay on it.
-              </p>
-            </Card>
+            <Callout tone="info" title="You're on a legacy plan">
+              {PLANS[currentTeam.plan].displayName} is no longer sold, but you keep it, its limits and your price for as long as you
+              stay on it.
+            </Callout>
           ) : null}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-        <Card className="p-6">
+        <Card className="p-4 sm:p-5">
           <div>
             <div className="text-sm text-muted-foreground">Payment Method</div>
             {subscription ? (
@@ -152,7 +151,7 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4 sm:p-5">
           <div>
             <div className="text-sm text-muted-foreground">Billing Email</div>
             {isEditingEmail ? (

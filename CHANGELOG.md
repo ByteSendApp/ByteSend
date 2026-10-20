@@ -11,6 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0] - 2026-10-19
+
+### Changed
+- **Redesigned dashboard, admin and website**:
+  - One consistent look throughout: denser tables, clearer page headers, stat strips and status badges with consistent meanings
+  - Settings now lives in the main sidebar
+  - A ⌘K search to jump to any page or domain
+  - Breadcrumbs that show names instead of IDs
+  - Error and not-found pages that keep you in the app
+  - New sign-in and account screens
+  - The email editor shows emails at inbox width on a white page
+  - The home page shows a live preview of the product instead of an old screenshot
+  - Pricing cards in USD, GBP or EUR, and a full site footer
+- Domains show their sending region by name and their sent volume and bounce rate for the last 30 days
+- Unsubscribe and confirm-subscription pages are plainer and unbranded, since your subscribers see them
+
+### Added
+- **Local SES and SNS emulator** (`packages/local-ses-sns`), ByteSend's own replacement for the upstream image: answers the SES, SNS and STS calls ByteSend makes, verifies every domain straight away, sends real delivery, bounce and complaint events (via SES's simulator addresses or `+bounce` / `+complaint`), and shows captured mail at http://localhost:5350. Published as `bytesend/local-ses-sns` with the other images
+
+### Fixed
+- Saving a template failed with "ctx is not defined"
+- Self-hosted system emails (invites, sign-in) now send from a verified domain; they checked for statuses that don't exist and always used the first domain
+- `pnpm dx:up` failed because the `minio/minio` and `bytesend/local-ses-sns` images don't exist. It now starts only Postgres, Redis and the local SES emulator; RustFS storage and the containerised app are opt-in profiles. New `pnpm dev:local` and `pnpm dx:migrate` use `.env.local`, so local development no longer has to run against production
+
+---
+
 ## [0.7.0] - 2026-10-19
 
 ### Added

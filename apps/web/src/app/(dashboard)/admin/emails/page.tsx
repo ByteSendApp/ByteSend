@@ -147,7 +147,7 @@ function AdminEmailsExplorer() {
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -232,7 +232,7 @@ function AdminEmailsExplorer() {
 
 export default function AdminEmailsPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+    <Suspense fallback={<Skeleton className="h-96 w-full rounded-lg" />}>
       <AdminEmailsExplorer />
     </Suspense>
   );

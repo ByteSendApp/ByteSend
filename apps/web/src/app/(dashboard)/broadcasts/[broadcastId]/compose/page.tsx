@@ -224,9 +224,9 @@ function BroadcastComposer({
     }
 
     return (
-        <div className="-mx-4 md:-mx-6 flex flex-col h-full min-h-screen">
+        <div className="flex flex-col h-full min-h-screen">
             {/* Sticky top bar */}
-            <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 h-12 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur">
+            <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 h-12 shrink-0 border-b border-border bg-background/95 backdrop-blur">
                 <div className="flex items-center gap-3 min-w-0">
                     <Link
                         href="/broadcasts"
@@ -284,7 +284,7 @@ function BroadcastComposer({
             {/* Settings strip (accordion for broadcast fields) */}
             <Accordion type="single" collapsible>
                 <AccordionItem value="item-1" className="border-0">
-                    <div className="border-b border-border/60 bg-muted/20 px-4 sm:px-6 py-3">
+                    <div className="border-b border-border bg-muted/20 px-4 sm:px-6 py-3">
                         <div className="flex items-center gap-4">
                             <label className="text-xs text-muted-foreground w-16 shrink-0">Subject</label>
                             <input
@@ -376,7 +376,7 @@ function BroadcastComposer({
                                 </div>
 
                                 {/* Recipients section in accordion */}
-                                <div className="pt-2 border-t border-border/40">
+                                <div className="pt-2 border-t border-border/70">
                                     <div className="flex items-center gap-4">
                                         <label className="text-xs text-muted-foreground w-16 shrink-0">Recipients</label>
                                         <div className="flex-1">
@@ -449,7 +449,7 @@ function BroadcastComposer({
                                             placeholder={"One email per line, or comma-separated\nalice@example.com\nbob@example.com"}
                                             value={directRecipients}
                                             onChange={(e) => setDirectRecipients(e.target.value)}
-                                            className="w-full h-24 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-1 focus:ring-primary mt-2"
+                                            className="w-full h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-1 focus:ring-primary mt-2"
                                         />
                                     )}
                                 </div>
@@ -460,11 +460,11 @@ function BroadcastComposer({
             </Accordion>
 
             {/* Variables strip */}
-            <div className="border-b border-border/60 bg-background px-4 sm:px-6 py-3">
+            <div className="border-b border-border bg-background px-4 sm:px-6 py-3">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground/60">Variables:</span>
                     {editorVariables.slice(0, 6).map((v) => (
-                        <code key={v} className="font-mono bg-muted px-1.5 py-0.5 rounded border border-border/60 text-[11px]">{`{{${v}}}`}</code>
+                        <code key={v} className="font-mono bg-muted px-1.5 py-0.5 rounded border border-border text-[11px]">{`{{${v}}}`}</code>
                     ))}
                     {editorVariables.length > 6 && (
                         <span className="text-muted-foreground/60">+{editorVariables.length - 6} more</span>
@@ -479,7 +479,7 @@ function BroadcastComposer({
             </div>
 
             {/* Editor */}
-            <div className="flex-1 bg-muted/10 px-0 pt-0 pb-6">
+            <div className="flex-1">
                 <div className="w-full">
                     <Editor
                         key={`broadcast-editor-${contactBookId ?? "none"}-${recipientMode}`}

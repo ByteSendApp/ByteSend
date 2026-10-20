@@ -25,7 +25,7 @@ export default function PrivacyPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">
@@ -74,14 +74,14 @@ export default function PrivacyPage() {
           <section id="what-we-collect" className="scroll-mt-24 mb-10">
             <h2 className="text-lg font-semibold mb-3">What We Collect</h2>
             <div className="space-y-4">
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <p className="text-sm font-medium mb-1">Usage &amp; analytics data</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   We use Simple Analytics for privacy-friendly, aggregate traffic insights. Simple Analytics
                   does not use cookies and does not collect personally identifiable information.
                 </p>
               </div>
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <p className="text-sm font-medium mb-1">Server &amp; security logs</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Our hosting infrastructure (NodeByte Hosting) transiently processes IP addresses and basic
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
                   are not linked to individual user accounts.
                 </p>
               </div>
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <p className="text-sm font-medium mb-1">Account &amp; profile data</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   When you create a ByteSend account we process your name, email address, and OAuth identity
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
                   and provide the service.
                 </p>
               </div>
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <p className="text-sm font-medium mb-1">Email sending data</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   When you send emails via ByteSend we store metadata such as recipient addresses, subject
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
                 { basis: "Legal obligation", desc: "Retaining records where required by law, and responding to lawful requests from authorities." },
                 { basis: "Consent", desc: "Where we rely on consent (e.g. optional communications), you may withdraw it at any time." },
               ].map(({ basis, desc }) => (
-                <li key={basis} className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+                <li key={basis} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
                   <span className="font-medium">{basis}:</span>{" "}
                   <span className="text-muted-foreground">{desc}</span>
                 </li>
@@ -153,16 +153,16 @@ export default function PrivacyPage() {
               We do not sell your personal information. We share data only with the following sub-processors
               where necessary to deliver the service:
             </p>
-            <div className="overflow-hidden rounded-lg border border-border/60">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/60 bg-muted/40">
+                  <tr className="border-b border-border bg-muted/40">
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Processor</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Purpose</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Location</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40">
+                <tbody className="divide-y divide-border/70">
                   {[
                     { p: "NodeByte Hosting", purpose: "Application hosting, networking, security", loc: "United Kingdom" },
                     { p: "Amazon Web Services (SES)", purpose: "Transactional email delivery", loc: "EU / US" },
@@ -219,7 +219,7 @@ export default function PrivacyPage() {
                 { right: "Portability", desc: "Receive your data in a structured, machine-readable format." },
                 { right: "Objection", desc: "Object to processing based on legitimate interests." },
               ].map(({ right, desc }) => (
-                <li key={right} className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+                <li key={right} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
                   <span className="font-medium">{right}:</span>{" "}
                   <span className="text-muted-foreground">{desc}</span>
                 </li>

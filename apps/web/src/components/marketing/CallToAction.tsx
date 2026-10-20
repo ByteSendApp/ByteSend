@@ -1,55 +1,39 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
-import { BrandMark } from "~/lib/brand";
+import { BRAND_COLORS, BrandMark } from "~/lib/brand";
 import { Reveal } from "./Reveal";
 
-const APP_URL = "/login";
-
 export function CallToAction() {
-    return (
-        <section className="relative overflow-hidden border-t border-border/30 bg-muted/20">
-            <div aria-hidden className="pointer-events-none absolute -left-40 bottom-0 hidden opacity-[0.06] dark:opacity-[0.09] md:block">
-                <BrandMark size={360} detail="full" />
-            </div>
-
-            <Reveal className="relative mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Start sending today.</h2>
-                <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    Create a free account in seconds and send 5,000 emails a month, free, for as long as you like.
-                </p>
-
-                <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                    <Button size="lg" className="h-12 w-full rounded-xl px-8 text-base sm:w-auto" asChild>
-                        <Link href={APP_URL}>Start sending free</Link>
-                    </Button>
-                    <Button variant="outline" size="lg" className="h-12 w-full rounded-xl px-8 text-base sm:w-auto" asChild>
-                        <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer">
-                            Read the docs
-                        </a>
-                    </Button>
-                </div>
-
-                <p className="mt-5 text-xs text-muted-foreground">
-                    Prefer to run it yourself?{" "}
-                    <a
-                        href="https://docs.bytesend.cloud/self-hosting/overview"
-                        className="underline underline-offset-2 hover:text-foreground"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Self-host ByteSend with Docker →
-                    </a>
-                </p>
-            </Reveal>
-
-            <div aria-hidden className="flex h-1.5">
-                <span className="flex-1 bg-brand-ice" />
-                <span className="flex-1 bg-brand-teal" />
-                <span className="flex-1 bg-brand-sky" />
-                <span className="flex-1 bg-brand-blue" />
-            </div>
-        </section>
-    );
+  return (
+    <section className="border-t border-border px-4 py-20 sm:px-6 sm:py-24">
+      <Reveal
+        className="relative mx-auto max-w-6xl overflow-hidden rounded-xl border border-border px-6 py-14 text-center sm:px-12 sm:py-20"
+        style={{ background: BRAND_COLORS.ink }}
+      >
+        <div aria-hidden className="pointer-events-none absolute -right-20 top-1/2 hidden -translate-y-1/2 opacity-[0.08] md:block">
+          <BrandMark size={300} flapColor={BRAND_COLORS.ink} />
+        </div>
+        <h2 className="relative text-3xl font-semibold tracking-tight text-white sm:text-4xl">Start sending today.</h2>
+        <p className="relative mx-auto mt-3 max-w-md text-base leading-relaxed text-white/65">
+          Create an account in seconds and send 5,000 emails a month, free, for as long as you like.
+        </p>
+        <div className="relative mt-8 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
+          <Button size="lg" className="h-11 w-full px-6 sm:w-auto" asChild>
+            <Link href="/signup">
+              Start sending free
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" className="h-11 w-full border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white sm:w-auto" asChild>
+            <a href="https://docs.bytesend.cloud/self-hosting/overview" target="_blank" rel="noopener noreferrer">
+              Self-host with Docker
+            </a>
+          </Button>
+        </div>
+      </Reveal>
+    </section>
+  );
 }
 
 export default CallToAction;

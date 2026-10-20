@@ -77,7 +77,7 @@ export default function AdminBillingPage() {
         <SummaryCard label="No subscription" value={summary.noSubscription} />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">

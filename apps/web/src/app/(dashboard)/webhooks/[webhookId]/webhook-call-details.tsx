@@ -23,7 +23,7 @@ export function WebhookCallDetails({ callId }: { callId: string }) {
         <div className="flex flex-row items-center justify-between mb-4">
           <h2 className="text-base font-medium">Call Details</h2>
         </div>
-        <div className="flex-1 rounded-xl border shadow p-6 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-border bg-card p-6">
           <p className="text-muted-foreground text-sm">
             Loading call details...
           </p>
@@ -87,7 +87,7 @@ export function WebhookCallDetails({ callId }: { callId: string }) {
           </Button>
         )}
       </div>
-      <div className="flex-1 overflow-auto rounded-xl border shadow p-6 space-y-8 no-scrollbar">
+      <div className="flex-1 space-y-6 overflow-auto rounded-lg border border-border bg-card p-4 no-scrollbar sm:p-5">
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
@@ -145,7 +145,7 @@ export function WebhookCallDetails({ callId }: { callId: string }) {
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider text-red-500">
               Error
             </span>
-            <div className="text-xs bg-red-500/10 border border-red-500/20 rounded-md p-3 font-mono text-red-600 dark:text-red-400">
+            <div className="rounded-md border border-destructive/25 bg-destructive/[0.06] p-3 font-mono text-xs text-destructive">
               {call.lastError}
             </div>
           </div>

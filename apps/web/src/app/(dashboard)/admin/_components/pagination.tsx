@@ -18,7 +18,7 @@ export function Pagination({
   const last = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex items-center justify-between text-sm">
+    <div className="flex items-center justify-between text-xs">
       <span className="tabular-nums text-muted-foreground">
         {formatNumber(first)}–{formatNumber(last)} of {formatNumber(total)}
       </span>

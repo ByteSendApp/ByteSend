@@ -60,9 +60,9 @@ export default function AddContact({
   const dialogTrigger =
     trigger ??
     (controlledOpen === undefined ? (
-      <Button>
-        <Plus className="h-4 w-4 mr-1" />
-        Add Contacts
+      <Button size="sm">
+        <Plus className="size-3.5" />
+        Add contacts
       </Button>
     ) : null);
 

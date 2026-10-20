@@ -37,6 +37,9 @@ jobs:
           - name: smtp-proxy
             dockerfile: ./apps/smtp-server/Dockerfile
             context: ./apps/smtp-server
+          - name: local-ses-sns
+            dockerfile: ./packages/local-ses-sns/Dockerfile
+            context: ./packages/local-ses-sns
 
     steps:
       - uses: actions/checkout@v5
@@ -180,7 +183,7 @@ jobs:
             TAGS="$TAGS develop"
           fi
 
-          for APP_NAME in bytesend smtp-proxy; do
+          for APP_NAME in bytesend smtp-proxy local-ses-sns; do
             for TAG in $TAGS; do
               # Wait for both platform images to be available before creating manifest
               wait_for_remote_image "bytesend/$APP_NAME-amd64:$TAG" || exit 1
@@ -233,7 +236,7 @@ jobs:
           fi
 
           GHCR="ghcr.io/$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
-          for APP_NAME in bytesend smtp-proxy; do
+          for APP_NAME in bytesend smtp-proxy local-ses-sns; do
             for TAG in $TAGS; do
               # Wait for both platform images to be available before creating manifest
               wait_for_remote_image "$GHCR/$APP_NAME-amd64:$TAG" || exit 1

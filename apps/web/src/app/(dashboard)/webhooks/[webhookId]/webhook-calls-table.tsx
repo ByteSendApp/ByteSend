@@ -95,13 +95,13 @@ export function WebhookCallsTable({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex-1 overflow-hidden rounded-xl border shadow flex flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
         <Table>
           <TableHeader className="sticky top-0 z-10">
-            <TableRow className="bg-muted dark:bg-muted/70">
-              <TableHead className="h-9 rounded-tl-xl">Status</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>Status</TableHead>
               <TableHead className="h-9">Event Type</TableHead>
-              <TableHead className="h-9 rounded-tr-xl">Time</TableHead>
+              <TableHead>Time</TableHead>
             </TableRow>
           </TableHeader>
         </Table>

@@ -5,85 +5,37 @@ import { NotificationProviderManager } from "~/components/notifications/notifica
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@bytesend/ui/src/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@bytesend/ui/src/tabs";
 import { Badge } from "@bytesend/ui/src/badge";
-import { InfoIcon } from "lucide-react";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { Stat, StatGroup } from "@bytesend/ui/src/stat";
 import { api } from "~/trpc/react";
 
 export default function NotificationSettingsPage() {
   const { data: stats } = api.notificationProvider.getStats.useQuery();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Notifications</h1>
-        <p className="text-muted-foreground mt-1">
-          Configure notification channels to stay informed about important events
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Notifications"
+        description="Send alerts about your team's email to Discord, Slack, Microsoft Teams, Telegram or any webhook: domain problems, usage alerts, campaigns and, if you choose, every send."
+      />
 
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Active Providers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.activeProviders}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                of {stats.totalProviders} configured
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.logStats.sent}</div>
-              <p className="text-xs text-green-600">Recent messages</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600">{stats.logStats.failed}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.failingProviders?.length || 0} provider(s) failing
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">By Type</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                {Object.entries(stats.providersByType || {}).map(([type, count]) => (
-                  <div key={type} className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">{type}</span>
-                    <Badge variant="secondary">{count}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Info Alert */}
-      <div className="flex gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-        <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>
-          Notification providers will receive real-time alerts for events like email delivery, bounces,
-          complaints, and more. Configure providers below and test them to ensure they&apos;re working correctly.
-        </span>
-      </div>
+      {stats ? (
+        <StatGroup>
+          <Stat label="Active channels" value={stats.activeProviders} hint={`of ${stats.totalProviders} set up`} />
+          <Stat label="Alerts sent" value={stats.logStats.sent.toLocaleString()} hint="Recently" />
+          <Stat
+            label="Failed"
+            value={stats.logStats.failed.toLocaleString()}
+            tone={stats.logStats.failed > 0 ? "danger" : "default"}
+            hint={`${stats.failingProviders?.length || 0} channel(s) failing`}
+          />
+          <Stat
+            label="By type"
+            value={Object.keys(stats.providersByType || {}).length}
+            hint={Object.entries(stats.providersByType || {}).map(([type, count]) => `${type.toLowerCase()} ${count}`).join(", ") || "None yet"}
+          />
+        </StatGroup>
+      ) : null}
 
       {/* Main Content */}
       <Tabs defaultValue="providers" className="w-full">

@@ -252,58 +252,43 @@ export default async function ChangelogPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <div className="border-b border-border/30">
-        <div className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground mb-6">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            Release notes
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Changelog</h1>
-          <p className="mt-4 text-base text-muted-foreground max-w-xl leading-relaxed">
-            New features, improvements, and fixes shipping in every ByteSend release.
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
+          <p className="mb-3 font-mono text-xs font-medium uppercase tracking-[0.14em] text-primary">Release notes</p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Changelog</h1>
+          <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+            New features, improvements and fixes in every ByteSend release.{" "}
+            <a href="https://github.com/ByteSendApp/ByteSend/releases" className="text-foreground underline-offset-4 hover:underline">
+              Also on GitHub
+            </a>
+            .
           </p>
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="mx-auto max-w-3xl px-6 py-16">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         {releases.length === 0 ? (
           <p className="text-sm text-muted-foreground">No releases found.</p>
         ) : (
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-0 top-2 bottom-0 w-px bg-border/40 hidden sm:block" />
-
-            <div className="space-y-16">
-              {releases.map((release, idx) => (
-                <div key={release.tag} id={release.tag} className="sm:pl-8 relative scroll-mt-20">
-                  {/* Timeline dot */}
-                  <div className="hidden sm:block absolute -left-[4.5px] top-2 h-2.5 w-2.5 rounded-full border-2 border-primary bg-background" />
-
-                  {/* Release header */}
-                  <div className="flex flex-wrap items-center gap-3 mb-1">
-                    <a href={`#${release.tag}`} className="group flex items-center gap-2">
-                      <h2 className="text-xl font-bold tracking-tight font-mono group-hover:text-primary transition-colors">
-                        {release.name}
-                      </h2>
-                      <span className="opacity-0 group-hover:opacity-50 text-muted-foreground text-sm transition-opacity">#</span>
-                    </a>
-                    {idx === 0 && (
-                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
+          <div className="divide-y divide-border">
+            {releases.map((release, idx) => (
+              <article key={release.tag} id={release.tag} className="grid scroll-mt-20 gap-4 py-10 first:pt-0 md:grid-cols-[11rem_1fr] md:gap-10">
+                <header className="md:sticky md:top-20 md:self-start">
+                  <a href={`#${release.tag}`} className="group inline-flex items-center gap-2">
+                    <h2 className="font-mono text-lg font-semibold tracking-tight transition-colors group-hover:text-primary">{release.name}</h2>
+                    {idx === 0 ? (
+                      <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-px text-[10px] font-semibold uppercase tracking-wide text-primary">
                         Latest
                       </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">{release.date}</p>
-
+                    ) : null}
+                  </a>
+                  <p className="mt-1 text-xs text-muted-foreground">{release.date}</p>
+                </header>
+                <div className="min-w-0">
                   <ReleaseBody body={release.body} />
-
-                  {/* Divider */}
-                  <div className="mt-12 border-b border-border/20 sm:hidden" />
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
           </div>
         )}
       </div>

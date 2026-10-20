@@ -61,7 +61,7 @@ export const UpgradeModal = () => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+        <div className="mt-3 rounded-lg border border-border bg-muted/20 p-4">
           <p className="text-sm text-muted-foreground">
             Compare plans, review limits, and complete checkout securely from Billing.
           </p>

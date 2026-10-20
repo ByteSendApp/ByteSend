@@ -41,7 +41,7 @@ function Section({
           {emptyLabel}
         </p>
       ) : (
-        <ul className="divide-y divide-border/60 rounded-lg border border-border/60">{children}</ul>
+        <ul className="divide-y divide-border/60 rounded-lg border border-border">{children}</ul>
       )}
     </section>
   );
@@ -49,7 +49,7 @@ function Section({
 
 export function AttentionCard({ attention }: { attention: Attention }) {
   return (
-    <div className="space-y-5 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="space-y-5 rounded-lg border border-border bg-card p-4">
       <div>
         <h3 className="text-sm font-medium text-foreground">Needs attention</h3>
         <p className="text-xs text-muted-foreground">

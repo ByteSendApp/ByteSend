@@ -39,8 +39,8 @@ function formatDay(date: string) {
 
 function StatTile({ value, label, hint }: { value: string; label: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-muted/20 p-6">
-      <div className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">{value}</div>
+    <div className="bg-background p-5">
+      <div className="text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{value}</div>
       <div className="mt-2 text-sm text-muted-foreground">{label}</div>
       {hint && <div className="mt-1 text-xs text-muted-foreground/70">{hint}</div>}
     </div>
@@ -92,12 +92,12 @@ function HealthRow({ label, value, threshold, description }: { label: string; va
       <div className="flex items-baseline justify-between gap-4">
         <div className="text-sm font-medium">{label}</div>
         <div className="text-sm tabular-nums">
-          <span className={healthy ? "text-foreground" : "text-amber-500"}>{formatPercent(value, 2)}</span>
+          <span className={healthy ? "text-foreground" : "text-warning"}>{formatPercent(value, 2)}</span>
           <span className="text-muted-foreground"> / {formatPercent(threshold, threshold < 0.01 ? 1 : 0)} AWS limit</span>
         </div>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className={`h-full rounded-full ${healthy ? "bg-[#00c3d6]" : "bg-amber-500"}`} style={{ width: `${Math.max(ratio * 100, value ? 1 : 0)}%` }} />
+        <div className={`h-full rounded-full ${healthy ? "bg-primary" : "bg-warning"}`} style={{ width: `${Math.max(ratio * 100, value ? 1 : 0)}%` }} />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{description}</p>
     </div>
@@ -119,13 +119,13 @@ export default async function StatsPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="border-b border-border/30">
-        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground">
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             Updated hourly · last refresh {updated} UTC
           </div>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Open stats</h1>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Open stats</h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
             Live, aggregate numbers across every team on ByteSend Cloud. No customer data, just how the platform is doing.
           </p>
@@ -133,7 +133,7 @@ export default async function StatsPage() {
       </div>
 
       <div className="mx-auto max-w-5xl space-y-16 px-6 py-16">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-4">
           <Reveal delay={0}>
             <StatTile value={formatCount(stats.allTime.sent)} label="Emails sent" hint="All time" />
           </Reveal>
@@ -157,7 +157,7 @@ export default async function StatsPage() {
             <h2 className="text-lg font-semibold tracking-tight">Daily volume</h2>
             <span className="text-xs text-muted-foreground">Emails sent per day, last {window.days} days (UTC)</span>
           </div>
-          <div className="mt-6 rounded-2xl border border-border/50 bg-muted/20 p-6">
+          <div className="mt-4 rounded-lg border border-border bg-card p-5">
             <VolumeChart days={stats.daily} />
             <div className="mt-3 flex justify-between text-xs text-muted-foreground">
               <span>{formatDay(stats.daily[0]!.date)}</span>
@@ -172,7 +172,7 @@ export default async function StatsPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Shared sending reputation stays healthy because we keep the whole platform well under AWS SES limits.
             </p>
-            <div className="mt-4 divide-y divide-border/40">
+            <div className="mt-4 divide-y divide-border/70">
               <HealthRow
                 label="Bounce rate"
                 value={rate(window.bounced, window.sent)}
@@ -193,7 +193,7 @@ export default async function StatsPage() {
             <p className="mt-1 text-sm text-muted-foreground">AWS SES regions your domains can send from.</p>
             <ul className="mt-6 space-y-2">
               {stats.regions.map((region) => (
-                <li key={region.code} className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
+                <li key={region.code} className="flex items-center justify-between rounded-md border border-border bg-card px-4 py-2.5">
                   <span className="text-sm">{region.label}</span>
                   <code className="font-mono text-xs text-muted-foreground">{region.code}</code>
                 </li>
@@ -210,7 +210,7 @@ export default async function StatsPage() {
           </Reveal>
         </div>
 
-        <p className="border-t border-border/30 pt-8 text-xs leading-relaxed text-muted-foreground">
+        <p className="border-t border-border pt-8 text-xs leading-relaxed text-muted-foreground">
           Figures combine transactional and marketing email across all ByteSend Cloud teams. Self-hosted instances are not
           included. Rates are calculated against emails sent in the window; days are in UTC.
         </p>

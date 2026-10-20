@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@bytesend/ui/src/button";
+import { AuthDivider } from "~/components/auth/auth-shell";
 import { Spinner } from "@bytesend/ui/src/spinner";
 import { api } from "~/trpc/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -71,66 +72,37 @@ export default function JoinTeam({
   };
 
   if (!invites?.length) {
-    return !showCreateTeam ? (
-      <div className="text-center text-xl">No invites found</div>
-    ) : null;
+    return !showCreateTeam ? <p className="text-sm text-muted-foreground">You don&apos;t have any team invitations.</p> : null;
   }
 
   return (
-    <div>
-      <div className="text-sm font-medium text-center text-muted-foreground">You have been invited to join a team</div>
-      <div className="space-y-2 mt-4">
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-[13px] font-medium text-foreground">You&apos;ve been invited</p>
         {invites.map((invite) => (
-          <div
-            key={invite.id}
-            className="flex items-center gap-2 border border-border/40 rounded-xl p-3 px-4 bg-card/40 justify-between"
-          >
-            <div>
-              <div className="text-sm">{invite.team.name}</div>
-              <div className="flex items-center gap-2">
-                <div className="text-muted-foreground text-xs capitalize">
-                  {invite.role.toLowerCase()}
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {invite.createdAt.toLocaleDateString()}
-                </div>
-              </div>
+          <div key={invite.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3.5 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-[13px] font-medium text-foreground">{invite.team.name}</p>
+              <p className="text-xs capitalize text-muted-foreground">
+                {invite.role.toLowerCase()} · invited {invite.createdAt.toLocaleDateString()}
+              </p>
             </div>
-            <Button
-              onClick={() => handleAcceptInvite(invite)}
-              disabled={joinTeamMutation.isPending}
-              size="sm"
-              variant="ghost"
-            >
-              {joinTeamMutation.isPending ? (
-                <Spinner className="w-5 h-5" />
-              ) : (
-                "Accept"
-              )}
+            <Button onClick={() => handleAcceptInvite(invite)} disabled={joinTeamMutation.isPending} size="sm">
+              {joinTeamMutation.isPending ? <Spinner className="size-4" /> : "Join"}
             </Button>
           </div>
         ))}
       </div>
-      {showCreateTeam ? (
-        <div className="mt-8 text-muted-foreground/50 text-xs font-medium text-center tracking-wider uppercase">
-          OR
-        </div>
-      ) : null}
+      {showCreateTeam ? <AuthDivider label="or start a new team" /> : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Accept Team Invitation</DialogTitle>
+            <DialogTitle>Join {selectedInvite?.team.name}?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to join{" "}
-              <span className="font-semibold text-foreground">
-                {selectedInvite?.team.name}
-              </span>
-              ? You will be added as a{" "}
-              <span className="font-semibold text-foreground lowercase">
-                {selectedInvite?.role.toLowerCase()}
-              </span>
-              .
+              You&apos;ll join as{" "}
+              <span className="font-medium lowercase text-foreground">{selectedInvite?.role.toLowerCase()}</span> and can switch
+              between teams from the sidebar.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
@@ -148,7 +120,7 @@ export default function JoinTeam({
               {joinTeamMutation.isPending ? (
                 <Spinner className="w-5 h-5" />
               ) : (
-                "Accept Invitation"
+                "Join team"
               )}
             </Button>
           </div>

@@ -1,5 +1,6 @@
 import { unsubscribeContactFromLink } from "~/server/service/campaign-service";
 import ReSubscribe from "./re-subscribe";
+import { RecipientPage } from "~/components/recipient-page";
 
 export const dynamic = "force-dynamic";
 
@@ -15,35 +16,15 @@ async function UnsubscribePage({
 
   if (!id || !hash) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-          <h2 className="text-center text-2xl font-semibold">
-            Unsubscribe
-          </h2>
-          <p className="text-center text-sm text-muted-foreground">
-            Invalid unsubscribe link. Please check your URL and try again.
-          </p>
-        </div>
-      </div>
+      <RecipientPage tone="error" title="This link doesn't work">
+        The unsubscribe link looks incomplete. Use the link at the bottom of the email again.
+      </RecipientPage>
     );
   }
 
   const contact = await unsubscribeContactFromLink(id, hash);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <ReSubscribe id={id} hash={hash} contact={contact} />
-
-      <div className="fixed bottom-10 p-4">
-        <p className="text-sm text-muted-foreground">
-          Powered by{" "}
-          <a href="https://bytesend.cloud" className="font-semibold text-primary hover:underline" target="_blank">
-            ByteSend
-          </a>
-        </p>
-      </div>
-    </div>
-  );
+  return <ReSubscribe id={id} hash={hash} contact={contact} />;
 }
 
 export default UnsubscribePage;

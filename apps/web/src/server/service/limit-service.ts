@@ -134,6 +134,7 @@ export class LimitService {
   static async checkContactBookLimit(teamId: number): Promise<{
     isLimitReached: boolean;
     limit: number;
+    currentCount: number;
     reason?: LimitReason;
   }> {
     if (!env.NEXT_PUBLIC_IS_CLOUD) {
@@ -148,6 +149,7 @@ export class LimitService {
       return {
         isLimitReached: true,
         limit,
+        currentCount,
         reason: LimitReason.CONTACT_BOOK,
       };
     }
@@ -155,6 +157,7 @@ export class LimitService {
     return {
       isLimitReached: false,
       limit,
+      currentCount,
     };
   }
 

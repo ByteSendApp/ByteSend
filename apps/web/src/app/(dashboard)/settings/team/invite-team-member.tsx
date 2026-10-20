@@ -150,23 +150,22 @@ export default function InviteTeamMember() {
       open={open}
       onOpenChange={(_open) => (_open !== open ? onOpenChange(_open) : null)}
     >
-      <DialogTrigger asChild>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        {limitsQuery.data && limitsQuery.data.limit !== -1 ? (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {limitsQuery.data.currentCount} of {limitsQuery.data.limit} seats
+          </span>
+        ) : null}
+        <DialogTrigger asChild>
           <Button size="sm">
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Invite Member
+            <PlusIcon className="size-3.5" />
+            Invite member
           </Button>
-          {/* Show usage counter next to button */}
-          {limitsQuery.data && limitsQuery.data.limit !== -1 && (
-            <span className="text-xs text-muted-foreground">
-              {limitsQuery.data.currentCount} / {limitsQuery.data.limit}
-            </span>
-          )}
-        </div>
-      </DialogTrigger>
+        </DialogTrigger>
+      </div>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Invite Team Member</DialogTitle>
+          <DialogTitle>Invite a member</DialogTitle>
           {limitsQuery.data && limitsQuery.data.limit !== -1 && (
             <div className="text-sm text-muted-foreground pt-1">
               Using {limitsQuery.data.currentCount} of {limitsQuery.data.limit} member slots
@@ -260,7 +259,7 @@ export default function InviteTeamMember() {
             </Form>
           )}
 
-          <div className="border-t border-border/40 pt-4">
+          <div className="border-t border-border/70 pt-4">
             {isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
                 You've reached your team member limit of {limitsQuery.data?.limit}. Purchase an extra slot to invite more.
@@ -275,6 +274,7 @@ export default function InviteTeamMember() {
               onClick={async () => {
                 try {
                   const url = await purchaseMemberAddonMutation.mutateAsync({ quantity: 1 });
+                  if (!url) throw new Error("Couldn't open checkout. Try again in a moment.");
                   window.location.href = url;
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : "Failed to open checkout");

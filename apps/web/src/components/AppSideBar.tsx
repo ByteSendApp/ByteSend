@@ -26,6 +26,7 @@ import {
   ScrollText,
   UserIcon,
   ArrowLeft,
+  LifeBuoy,
 } from "lucide-react";
 import { FaBook } from "react-icons/fa";
 import { SiDiscord } from "react-icons/si";
@@ -53,7 +54,6 @@ import { isCloud, isSelfHosted } from "~/utils/common";
 import { usePathname } from "next/navigation";
 import { Badge } from "@bytesend/ui/src/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@bytesend/ui/src/avatar";
-import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,79 +66,59 @@ import {
 import { FeedbackDialog } from "./FeedbackDialog";
 import { env } from "~/env";
 import { getAdminNavGroups, isActiveAdminPath } from "~/app/(dashboard)/admin/_components/admin-nav";
-import { BrandIcon } from "~/lib/brand";
+import { TeamAvatar } from "~/components/dashboard/team-avatar";
+import { getSettingsNavGroups } from "~/components/dashboard/settings-nav";
 
-// General items
-const generalItems = [
+type NavItem = { title: string; url: string; icon: React.ComponentType };
+
+const NAV_GROUPS: Array<{ label: string | null; items: NavItem[] }> = [
   {
-    title: "Emails",
-    url: "/emails",
-    icon: Mail,
+    label: null,
+    items: [
+      { title: "Overview", url: "/dashboard", icon: HouseIcon },
+      { title: "Emails", url: "/emails", icon: Mail },
+    ],
   },
   {
-    title: "Overview",
-    url: "/dashboard",
-    icon: HouseIcon,
+    label: "Sending",
+    items: [
+      { title: "Domains", url: "/domains", icon: Globe },
+      { title: "Templates", url: "/templates", icon: LayoutTemplate },
+      { title: "Suppressions", url: "/suppressions", icon: UserRoundX },
+      { title: "Webhooks", url: "/webhooks", icon: Webhook },
+    ],
   },
   {
-    title: "Domains",
-    url: "/domains",
-    icon: Globe,
+    label: "Marketing",
+    items: [
+      { title: "Contacts", url: "/contacts", icon: BookUser },
+      { title: "Broadcasts", url: "/broadcasts", icon: Volume2 },
+      { title: "Campaigns", url: "/campaigns", icon: BookOpenText },
+    ],
   },
   {
-    title: "Webhooks",
-    url: "/webhooks",
-    icon: Webhook,
+    label: "Workspace",
+    items: [
+      { title: "Audit log", url: "/logs", icon: ScrollText },
+      { title: "Settings", url: "/settings", icon: Cog },
+    ],
   },
-  {
-    title: "Templates",
-    url: "/templates",
-    icon: LayoutTemplate,
-  },
-  {
-    title: "Suppressions",
-    url: "/suppressions",
-    icon: UserRoundX,
-  },
-  {
-    title: "Audit Logs",
-    url: "/logs",
-    icon: ScrollText,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Cog,
-  }
 ];
 
-// Marketing items
-const marketingItems = [
-  {
-    title: "Contacts",
-    url: "/contacts",
-    icon: BookUser,
-  },
-  {
-    title: "Broadcasts",
-    url: "/broadcasts",
-    icon: Volume2,
-  },
-  {
-    title: "Campaigns",
-    url: "/campaigns",
-    icon: BookOpenText,
-  },
-];
+function isActivePath(pathname: string, url: string) {
+  return pathname === url || pathname.startsWith(`${url}/`);
+}
 
 export function AppSidebar() {
   const { data: session } = useSession();
   const showFeedback = isCloud();
-  const { currentTeam, teams, setCurrentTeam } = useTeam();
+  const { currentTeam, teams, setCurrentTeam, currentIsAdmin } = useTeam();
 
   const pathname = usePathname();
   const inAdmin = pathname?.startsWith("/admin") ?? false;
+  const inSettings = !inAdmin && (pathname?.startsWith("/settings") ?? false);
   const adminGroups = inAdmin ? getAdminNavGroups(Boolean(session?.user?.isAdmin)) : [];
+  const settingsGroups = inSettings ? getSettingsNavGroups(currentIsAdmin) : [];
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -152,19 +132,7 @@ export function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   tooltip="Switch team"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20 shrink-0 overflow-hidden">
-                    {currentTeam?.image ? (
-                      <Image
-                        src={currentTeam.image}
-                        alt={currentTeam.name}
-                        width={32}
-                        height={32}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <BrandIcon size={20} />
-                    )}
-                  </div>
+                  <TeamAvatar image={currentTeam?.image} name={currentTeam?.name ?? "Team"} size={28} />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold tracking-tight">
                       {currentTeam?.name ?? "No team"}
@@ -187,19 +155,7 @@ export function AppSidebar() {
                     onSelect={() => setCurrentTeam(team.id)}
                     className="flex items-center gap-2"
                   >
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/10 ring-1 ring-primary/20 overflow-hidden">
-                      {team.image ? (
-                        <Image
-                          src={team.image}
-                          alt={team.name}
-                          width={20}
-                          height={20}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <BrandIcon size={14} />
-                      )}
-                    </div>
+                    <TeamAvatar image={team.image} name={team.name} size={20} />
                     <span className="flex-1 truncate">{team.name}</span>
                     {team.id === currentTeam?.id && (
                       <Check className="size-3.5 text-primary" />
@@ -259,66 +215,66 @@ export function AppSidebar() {
               </SidebarGroup>
             ))}
           </>
+        ) : inSettings ? (
+          <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Back to dashboard">
+                      <Link href="/dashboard">
+                        <ArrowLeft />
+                        <span>Back to dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            {settingsGroups.map((group) => (
+              <SidebarGroup key={group.label} className="py-1">
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-0.5">
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild tooltip={item.label} isActive={isActivePath(pathname ?? "", item.href)}>
+                          <Link href={item.href}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </>
         ) : (
-        <>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <span>General</span>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {generalItems.map((item) => {
-                const isActive = pathname?.startsWith(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive}
-                    >
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <span>Marketing</span>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {marketingItems.map((item) => {
-                const isActive = pathname?.startsWith(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive}
-                      className="text-sidebar-foreground"
-                    >
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        </>
+          NAV_GROUPS.map((group, index) => (
+            <SidebarGroup key={group.label ?? `nav-${index}`} className="py-1">
+              {group.label ? <SidebarGroupLabel>{group.label}</SidebarGroupLabel> : null}
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5">
+                  {group.items.map((item) => (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton asChild tooltip={item.title} isActive={isActivePath(pathname ?? "", item.url)}>
+                        <Link href={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))
         )}
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup className="mt-auto py-1">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {showFeedback ? (
                 <SidebarMenuItem>
                   <FeedbackDialog
@@ -332,37 +288,13 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ) : null}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Documentation">
-                  <Link href="https://docs.bytesend.cloud" target="_blank">
-                    <FaBook className="size-4 shrink-0" />
-                    <span>Documentation</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {isCloud() ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Service status">
-                    <Link href="https://status.bytesend.cloud" target="_blank">
-                      <Activity className="size-4 shrink-0" />
-                      <span>Status</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : null}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Discord">
-                  <Link href="https://discord.gg/C2Q4GHXKQA" target="_blank">
-                    <SiDiscord className="size-4 shrink-0" />
-                    <span>Discord</span>
-                  </Link>
-                </SidebarMenuButton>
+                <HelpMenu />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="shrink-0">
-        {<VersionInfo />}
+      <SidebarFooter className="shrink-0 border-t border-sidebar-border">
         <NavUser
           user={{
             name:
@@ -494,22 +426,56 @@ export function NavUser({
   );
 }
 
-function VersionInfo() {
+function HelpMenu() {
   const [version, setVersion] = useState<string | null>(null);
+  const { isMobile } = useSidebar();
 
   useEffect(() => {
     fetch("/api/version")
       .then((r) => r.json())
       .then((data: { version: string }) => setVersion(data.version))
-      .catch(() => setVersion("unknown"));
+      .catch(() => setVersion(null));
   }, []);
 
   return (
-    <div className="px-2 py-2 text-xs text-muted-foreground">
-      <div className="flex items-center justify-between">
-        <span>Version</span>
-        <span className="font-mono">{version ?? "..."}</span>
-      </div>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <SidebarMenuButton tooltip="Help">
+          <LifeBuoy />
+          <span>Help</span>
+        </SidebarMenuButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side={isMobile ? "bottom" : "right"} align="end" className="w-52">
+        <DropdownMenuItem asChild>
+          <Link href="https://docs.bytesend.cloud" target="_blank">
+            <FaBook className="size-4" />
+            Documentation
+          </Link>
+        </DropdownMenuItem>
+        {isCloud() ? (
+          <DropdownMenuItem asChild>
+            <Link href="https://status.bytesend.cloud" target="_blank">
+              <Activity className="size-4" />
+              Service status
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem asChild>
+          <Link href="https://discord.gg/C2Q4GHXKQA" target="_blank">
+            <SiDiscord className="size-4" />
+            Discord community
+          </Link>
+        </DropdownMenuItem>
+        {version ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center justify-between text-xs font-normal text-muted-foreground">
+              <span>Version</span>
+              <span className="font-mono">{version}</span>
+            </DropdownMenuLabel>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

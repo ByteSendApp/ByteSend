@@ -26,8 +26,8 @@ const PROVIDER_LABELS: Record<string, string> = {
 
 function Panel({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-      <div className="border-b border-border/60 px-4 py-3">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
       </div>
@@ -111,7 +111,7 @@ export default function AdminUserDetailPage() {
             <Skeleton className="h-4 w-64" />
           </div>
         </div>
-        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-lg" />
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function AdminUserDetailPage() {
         <Link href="/admin/users" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Users
         </Link>
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           {userQuery.error?.message ?? "User not found"}
         </div>
       </div>

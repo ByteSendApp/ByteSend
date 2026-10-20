@@ -80,17 +80,17 @@ export default function AdminSpamPage() {
       {scansQuery.isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }, (_, i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-xl" />
+            <Skeleton key={i} className="h-32 w-full rounded-lg" />
           ))}
         </div>
       ) : scans.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           {filter === "held" ? "Nothing is waiting for review." : "No messages here yet."}
         </div>
       ) : (
         <ul className="space-y-3">
           {scans.map((scan) => (
-            <li key={scan.id} className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <li key={scan.id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -157,7 +157,7 @@ export default function AdminSpamPage() {
                 {scan.hits.map((hit, index) => (
                   <li
                     key={`${hit.rule}-${index}`}
-                    className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-xs"
+                    className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs"
                     title={hit.detail}
                   >
                     <span className="font-mono text-muted-foreground">+{hit.score}</span>{" "}

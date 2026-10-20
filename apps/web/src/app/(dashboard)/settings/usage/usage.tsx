@@ -2,6 +2,7 @@
 
 import { api } from "~/trpc/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@bytesend/ui/src/card";
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import { Button } from "@bytesend/ui/src/button";
 import Spinner from "@bytesend/ui/src/spinner";
 import { format } from "date-fns";
@@ -101,7 +102,7 @@ function FreePlanUsage({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {/* Monthly gauge */}
-      <Card className="border-border/50">
+      <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Monthly limit</span>
@@ -109,7 +110,7 @@ function FreePlanUsage({
               {totalSent.toLocaleString()}/{FREE_PLAN_LIMIT.toLocaleString()}
             </span>
           </div>
-          <Progress value={monthlyPct} className="h-2" />
+          <Progress value={monthlyPct} className="h-1.5" />
           <p className="mt-2 text-xs text-muted-foreground">
             {(FREE_PLAN_LIMIT - totalSent).toLocaleString()} emails remaining
           </p>
@@ -117,7 +118,7 @@ function FreePlanUsage({
       </Card>
 
       {/* Daily gauge */}
-      <Card className="border-border/50">
+      <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Daily limit</span>
@@ -125,7 +126,7 @@ function FreePlanUsage({
               {dailyUsage.toLocaleString()}/{FREE_PLAN_DAILY_LIMIT.toLocaleString()}
             </span>
           </div>
-          <Progress value={dailyPct} className="h-2" />
+          <Progress value={dailyPct} className="h-1.5" />
           <p className="mt-2 text-xs text-muted-foreground">
             Resets at midnight UTC
           </p>
@@ -187,7 +188,7 @@ function EmailLimitsBreakdown({
   const monthlyTransactionalSent = getUsageByType(usage, "TRANSACTIONAL");
 
   return (
-    <Card className="border-border/50">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Email limits breakdown</CardTitle>
       </CardHeader>
@@ -271,7 +272,7 @@ function PaidPlanUsage({
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       {/* Amount due */}
-      <Card className="border-border/50">
+      <Card>
         <CardContent className="pt-6">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Amount due
@@ -286,7 +287,7 @@ function PaidPlanUsage({
       </Card>
 
       {/* Credit remaining */}
-      <Card className="border-border/50">
+      <Card>
         <CardContent className="pt-6">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Credit remaining
@@ -299,7 +300,7 @@ function PaidPlanUsage({
       </Card>
 
       {/* Total emails */}
-      <Card className="border-border/50">
+      <Card>
         <CardContent className="pt-6">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Emails sent
@@ -398,7 +399,7 @@ function ResourceLimits() {
   }
 
   return (
-    <Card className="border-border/50">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Resource limits breakdown</CardTitle>
       </CardHeader>
@@ -465,13 +466,9 @@ export default function UsagePage() {
       : `${format(new Date(today.getFullYear(), today.getMonth(), 1), "MMM dd")} – ${format(new Date(today.getFullYear(), today.getMonth() + 1, 1), "MMM dd")}`;
 
   return (
-    <div className="space-y-8">
-      {/* Usage section */}
+    <div className="space-y-6">
+      <PageHeader title="Usage" description={`Emails sent and resources used this billing period: ${billingPeriod}.`} />
       <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Usage</h2>
-          <p className="text-sm text-muted-foreground">{billingPeriod}</p>
-        </div>
 
         {currentTeam?.plan ? (
           <EmailLimitsBreakdown
@@ -487,7 +484,7 @@ export default function UsagePage() {
             <Spinner className="w-6 h-6" innerSvgClass="stroke-primary" />
           </div>
         ) : usage?.month.length === 0 ? (
-          <Card className="border-border/50">
+          <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No usage data available
             </CardContent>
@@ -504,7 +501,7 @@ export default function UsagePage() {
 
       {/* Current plan section */}
       {currentTeam?.plan && (
-        <Card className="border-border/50">
+        <Card>
           <CardContent className="pt-6">
             <PlanDetails />
             {currentTeam.plan === "FREE" && (

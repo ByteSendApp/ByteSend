@@ -45,7 +45,7 @@ function TeamsTable() {
         className="sm:max-w-md"
       />
 
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -146,7 +146,7 @@ export default function AdminTeamsPage() {
       {isCloud() ? (
         <TeamsTable />
       ) : (
-        <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
           Team administration is only available in the cloud deployment.
         </div>
       )}

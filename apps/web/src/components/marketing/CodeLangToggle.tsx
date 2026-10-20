@@ -49,7 +49,7 @@ export function LangToggle({
 
   return (
     <Select value={active} onValueChange={setActive}>
-      <SelectTrigger className="h-9 min-w-40 rounded-lg border-border/60 bg-background/80 text-xs sm:min-w-44">
+      <SelectTrigger className="h-8 min-w-40 bg-background text-xs sm:min-w-44">
         <SelectValue placeholder="Select language" />
       </SelectTrigger>
       <SelectContent align="end" className="min-w-44">

@@ -2,7 +2,10 @@
 
 import { UAParser } from "ua-parser-js";
 import { api } from "~/trpc/react";
-import { Separator } from "@bytesend/ui/src/separator";
+import Spinner from "@bytesend/ui/src/spinner";
+import { Callout } from "@bytesend/ui/src/callout";
+import { CopyButton } from "@bytesend/ui/src/copy-field";
+import { KeyValueList } from "@bytesend/ui/src/panel";
 import { EmailStatusBadge, EmailStatusIcon } from "./email-status-badge";
 import { formatDate } from "date-fns";
 import { EmailStatus } from "@prisma/client";
@@ -20,139 +23,126 @@ import {
   DELIVERY_DELAY_ERRORS,
 } from "@bytesend/lib/src/constants/ses-errors";
 import CancelEmail from "./cancel-email";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function EmailDetails({ emailId }: { emailId: string }) {
   const emailQuery = api.email.getEmail.useQuery({ id: emailId });
+  const email = emailQuery.data;
+
+  if (emailQuery.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Spinner className="size-5" />
+      </div>
+    );
+  }
+  if (!email) {
+    return <p className="p-6 text-sm text-muted-foreground">This email couldn&apos;t be found.</p>;
+  }
+
+  const events = [...email.emailEvents].sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime());
+  const isScheduled = email.latestStatus === "SCHEDULED" && email.scheduledAt;
 
   return (
-    <div className="h-full overflow-auto px-4 no-scrollbar">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4 items-center">
-          <h1 className="font-bold">{emailQuery.data?.to}</h1>
-          <EmailStatusBadge status={emailQuery.data?.latestStatus ?? "SENT"} />
-        </div>
+    <div className="flex h-full flex-col gap-5 overflow-auto p-1 no-scrollbar">
+      <div className="space-y-1.5 pr-8">
+        <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+        <h2 className="text-base font-semibold leading-snug text-foreground [overflow-wrap:anywhere]">
+          {email.subject || "(no subject)"}
+        </h2>
       </div>
-      <div className="flex flex-col mt-8 items-start gap-8">
-        <div className="rounded-xl border border-border/60 flex flex-col gap-2 w-full">
-          {/* <div className="flex gap-2">
-            <span className="w-[100px] text-muted-foreground text-sm">
-              From
-            </span>
-            <span className="text-sm">{emailQuery.data?.from}</span>
-          </div>
-          <Separator />
-          <div className="flex gap-2">
-            <span className="w-[100px] text-muted-foreground text-sm">To</span>
-            <span className="text-sm">{emailQuery.data?.to}</span>
-          </div>
-          <Separator />
-          <div className="flex gap-2">
-            <span className="w-[100px] text-muted-foreground text-sm">
-              Subject
-            </span>
-            <span className="text-sm">{emailQuery.data?.subject}</span>
-          </div> */}
-          <div className="flex flex-col gap-1 px-4 py-1">
-            {/* <div className=" text-[15px] font-medium">
-              {emailQuery.data?.to}
-            </div> */}
-            <div className=" text-sm">Subject: {emailQuery.data?.subject}</div>
-            <div className="text-muted-foreground text-xs">
-              From: {emailQuery.data?.from}
-            </div>
-          </div>
-          {emailQuery.data?.latestStatus === "SCHEDULED" &&
-          emailQuery.data?.scheduledAt ? (
-            <>
-              <Separator />
-              <div className="flex gap-2 items-center px-4">
-                <span className="w-25 text-muted-foreground text-sm ">
-                  Scheduled at
-                </span>
-                <span className="text-sm">
-                  {formatDate(
-                    emailQuery.data?.scheduledAt,
-                    "MMM dd'th', hh:mm a",
-                  )}
-                </span>
-                <div className="ml-4">
-                  <CancelEmail emailId={emailId} />
-                </div>
-              </div>
-            </>
-          ) : null}
 
-          <div>
-            <EmailPreview html={emailQuery.data?.html ?? ""} />
-          </div>
-        </div>
-        {emailQuery.data?.latestStatus !== "SCHEDULED" ? (
-          <div className="border border-border/60 rounded-xl w-full mb-2">
-            <div className="  p-4 flex flex-col gap-8 w-full">
-              <div className="font-medium">Events History</div>
-              <div className="flex items-stretch px-4 w-full">
-                <div className="border-r border-border border-dashed" />
-                <div className="flex flex-col gap-12 w-full">
-                  {emailQuery.data?.emailEvents.map((evt) => (
-                    <div
-                      key={evt.status}
-                      className="flex gap-5 items-start w-full"
-                    >
-                      <div className=" -ml-2.5">
-                        <EmailStatusIcon status={evt.status} />
-                      </div>
-                      <div className="-mt-0.5 w-full">
-                        <div className=" capitalize font-medium">
-                          <EmailStatusBadge status={evt.status} />
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          {formatDate(evt.createdAt, "MMM dd, hh:mm a")}
-                        </div>
-                        <div className="mt-1 text-foreground/80">
-                          <EmailStatusText
-                            status={evt.status}
-                            data={evt.data}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
+      <div className="overflow-hidden rounded-lg border border-border">
+        <KeyValueList
+          items={[
+            { label: "To", value: email.to.join(", ") },
+            { label: "From", value: email.from },
+            {
+              label: isScheduled ? "Scheduled for" : "Sent",
+              value: formatDate(isScheduled ? email.scheduledAt! : email.createdAt, "MMM d, yyyy 'at' HH:mm"),
+            },
+            {
+              label: "Email ID",
+              value: (
+                <span className="inline-flex items-center gap-1 font-mono text-xs font-normal">
+                  {email.id}
+                  <CopyButton value={email.id} />
+                </span>
+              ),
+            },
+          ]}
+        />
       </div>
+
+      {isScheduled ? (
+        <Callout tone="info" title="This email hasn't been sent yet" action={<CancelEmail emailId={emailId} />}>
+          It goes out {formatDate(email.scheduledAt!, "MMM d 'at' HH:mm")}. Cancel it to stop it being sent.
+        </Callout>
+      ) : null}
+
+      {!isScheduled && events.length ? (
+        <section className="space-y-3">
+          <h3 className="text-[13px] font-semibold text-foreground">Events</h3>
+          <ol className="relative space-y-4 border-l border-border pl-5">
+            {events.map((evt) => (
+              <li key={`${evt.status}-${String(evt.createdAt)}`} className="relative">
+                <span className="absolute -left-[26.5px] top-0.5 rounded-full bg-background p-0.5">
+                  <EmailStatusIcon status={evt.status} />
+                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <EmailStatusBadge status={evt.status} />
+                  <span className="text-xs text-muted-foreground">{formatDate(evt.createdAt, "MMM d, HH:mm:ss")}</span>
+                </div>
+                <div className="mt-1.5 text-[13px] text-muted-foreground">
+                  <EmailStatusText status={evt.status} data={evt.data} />
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      <section className="space-y-3">
+        <h3 className="text-[13px] font-semibold text-foreground">Content</h3>
+        <EmailPreview html={email.html ?? ""} text={email.text ?? ""} />
+      </section>
     </div>
   );
 }
 
-const EmailPreview = ({ html }: { html: string }) => {
+const EmailPreview = ({ html, text }: { html: string; text: string }) => {
   const [show, setShow] = useState(false);
+  const [view, setView] = useState<"html" | "text">(html ? "html" : "text");
 
+  // The iframe is mounted after the sheet's open animation, which it would otherwise stutter.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(true);
-    }, 200);
-
+    const timer = setTimeout(() => setShow(true), 200);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!show) {
-    return (
-    <div className="h-88 overflow-hidden rounded border-t bg-white"></div>
-    );
-  }
-
   return (
-    <div className="h-88 overflow-hidden rounded border-t bg-white">
-      <iframe
-        className="w-full h-full"
-        srcDoc={html}
-        sandbox="allow-same-origin"
-      />
+    <div className="overflow-hidden rounded-lg border border-border">
+      {html && text ? (
+        <div className="flex gap-1 border-b border-border bg-muted/30 p-1">
+          {(["html", "text"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setView(option)}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                view === option ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {option === "html" ? "HTML" : "Plain text"}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {view === "html" && html ? (
+        <div className="h-96 bg-white">{show ? <iframe title="Email preview" className="size-full" srcDoc={html} sandbox="allow-same-origin" /> : null}</div>
+      ) : (
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap p-4 font-mono text-xs text-foreground">{text || "No plain-text version."}</pre>
+      )}
     </div>
   );
 };
@@ -167,11 +157,11 @@ export const EmailStatusText = ({
   if (status === "SENT") {
     return (
       <div>
-        We received your request and sent the email to recipient's server.
+        Accepted and handed to the recipient's mail server.
       </div>
     );
   } else if (status === "DELIVERED") {
-    return <div>Mail is successfully delivered to the recipient.</div>;
+    return <div>The recipient's mail server accepted it.</div>;
   } else if (status === "DELIVERY_DELAYED") {
     const _errorData = data as unknown as SesDeliveryDelay;
     const errorMessage = DELIVERY_DELAY_ERRORS[_errorData.delayType];
@@ -184,19 +174,19 @@ export const EmailStatusText = ({
     return (
       <div className="flex flex-col gap-4 w-full">
         <p>{getErrorMessage(_errorData)}</p>
-        <div className="rounded-xl p-4 bg-muted/30 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 text-xs">
           <div className="flex gap-2 w-full">
             <div className="w-1/2">
-              <p className="text-sm text-muted-foreground">Type</p>
+              <p className="text-[11px] text-muted-foreground">Type</p>
               <p>{_errorData.bounceType}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Sub Type</p>
+              <p className="text-[11px] text-muted-foreground">Sub Type</p>
               <p>{_errorData.bounceSubType}</p>
             </div>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">SMTP response</p>
+            <p className="text-[11px] text-muted-foreground">SMTP response</p>
             <p>{_errorData.bouncedRecipients[0]?.diagnosticCode}</p>
           </div>
         </div>
@@ -210,17 +200,17 @@ export const EmailStatusText = ({
     const userAgent = getUserAgent(_data.userAgent);
 
     return (
-      <div className="w-full rounded-xl p-4 bg-muted/30 mt-4">
+      <div className="mt-2 w-full rounded-md border border-border bg-muted/30 p-3 text-xs">
         <div className="flex  w-full ">
           {userAgent.os.name ? (
             <div className="w-1/2">
-              <p className="text-sm text-muted-foreground">OS</p>
+              <p className="text-[11px] text-muted-foreground">OS</p>
               <p>{userAgent.os.name}</p>
             </div>
           ) : null}
           {userAgent.browser.name ? (
             <div>
-              <p className="text-sm text-muted-foreground">Browser</p>
+              <p className="text-[11px] text-muted-foreground">Browser</p>
               <p>{userAgent.browser.name}</p>
             </div>
           ) : null}
@@ -232,24 +222,24 @@ export const EmailStatusText = ({
     const userAgent = getUserAgent(_data.userAgent);
 
     return (
-      <div className="w-full mt-4 flex flex-col gap-4  rounded-xl p-4 bg-muted/30">
+      <div className="mt-2 flex w-full flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 text-xs">
         <div className="flex  w-full ">
           {userAgent.os.name ? (
             <div className="w-1/2">
-              <p className="text-sm text-muted-foreground">OS </p>
+              <p className="text-[11px] text-muted-foreground">OS </p>
               <p>{userAgent.os.name}</p>
             </div>
           ) : null}
           {userAgent.browser.name ? (
             <div>
-              <p className="text-sm text-muted-foreground">Browser </p>
+              <p className="text-[11px] text-muted-foreground">Browser </p>
               <p>{userAgent.browser.name}</p>
             </div>
           ) : null}
         </div>
         <div className="w-full">
-          <p className="text-sm text-muted-foreground">URL</p>
-          <p>{_data.link}</p>
+          <p className="text-[11px] text-muted-foreground">URL</p>
+          <p className="break-all text-foreground">{_data.link}</p>
         </div>
       </div>
     );
@@ -266,8 +256,7 @@ export const EmailStatusText = ({
   } else if (status === "SUPPRESSED") {
     return (
       <div>
-        This email was suppressed because this email is previously either
-        bounced or the recipient complained.
+        Not sent: this address bounced or marked an earlier email as spam, so it's on your suppression list.
       </div>
     );
   }

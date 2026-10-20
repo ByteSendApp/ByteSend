@@ -1,15 +1,12 @@
 "use client";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@bytesend/ui/src/breadcrumb";
 import Link from "next/link";
-import { H2 } from "@bytesend/ui";
+import { Megaphone, Pencil } from "lucide-react";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { KeyValueList, Panel } from "@bytesend/ui/src/panel";
+import { Stat, StatGroup } from "@bytesend/ui/src/stat";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { useBreadcrumb } from "~/components/dashboard/breadcrumbs";
 
 import Spinner from "@bytesend/ui/src/spinner";
 import { api } from "~/trpc/react";
@@ -19,7 +16,6 @@ import { formatDistanceToNow } from "date-fns";
 import TogglePauseCampaign from "../toggle-pause-campaign";
 import CampaignStatusBadge from "../../campaigns/campaign-status-badge";
 import { Button } from "@bytesend/ui/src/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@bytesend/ui/src/card";
 import { EmailStatusBadge } from "../../emails/email-status-badge";
 
 export default function CampaignDetailsPage({
@@ -55,251 +51,121 @@ export default function CampaignDetailsPage({
       }
     );
 
+  useBreadcrumb(
+    campaign ? `/${campaign.intent === "BROADCAST" ? "broadcasts" : "campaigns"}/${campaignId}` : "",
+    campaign?.name,
+  );
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner className="w-5 h-5 text-foreground" />
+      <div className="flex items-center justify-center py-24">
+        <Spinner className="size-5" />
       </div>
     );
   }
 
   if (!campaign) {
-    return <div>Campaign not found</div>;
+    return <EmptyState icon={<Megaphone />} title="Not found" description="It may have been deleted, or it belongs to another team." />;
   }
 
-  const deliveredCount = campaign.delivered ?? 0;
-  const openedCount = campaign.opened ?? 0;
-  const clickedCount = campaign.clicked ?? 0;
-  const unsubscribedCount = campaign.unsubscribed ?? 0;
-  const deliveredDenominator = deliveredCount > 0 ? deliveredCount : 0;
-  const percentageOfDelivered = (value: number) =>
-    deliveredDenominator > 0 ? (value / deliveredDenominator) * 100 : 0;
-
-  const statisticsRows = [
-    {
-      status: "delivered",
-      count: deliveredCount,
-      percentage: deliveredDenominator > 0 ? 100 : 0,
-    },
-    {
-      status: "unsubscribed",
-      count: unsubscribedCount,
-      percentage: percentageOfDelivered(unsubscribedCount),
-    },
-    {
-      status: "clicked",
-      count: clickedCount,
-      percentage: percentageOfDelivered(clickedCount),
-    },
-    {
-      status: "opened",
-      count: openedCount,
-      percentage: percentageOfDelivered(openedCount),
-    },
-  ];
-
+  const delivered = campaign.delivered ?? 0;
+  const pct = (value: number) => (delivered > 0 ? `${((value / delivered) * 100).toFixed(1)}% of delivered` : undefined);
   const total = campaign.total ?? 0;
   const processed = campaign.sent ?? 0;
   const basePath = campaign.intent === "BROADCAST" ? "/broadcasts" : "/campaigns";
-  const collectionLabel = campaign.intent === "BROADCAST" ? "Broadcasts" : "Campaigns";
+  const sending = campaign.status === CampaignStatus.RUNNING || campaign.status === CampaignStatus.PAUSED;
 
   return (
-    <div className="container mx-auto">
-      <div className="flex justify-between items-center">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={basePath} className="text-lg">
-                  {collectionLabel}
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="text-lg" />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-lg ">
-                <div className="flex items-center gap-2">
-                  <div className="max-w-75 truncate">{campaign.name}</div>
-                  <CampaignStatusBadge status={campaign.status} />
-                </div>
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        {campaign.status === "SCHEDULED" ? (
-          <Link href={`${basePath}/${campaign.id}/edit`}>
-            <Button>Edit</Button>
-          </Link>
-        ) : (
-          <TogglePauseCampaign campaign={campaign} mode="full" />
-        )}
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title={campaign.name}
+        meta={<CampaignStatusBadge status={campaign.status} />}
+        description={campaign.subject || undefined}
+        actions={
+          campaign.status === "SCHEDULED" ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`${basePath}/${campaign.id}/edit`}>
+                <Pencil className="size-3.5" />
+                Edit
+              </Link>
+            </Button>
+          ) : (
+            <TogglePauseCampaign campaign={campaign} mode="full" />
+          )
+        }
+      />
 
-      <div className="mt-10">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <CardTitle className="text-sm font-mono">Statistics</CardTitle>
-                {total > 0 ? (
-                  <div className="text-sm text-muted-foreground font-mono">
-                    {processed.toLocaleString()} of {total.toLocaleString()}{" "}
-                    processed
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    No recipients processed yet
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {statisticsRows.map((row, index) => (
-                <div
-                  key={row.status}
-                  className={`flex items-center justify-between gap-4 px-0 pb-3 ${
-                    index !== statisticsRows.length - 1
-                      ? "border-b border-dashed border-border"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <CampaignStatusIndicator status={row.status} />
-                    <div>
-                      <div className="text-sm capitalize">{row.status}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-mono">{row.count}</div>
-                    {row.status !== "delivered" ? (
-                      <div className="text-xs text-muted-foreground">
-                        {row.percentage.toFixed(1)}% of delivered
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex gap-2">
-              <CardTitle className="text-sm font-mono">Live activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-75 flex-col">
-                {latestEmailsLoading ? (
-                  <div className="flex flex-1 items-center justify-center">
-                    <Spinner className="h-5 w-5 text-foreground" />
-                  </div>
-                ) : !latestEmails || latestEmails.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center">
-                    <div className="rounded   text-sm text-muted-foreground">
-                      No recent user actions yet.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4 overflow-y-auto overscroll-y-contain pr-1 no-scrollbar">
-                    {latestEmails.map((email) => {
-                        const recipients = email.to ?? [];
-                        const primaryRecipient =
-                          recipients.length > 0
-                            ? recipients[0]
-                            : "Unknown recipient";
-                        const timestamp =
-                          email.latestStatus === "SCHEDULED" &&
-                          email.scheduledAt
-                            ? new Date(email.scheduledAt)
-                            : new Date(email.updatedAt ?? email.createdAt);
-                        const relativeTime = formatDistanceToNow(timestamp, {
-                          addSuffix: true,
-                        });
-
-                        return (
-                          <div
-                            key={email.id}
-                            className="flex flex-col gap-2 border-b pb-4 last:border-b-0 last:pb-0"
-                          >
-                            <div className="text-sm font-mono">
-                              {primaryRecipient}
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <EmailStatusBadge status={email.latestStatus} />
-                              <span className="whitespace-nowrap text-xs text-muted-foreground font-mono">
-                                {relativeTime}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {campaign.html && (
-        <div className=" rounded-lg  mt-16">
-          <H2 className="mb-4">Email</H2>
-
-          <div className="p-2 rounded-lg border shadow  flex flex-col gap-4 w-full">
-            <div className="flex flex-col gap-3 px-4 py-1">
-              <div className=" flex text-sm">
-                  <div className="w-17.5 text-muted-foreground">Subject</div>
-                <div> {campaign.subject}</div>
-              </div>
-              <div className="flex  text-sm">
-                  <div className="w-17.5 text-muted-foreground">From</div>
-                <div> {campaign.from}</div>
-              </div>
-              <div className="flex  text-sm items-center">
-                  <div className="w-17.5 text-muted-foreground">Contact</div>
-                <Link
-                  href={`/contacts/${campaign.contactBookId}`}
-                  target="_blank"
-                >
-                  <div className="bg-secondary p-0.5 px-2 rounded-md ">
-                    {campaign.contactBook?.emoji} &nbsp;
-                    {campaign.contactBook?.name}
-                  </div>
-                </Link>
-              </div>
-            </div>
-            <div className=" dark:bg-slate-50 overflow-auto text-black rounded py-8 border-t">
-              <div dangerouslySetInnerHTML={{ __html: campaign.html ?? "" }} />
-            </div>
+      {sending && total > 0 ? (
+        <Panel>
+          <div className="flex items-center justify-between gap-3 text-[13px]">
+            <span className="font-medium text-foreground">{campaign.status === CampaignStatus.PAUSED ? "Paused" : "Sending"}</span>
+            <span className="tabular-nums text-muted-foreground">
+              {processed.toLocaleString()} of {total.toLocaleString()} ({Math.round((processed / total) * 100)}%)
+            </span>
           </div>
-        </div>
-      )}
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(processed / total) * 100}%` }} />
+          </div>
+        </Panel>
+      ) : null}
+
+      <StatGroup>
+        <Stat label="Recipients" value={total.toLocaleString()} hint={total > 0 ? `${processed.toLocaleString()} processed` : "None yet"} />
+        <Stat label="Delivered" value={delivered.toLocaleString()} />
+        <Stat label="Opened" value={(campaign.opened ?? 0).toLocaleString()} hint={pct(campaign.opened ?? 0)} />
+        <Stat label="Clicked" value={(campaign.clicked ?? 0).toLocaleString()} hint={pct(campaign.clicked ?? 0)} />
+        <Stat label="Unsubscribed" value={(campaign.unsubscribed ?? 0).toLocaleString()} hint={pct(campaign.unsubscribed ?? 0)} />
+      </StatGroup>
+
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <Panel flush title="Email">
+          <KeyValueList
+            items={[
+              { label: "Subject", value: campaign.subject || "–" },
+              { label: "From", value: campaign.from || "–" },
+              {
+                label: "Sent to",
+                value: campaign.contactBookId ? (
+                  <Link href={`/contacts/${campaign.contactBookId}`} className="hover:underline">
+                    {campaign.contactBook?.emoji} {campaign.contactBook?.name}
+                  </Link>
+                ) : (
+                  "–"
+                ),
+              },
+            ]}
+          />
+          {campaign.html ? (
+            <div className="h-[520px] border-t border-border bg-white">
+              <iframe title="Email preview" className="size-full" srcDoc={campaign.html} sandbox="allow-same-origin" />
+            </div>
+          ) : null}
+        </Panel>
+
+        <Panel flush title="Live activity" description="Latest recipients and what happened">
+          {latestEmailsLoading ? (
+            <ListSkeleton rows={5} />
+          ) : !latestEmails || latestEmails.length === 0 ? (
+            <p className="px-4 py-8 text-center text-[13px] text-muted-foreground">Nothing yet. Activity shows up here as emails go out.</p>
+          ) : (
+            <ul className="max-h-[600px] divide-y divide-border/70 overflow-y-auto">
+              {latestEmails.map((email) => {
+                const timestamp =
+                  email.latestStatus === "SCHEDULED" && email.scheduledAt ? new Date(email.scheduledAt) : new Date(email.updatedAt ?? email.createdAt);
+                return (
+                  <li key={email.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] text-foreground">{email.to?.[0] ?? "Unknown recipient"}</p>
+                      <p className="text-xs text-muted-foreground">{formatDistanceToNow(timestamp, { addSuffix: true })}</p>
+                    </div>
+                    <EmailStatusBadge status={email.latestStatus} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
+      </div>
     </div>
   );
 }
-
-const CampaignStatusIndicator: React.FC<{ status: string }> = ({ status }) => {
-  let colorClass = "bg-gray";
-
-  switch (status) {
-    case "delivered":
-      colorClass = "bg-green";
-      break;
-    case "bounced":
-    case "unsubscribed":
-      colorClass = "bg-red";
-      break;
-    case "clicked":
-      colorClass = "bg-blue";
-      break;
-    case "opened":
-      colorClass = "bg-purple";
-      break;
-    case "complained":
-      colorClass = "bg-yellow";
-      break;
-    default:
-      colorClass = "bg-gray";
-  }
-
-  return <div className={`h-2.5 w-2.5 rounded-[2px] ${colorClass}`} />;
-};

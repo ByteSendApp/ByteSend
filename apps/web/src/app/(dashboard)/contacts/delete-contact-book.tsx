@@ -51,8 +51,8 @@ export const DeleteContactBook: React.FC<{
   const dialogTrigger =
     trigger ??
     (open === undefined ? (
-      <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent ">
-        <Trash2 className="h-4.5 w-4.5 text-red/80 hover:text-red/70" />
+      <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-destructive">
+        <Trash2 className="size-3.5" />
       </Button>
     ) : null);
 

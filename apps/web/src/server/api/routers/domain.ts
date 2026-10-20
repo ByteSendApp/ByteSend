@@ -73,6 +73,26 @@ export const domainRouter = createTRPCRouter({
     return getDomains(ctx.team.id);
   }),
 
+  domainStats: teamProcedure.query(async ({ ctx }) => {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const rows = await ctx.db.dailyEmailUsage.groupBy({
+      by: ["domainId"],
+      where: { teamId: ctx.team.id, date: { gte: since } },
+      _sum: { sent: true, delivered: true, hardBounced: true, complained: true },
+    });
+    return Object.fromEntries(
+      rows.map((row) => [
+        row.domainId,
+        {
+          sent: row._sum.sent ?? 0,
+          delivered: row._sum.delivered ?? 0,
+          hardBounced: row._sum.hardBounced ?? 0,
+          complained: row._sum.complained ?? 0,
+        },
+      ]),
+    ) as Record<number, { sent: number; delivered: number; hardBounced: number; complained: number }>;
+  }),
+
   getDomain: domainProcedure.query(async ({ input, ctx }) => {
     const domain = await getDomain(input.id, ctx.team.id);
     return { ...domain, regionMove: getRegionMoveSummary(domain) };

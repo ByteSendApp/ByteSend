@@ -1,54 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, Upload } from "lucide-react";
+import { Button } from "@bytesend/ui/src/button";
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import AddSuppressionDialog from "./add-suppression";
 import BulkAddSuppressionsDialog from "./bulk-add-suppressions";
 import SuppressionList from "./suppression-list";
 import SuppressionStats from "./suppression-stats";
-import { Button } from "@bytesend/ui/src/button";
-import { Plus, Upload } from "lucide-react";
-import { H1 } from "@bytesend/ui";
 
 export default function SuppressionsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showBulkAddDialog, setShowBulkAddDialog] = useState(false);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <H1>Suppression List</H1>
-          <p className="text-sm text-muted-foreground mt-1">Manage bounced and unsubscribed addresses</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowBulkAddDialog(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Add
-          </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Suppression
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
+    <div className="space-y-5">
+      <PageHeader
+        title="Suppressions"
+        description="Addresses ByteSend won't send to: ones that bounced, complained, or that you added. This protects your sending reputation."
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setShowBulkAddDialog(true)}>
+              <Upload className="size-3.5" />
+              Import
+            </Button>
+            <Button size="sm" onClick={() => setShowAddDialog(true)}>
+              <Plus className="size-3.5" />
+              Add address
+            </Button>
+          </>
+        }
+      />
       <SuppressionStats />
-
-      {/* Suppression List */}
       <SuppressionList />
-
-      {/* Dialogs */}
-      <AddSuppressionDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-      />
-
-      <BulkAddSuppressionsDialog
-        open={showBulkAddDialog}
-        onOpenChange={setShowBulkAddDialog}
-      />
+      <AddSuppressionDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+      <BulkAddSuppressionsDialog open={showBulkAddDialog} onOpenChange={setShowBulkAddDialog} />
     </div>
   );
 }

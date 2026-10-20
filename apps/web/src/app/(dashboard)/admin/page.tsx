@@ -28,7 +28,7 @@ function parseRange(value: string | null): Range {
 
 function RangePicker({ value, onChange }: { value: Range; onChange: (range: Range) => void }) {
   return (
-    <div className="inline-flex rounded-lg border border-border/60 bg-muted/40 p-0.5" role="group" aria-label="Time range">
+    <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5" role="group" aria-label="Time range">
       {RANGES.map((range) => (
         <button
           key={range}
@@ -38,7 +38,7 @@ function RangePicker({ value, onChange }: { value: Range; onChange: (range: Rang
           className={cn(
             "rounded-md px-3 py-1 text-xs font-medium tabular-nums transition-colors",
             value === range
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-background text-foreground "
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -94,7 +94,7 @@ export default function AdminOverviewPage() {
               <StatCardSkeleton key={i} />
             ))}
           </div>
-          <Skeleton className="h-80 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-lg" />
         </div>
       ) : (
         <div className={cn("space-y-6 transition-opacity", overviewQuery.isFetching && "opacity-70")}>

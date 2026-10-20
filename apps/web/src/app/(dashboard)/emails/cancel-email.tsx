@@ -76,8 +76,9 @@ export const CancelEmail: React.FC<{
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Trash2 className="h-4 w-4 text-red" />
+        <Button variant="outline" size="sm">
+          <Trash2 className="size-3.5" />
+          Cancel send
         </Button>
       </DialogTrigger>
       <DialogContent>

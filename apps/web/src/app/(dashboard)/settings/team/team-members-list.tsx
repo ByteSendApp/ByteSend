@@ -1,24 +1,25 @@
 "use client";
 
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@bytesend/ui/src/table";
-import { api } from "~/trpc/react";
-import { Button } from "@bytesend/ui/src/button";
-import Spinner from "@bytesend/ui/src/spinner";
 import { formatDistanceToNow } from "date-fns";
-import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { Badge } from "@bytesend/ui/src/badge";
+import { Panel } from "@bytesend/ui/src/panel";
+import { ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@bytesend/ui/src/table";
+import { api } from "~/trpc/react";
+import { useTeam } from "~/providers/team-context";
 import { EditTeamMember } from "./edit-team-member";
 import { DeleteTeamMember } from "./delete-team-member";
 import { ResendTeamInvite } from "./resend-team-invite";
 import { DeleteTeamInvite } from "./delete-team-invite";
-import { useTeam } from "~/providers/team-context";
-import { useSession } from "next-auth/react";
+
+function Initial({ text }: { text: string }) {
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-medium uppercase text-muted-foreground">
+      {text.charAt(0)}
+    </span>
+  );
+}
 
 export default function TeamMembersList() {
   const { currentIsAdmin } = useTeam();
@@ -26,128 +27,105 @@ export default function TeamMembersList() {
   const teamUsersQuery = api.team.getTeamUsers.useQuery();
   const teamInvitesQuery = api.team.getTeamInvites.useQuery();
 
-  // Combine team users and invites for display
   const teamMembers = teamUsersQuery.data || [];
   const pendingInvites = teamInvitesQuery.data || [];
 
-  const isLoading = teamUsersQuery.isLoading || teamInvitesQuery.isLoading;
+  if (teamUsersQuery.isLoading || teamInvitesQuery.isLoading) {
+    return (
+      <Panel flush>
+        <ListSkeleton rows={3} />
+      </Panel>
+    );
+  }
 
   return (
-    <div className="mt-10 flex flex-col gap-4">
-      <div className="flex flex-col rounded-xl border border-border shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="rounded-tl-xl">User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="rounded-tr-xl">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={5} className="text-center py-4">
-                  <Spinner
-                    className="w-6 h-6 mx-auto"
-                    innerSvgClass="stroke-primary"
-                  />
+    <Panel flush>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Member</TableHead>
+            <TableHead className="w-28">Role</TableHead>
+            <TableHead className="hidden w-28 sm:table-cell">Status</TableHead>
+            <TableHead className="hidden w-36 md:table-cell">Joined</TableHead>
+            <TableHead className="w-24" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {teamMembers.map((member) => {
+            const email = member.user?.email || "Unknown user";
+            const isSelf = session?.user.id == member.userId;
+            return (
+              <TableRow key={member.userId}>
+                <TableCell className="max-w-0">
+                  <div className="flex items-center gap-2.5">
+                    <Initial text={email} />
+                    <span className="truncate font-medium text-foreground">
+                      {email}
+                      {isSelf ? <span className="ml-1.5 font-normal text-muted-foreground">(you)</span> : null}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={member.role === "ADMIN" ? "info" : "neutral"} className="capitalize">
+                    {member.role.toLowerCase()}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge variant="success" dot>
+                    Active
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden text-muted-foreground md:table-cell">
+                  {formatDistanceToNow(new Date(member.user.createdAt), { addSuffix: true })}
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    {currentIsAdmin ? <EditTeamMember teamUser={{ ...member, userId: String(member.userId) }} /> : null}
+                    {currentIsAdmin || isSelf ? (
+                      <DeleteTeamMember
+                        teamUser={{ userId: String(member.userId), role: member.role, email }}
+                        self={isSelf}
+                      />
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : teamMembers.length > 0 ? (
-              teamMembers.map((member) => (
-                <TableRow key={member.userId} className="">
-                  <TableCell className="font-medium">
-                    {member.user?.email || "Unknown user"}
-                  </TableCell>
-                  <TableCell>
-                    <div className=" rounded capitalize py-1 text-xs">
-                      {member.role.toLowerCase()}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-center w-[100px] rounded capitalize py-1 text-xs bg-green/15 text-green border border-green/25">
-                      Active
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {formatDistanceToNow(new Date(member.user.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {currentIsAdmin ? (
-                        <EditTeamMember
-                          teamUser={{
-                            ...member,
-                            userId: String(member.userId),
-                          }}
-                        />
-                      ) : null}
-                      {currentIsAdmin || session?.user.id == member.userId ? (
-                        <DeleteTeamMember
-                          teamUser={{
-                            userId: String(member.userId),
-                            role: member.role,
-                            email: member.user?.email || "Unknown user",
-                          }}
-                          self={session?.user.id == member.userId}
-                        />
-                      ) : null}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow className="h-32">
-                <TableCell colSpan={5} className="text-center py-4">
-                  No team members found
-                </TableCell>
-              </TableRow>
-            )}
+            );
+          })}
 
-            {/* Pending invites section */}
-            {pendingInvites.length > 0 && (
-              <>
-                {pendingInvites.map((invite) => (
-                  <TableRow key={invite.id} className="">
-                    <TableCell className="font-medium">
-                      {invite.email}
-                    </TableCell>
-                    <TableCell>
-                      <div className=" w-[100px] rounded capitalize py-1 text-xs">
-                        {invite.role.toLowerCase()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-center w-[100px] rounded capitalize py-1 text-xs bg-yellow/15 text-yellow border border-yellow/25">
-                        Pending
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(invite.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {currentIsAdmin ? (
-                          <ResendTeamInvite invite={invite} />
-                        ) : null}
-                        {currentIsAdmin ? (
-                          <DeleteTeamInvite invite={invite} />
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+          {pendingInvites.map((invite) => (
+            <TableRow key={invite.id}>
+              <TableCell className="max-w-0">
+                <div className="flex items-center gap-2.5">
+                  <Initial text={invite.email} />
+                  <span className="truncate text-muted-foreground">{invite.email}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="neutral" className="capitalize">
+                  {invite.role.toLowerCase()}
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden sm:table-cell">
+                <Badge variant="warning" dot>
+                  Invited
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden text-muted-foreground md:table-cell">
+                Invited {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
+              </TableCell>
+              <TableCell>
+                {currentIsAdmin ? (
+                  <div className="flex justify-end gap-1">
+                    <ResendTeamInvite invite={invite} />
+                    <DeleteTeamInvite invite={invite} />
+                  </div>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Panel>
   );
 }

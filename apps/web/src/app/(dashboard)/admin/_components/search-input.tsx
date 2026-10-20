@@ -24,7 +24,7 @@ export function SearchInput({
 
   return (
     <div className={cn("relative", className)}>
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={value}
         onChange={(event) => {
@@ -33,7 +33,7 @@ export function SearchInput({
         }}
         placeholder={placeholder}
         aria-label={label}
-        className="pl-8"
+        className="h-8 pl-8 text-[13px]"
       />
     </div>
   );

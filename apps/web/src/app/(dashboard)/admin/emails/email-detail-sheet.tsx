@@ -75,7 +75,7 @@ export function EmailDetailSheet({ emailId, onClose }: { emailId: string | null;
               <span className="text-xs text-muted-foreground">{email.team.plan}</span>
             </div>
 
-            <dl className="divide-y divide-border/60 rounded-lg border border-border/60 px-3">
+            <dl className="divide-y divide-border/60 rounded-lg border border-border px-3">
               <Field label="From">
                 <span className="font-mono text-xs">{email.from}</span>
               </Field>
@@ -124,7 +124,7 @@ export function EmailDetailSheet({ emailId, onClose }: { emailId: string | null;
               {email.emailEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No events yet.</p>
               ) : (
-                <ol className="relative space-y-4 border-l border-border/60 pl-5">
+                <ol className="relative space-y-4 border-l border-border pl-5">
                   {email.emailEvents.map((event) => (
                     <li key={event.id} className="relative">
                       <span className="absolute -left-[1.4rem] top-1.5 size-2 rounded-full bg-muted-foreground/60 ring-4 ring-background" />
@@ -157,11 +157,11 @@ export function EmailDetailSheet({ emailId, onClose }: { emailId: string | null;
               <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Content</h4>
               {content ? (
                 content.html ? (
-                  <div className="h-96 overflow-hidden rounded-lg border border-border/60 bg-white">
+                  <div className="h-96 overflow-hidden rounded-lg border border-border bg-white">
                     <iframe title="Email content" className="size-full" srcDoc={content.html} sandbox="" />
                   </div>
                 ) : content.text ? (
-                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-border/60 p-3 text-xs">
+                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-border p-3 text-xs">
                     {content.text}
                   </pre>
                 ) : (

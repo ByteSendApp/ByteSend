@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@bytesend/ui/src/button";
+import { AuthShell } from "~/components/auth/auth-shell";
 import {
   Form,
   FormControl,
@@ -52,51 +53,37 @@ export default function CreateTeam() {
   }
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-120 w-180 rounded-full bg-primary/8 blur-[120px]" />
-      <div className="relative w-[400px] flex flex-col gap-8">
-        <JoinTeam showCreateTeam />
-        <div>
-          <h1 className="font-semibold text-center text-lg">Create Team</h1>
-          <p className="text-sm text-muted-foreground text-center mt-1">Set up your workspace to start sending</p>
-        </div>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className=" flex flex-col gap-8 w-full"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field, formState }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      placeholder="Team name"
-                      className="w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  {formState.errors.name ? (
-                    <FormMessage />
-                  ) : (
-                    <FormDescription>
-                      Request admin to join existing team
-                    </FormDescription>
-                  )}
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={createTeam.isPending}>
-              {createTeam.isPending ? (
-                <Spinner className="w-5 h-5" />
-              ) : (
-                "Create"
-              )}
-            </Button>
-          </form>
-        </Form>
-      </div>
-    </div>
+    <AuthShell
+      title="Set up your team"
+      description="Teams hold your domains, API keys and contacts. You can invite people once it's created."
+    >
+      <JoinTeam showCreateTeam />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field, formState }) => (
+              <FormItem>
+                <label htmlFor="team-name" className="text-[13px] font-medium text-foreground">
+                  Team name
+                </label>
+                <FormControl>
+                  <Input id="team-name" placeholder="Acme Inc." className="h-10" autoFocus {...field} />
+                </FormControl>
+                {formState.errors.name ? (
+                  <FormMessage />
+                ) : (
+                  <FormDescription>Usually your company or project. You can change it later.</FormDescription>
+                )}
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="h-10 w-full" disabled={createTeam.isPending}>
+            {createTeam.isPending ? <Spinner className="size-4" /> : "Create team"}
+          </Button>
+        </form>
+      </Form>
+    </AuthShell>
   );
 }

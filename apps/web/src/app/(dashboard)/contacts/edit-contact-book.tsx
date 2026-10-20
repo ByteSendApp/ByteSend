@@ -55,11 +55,12 @@ export const EditContactBook: React.FC<{
     (controlledOpen === undefined ? (
       <Button
         variant="ghost"
-        size="sm"
-        className="p-0 hover:bg-transparent"
+        size="icon"
+        className="size-7 text-muted-foreground hover:text-foreground"
+        aria-label="Edit contact book"
         onClick={(e) => e.stopPropagation()}
       >
-        <Edit className="h-4 w-4 text-foreground/80 hover:text-foreground/70" />
+        <Edit className="size-3.5" />
       </Button>
     ) : null);
 

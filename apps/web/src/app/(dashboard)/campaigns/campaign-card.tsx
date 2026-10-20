@@ -1,22 +1,17 @@
 "use client";
 
 import { CampaignStatus } from "@prisma/client";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@bytesend/ui/src/tooltip";
-import { Progress } from "@bytesend/ui/src/progress";
+import { useRouter } from "next/navigation";
+import { TableCell, TableRow } from "@bytesend/ui/src/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@bytesend/ui/src/tooltip";
 import DeleteCampaign from "./delete-campaign";
 import DuplicateCampaign from "./duplicate-campaign";
 import TogglePauseCampaign from "./toggle-pause-campaign";
 import CampaignStatusBadge from "./campaign-status-badge";
 
-interface CampaignCardProps {
+interface CampaignRowProps {
   campaign: {
     id: string;
     name: string;
@@ -35,136 +30,92 @@ interface CampaignCardProps {
   basePath: "/campaigns" | "/broadcasts";
 }
 
-export default function CampaignCard({ campaign, basePath }: CampaignCardProps) {
-  const sentPercentage =
-    campaign.total > 0 ? Math.round((campaign.sent / campaign.total) * 100) : 0;
-  const pendingCount = campaign.total - campaign.sent;
+function hrefFor(campaign: CampaignRowProps["campaign"], basePath: string) {
+  const editable = campaign.status === CampaignStatus.DRAFT || campaign.status === CampaignStatus.SCHEDULED;
+  if (!editable) return `${basePath}/${campaign.id}`;
+  return campaign.intent === "BROADCAST" ? `${basePath}/${campaign.id}/compose` : `${basePath}/${campaign.id}/edit`;
+}
+
+function Progress({ campaign }: { campaign: CampaignRowProps["campaign"] }) {
+  const { status, total, sent, delivered, unsubscribed, scheduledAt } = campaign;
+  if (status === CampaignStatus.SCHEDULED && scheduledAt) {
+    return <span className="text-muted-foreground">Sends {format(new Date(scheduledAt), "MMM d 'at' HH:mm")}</span>;
+  }
+  if (status === CampaignStatus.SENT) {
+    return (
+      <span className="text-muted-foreground">
+        <span className="tabular-nums text-foreground">{delivered.toLocaleString()}</span> delivered
+        {unsubscribed > 0 ? <> · {unsubscribed.toLocaleString()} unsubscribed</> : null}
+      </span>
+    );
+  }
+  if ((status === CampaignStatus.RUNNING || status === CampaignStatus.PAUSED) && total > 0) {
+    const pct = Math.round((sent / total) * 100);
+    return (
+      <div className="flex items-center gap-2">
+        <div className="h-1 w-20 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="tabular-nums text-muted-foreground">
+          {sent.toLocaleString()} / {total.toLocaleString()}
+        </span>
+      </div>
+    );
+  }
+  return <span className="text-muted-foreground">Not sent yet</span>;
+}
+
+function ActionTip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{children}</span>
+      </TooltipTrigger>
+      <TooltipContent className="text-xs">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export default function CampaignRow({ campaign, basePath }: CampaignRowProps) {
+  const router = useRouter();
+  const href = hrefFor(campaign, basePath);
+  const canPause =
+    campaign.status === CampaignStatus.SCHEDULED || campaign.status === CampaignStatus.RUNNING || campaign.status === CampaignStatus.PAUSED;
 
   return (
-    <div className="border border-border/60 rounded-xl p-4 hover:border-border transition-colors">
-      {/* Mobile: stacked */}
-      <div className="flex flex-col gap-3 sm:hidden">
-        <div className="flex items-center justify-between">
-          <Link
-            href={
-              campaign.status === CampaignStatus.DRAFT ||
-                campaign.status === CampaignStatus.SCHEDULED
-                ? campaign.intent === "BROADCAST"
-                  ? `${basePath}/${campaign.id}/compose`
-                  : `${basePath}/${campaign.id}/edit`
-                : `${basePath}/${campaign.id}`
-            }
-            className="text-sm font-medium underline decoration-dashed underline-offset-2 truncate"
-          >
-            {campaign.name}
-          </Link>
-          <CampaignStatusBadge status={campaign.status} />
-        </div>
-
-        <div className="text-xs font-mono text-muted-foreground">
-          {campaign.status === CampaignStatus.SCHEDULED ? (
-            campaign.scheduledAt && (
-              <span>At <strong>{format(new Date(campaign.scheduledAt), "MMM do, hh:mm a")}</strong></span>
-            )
-          ) : campaign.status === CampaignStatus.SENT ? (
-            <span>Delivered <strong>{campaign.delivered.toLocaleString()}</strong> · Unsub <strong>{campaign.unsubscribed}</strong></span>
-          ) : (
-            <span>Sent <strong>{campaign.sent.toLocaleString()}</strong>{pendingCount > 0 && <> · Pending <strong>{pendingCount.toLocaleString()}</strong></>}</span>
-          )}
-        </div>
-        {(campaign.status === CampaignStatus.RUNNING ||
-          campaign.status === CampaignStatus.PAUSED) &&
-          campaign.total > 0 && (
-            <Progress value={sentPercentage} className="h-1 mt-2.5 bg-border/60" />
-          )}
-
-        <TooltipProvider>
-          <div className="flex gap-3 items-center">
-            {(campaign.status === CampaignStatus.SCHEDULED ||
-              campaign.status === CampaignStatus.RUNNING ||
-              campaign.status === CampaignStatus.PAUSED) && (
-                <TogglePauseCampaign campaign={campaign} />
-              )}
-            <DuplicateCampaign campaign={campaign} />
-            <DeleteCampaign campaign={campaign} />
-          </div>
-        </TooltipProvider>
-      </div>
-
-      {/* Desktop: row */}
-      <div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0 flex-1">
-          <Link
-            href={
-              campaign.status === CampaignStatus.DRAFT ||
-                campaign.status === CampaignStatus.SCHEDULED
-                ? campaign.intent === "BROADCAST"
-                  ? `${basePath}/${campaign.id}/compose`
-                  : `${basePath}/${campaign.id}/edit`
-                : `${basePath}/${campaign.id}`
-            }
-            className="text-sm font-medium underline decoration-dashed underline-offset-2"
-          >
-            {campaign.name}
-          </Link>
-          <div className="text-xs font-mono text-muted-foreground mt-1.5">
-            {campaign.status === CampaignStatus.SCHEDULED ? (
-              campaign.scheduledAt && (
-                <span>At <strong>{format(new Date(campaign.scheduledAt), "MMM do, hh:mm a")}</strong></span>
-              )
-            ) : campaign.status === CampaignStatus.SENT ? (
-              <span>Delivered <strong>{campaign.delivered.toLocaleString()}</strong> · Unsub <strong>{campaign.unsubscribed}</strong></span>
-            ) : (
-              <span>Sent <strong>{campaign.sent.toLocaleString()}</strong>{pendingCount > 0 && <> · Pending <strong>{pendingCount.toLocaleString()}</strong></>}</span>
-            )}
-          </div>
-          {(campaign.status === CampaignStatus.RUNNING ||
-            campaign.status === CampaignStatus.PAUSED) &&
-            campaign.total > 0 && (
-              <Progress
-                value={sentPercentage}
-                className="h-1 mt-2.5 bg-border/60"
-              />
-            )}
-        </div>
-
+    <TableRow className="cursor-pointer" onClick={() => router.push(href)}>
+      <TableCell className="max-w-0">
+        <Link href={href} className="block truncate font-medium text-foreground" onClick={(e) => e.stopPropagation()}>
+          {campaign.name}
+        </Link>
+        <p className="truncate text-xs text-muted-foreground">{campaign.subject || "No subject yet"}</p>
+      </TableCell>
+      <TableCell>
         <CampaignStatusBadge status={campaign.status} />
-
+      </TableCell>
+      <TableCell className="hidden text-xs md:table-cell">
+        <Progress campaign={campaign} />
+      </TableCell>
+      <TableCell className="hidden text-muted-foreground lg:table-cell">
+        {formatDistanceToNow(campaign.updatedAt, { addSuffix: true })}
+      </TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()}>
         <TooltipProvider>
-          <div className="flex gap-3 items-center shrink-0">
-            {(campaign.status === CampaignStatus.SCHEDULED ||
-              campaign.status === CampaignStatus.RUNNING ||
-              campaign.status === CampaignStatus.PAUSED) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex">
-                      <TogglePauseCampaign campaign={campaign} />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">
-                    {campaign.status === CampaignStatus.PAUSED ? "Resume campaign" : "Pause campaign"}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <DuplicateCampaign campaign={campaign} />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Duplicate</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <DeleteCampaign campaign={campaign} />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Delete</TooltipContent>
-            </Tooltip>
+          <div className="flex justify-end gap-1">
+            {canPause ? (
+              <ActionTip label={campaign.status === CampaignStatus.PAUSED ? "Resume" : "Pause"}>
+                <TogglePauseCampaign campaign={campaign} />
+              </ActionTip>
+            ) : null}
+            <ActionTip label="Duplicate">
+              <DuplicateCampaign campaign={campaign} />
+            </ActionTip>
+            <ActionTip label="Delete">
+              <DeleteCampaign campaign={campaign} />
+            </ActionTip>
           </div>
         </TooltipProvider>
-      </div>
-    </div>
+      </TableCell>
+    </TableRow>
   );
 }

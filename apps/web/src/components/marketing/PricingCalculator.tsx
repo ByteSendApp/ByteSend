@@ -109,9 +109,9 @@ export function PricingCalculator() {
     `$${(value * 1000).toFixed(2)}/1,000`;
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/40 p-1">
-      <div className="rounded-[14px] border border-border/50 bg-background/95 p-5 pb-8 sm:p-6">
-        <div className="mx-auto mb-5 grid w-full max-w-xl grid-cols-3 gap-2 rounded-xl border border-border/50 bg-muted/30 p-1">
+    <div className="rounded-lg border border-border bg-card">
+      <div className="p-5 pb-8 sm:p-6">
+        <div className="mx-auto mb-5 grid w-full max-w-md grid-cols-3 gap-1 rounded-md border border-border bg-muted/50 p-0.5">
           {SOLD_PAID_PLANS.map((planKey) => {
             const planLabel = PLANS[planKey].displayName;
             const isSelected = selectedPlan === planKey;
@@ -120,7 +120,7 @@ export function PricingCalculator() {
                 key={planKey}
                 type="button"
                 onClick={() => setSelectedPlan(planKey)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors ${
                   isSelected
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -133,7 +133,7 @@ export function PricingCalculator() {
           })}
         </div>
 
-        <div className="rounded-xl border border-border/50 bg-muted/20 p-3 text-xs text-muted-foreground sm:p-4 sm:text-sm">
+        <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground sm:p-4 sm:text-[13px]">
           <span className="font-medium text-foreground">{plan.displayName}</span>{" "}
           includes {included.toLocaleString()} emails/month. Overage estimate uses {" "}
           {rates
@@ -175,28 +175,28 @@ export function PricingCalculator() {
             </div>
 
             <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-4 items-center">
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-md border border-border p-4">
                 <div className="text-xs text-muted-foreground">Plan base</div>
                 <div className="text-lg font-medium">${baseMonthly.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {plan.displayName} monthly
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-md border border-border p-4">
                 <div className="text-xs text-muted-foreground">Marketing overage</div>
                 <div className="text-lg font-medium">${marketingOverageCost.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {Math.round(marketingOverage).toLocaleString()} estimated overage emails
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-md border border-border p-4">
                 <div className="text-xs text-muted-foreground">Transactional overage</div>
                 <div className="text-lg font-medium">${transactionalOverageCost.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {Math.round(transactionalOverage).toLocaleString()} estimated overage emails
                 </div>
               </div>
-              <div className="rounded-lg border border-primary/30 p-4 bg-primary/10">
+              <div className="rounded-md border border-primary/30 bg-primary/[0.06] p-4">
                 <div className="text-xs text-muted-foreground">Estimated Total</div>
                 <div className="text-3xl text-primary font-semibold">${estimatedTotal.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">

@@ -71,7 +71,7 @@ export default function AdminBlocklistPage() {
       />
 
       <form
-        className="grid gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:grid-cols-[180px_1fr_1fr_auto]"
+        className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[180px_1fr_1fr_auto]"
         onSubmit={(event) => {
           event.preventDefault();
           add.mutate({ type: newType, value: newValue, reason: newReason || undefined });
@@ -133,7 +133,7 @@ export default function AdminBlocklistPage() {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

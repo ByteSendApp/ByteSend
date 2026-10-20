@@ -260,7 +260,7 @@ export default function AccountSettings() {
     return (
         <div className="flex flex-col gap-8 mt-6">
             {/* ── Account email ── */}
-            <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-sm font-semibold mb-1">Email Address</h3>
                 <p className="text-xs text-muted-foreground mb-5">
                     This email is used for login and account notifications. Changes require verification of both your current and new email.
@@ -294,7 +294,7 @@ export default function AccountSettings() {
                         {pendingEmail ? (
                             <div className="mt-4 space-y-4">
                                 {emailVerificationStep === "old" && (
-                                    <div className="rounded-lg border border-border/60 bg-background/40 p-4">
+                                    <div className="rounded-md border border-border bg-muted/30 p-4">
                                         <p className="text-xs text-muted-foreground mb-3">
                                             <span className="font-semibold text-foreground">Step 1:</span> Enter the code sent to your current email.
                                         </p>
@@ -321,7 +321,7 @@ export default function AccountSettings() {
                                 )}
 
                                 {emailVerificationStep === "new" && (
-                                    <div className="rounded-lg border border-border/60 bg-background/40 p-4">
+                                    <div className="rounded-md border border-border bg-muted/30 p-4">
                                         <p className="text-xs text-muted-foreground mb-3">
                                             <span className="font-semibold text-foreground">Step 2:</span> Enter the code sent to your new email <span className="font-semibold text-foreground">{pendingEmail}</span>.
                                         </p>
@@ -361,7 +361,7 @@ export default function AccountSettings() {
             />
 
             {/* ── Backup Emails ── */}
-            <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-sm font-semibold mb-1">Backup Email</h3>
                 <p className="text-xs text-muted-foreground mb-5">
                     Add a backup email with password for account access if you lose your primary email. You can use this for login.
@@ -370,7 +370,7 @@ export default function AccountSettings() {
                 {backupEmailsQuery.data && backupEmailsQuery.data.length > 0 ? (
                     <div className="space-y-3">
                         {backupEmailsQuery.data.map((backup) => (
-                            <div key={backup.id} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-4 py-3">
+                            <div key={backup.id} className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
                                 <div>
                                     <p className="text-sm font-medium">{backup.email}</p>
                                     <p className="text-xs text-muted-foreground">
@@ -469,7 +469,7 @@ export default function AccountSettings() {
                         </Form>
                     </div>
                 ) : pendingBackupEmail && pendingBackupEmail !== "_init" ? (
-                    <div className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-3">
+                    <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
                         <p className="text-xs text-muted-foreground">
                             Enter the code sent to <span className="font-semibold text-foreground">{pendingBackupEmail}</span>.
                         </p>
@@ -497,7 +497,7 @@ export default function AccountSettings() {
             </div>
 
             {/* ── Two-factor auth ── */}
-            <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-sm font-semibold mb-1">Two-Factor Authentication</h3>
                 <p className="text-xs text-muted-foreground mb-5">
                     Protect your account with an authenticator app using TOTP codes.
@@ -528,7 +528,7 @@ export default function AccountSettings() {
                     </div>
                 ) : twoFactorSetup ? (
                     <div className="space-y-4">
-                        <div className="w-fit rounded-lg border border-border/60 bg-white p-3">
+                        <div className="w-fit rounded-lg border border-border bg-white p-3">
                             <QRCodeSVG value={twoFactorSetup.otpauthUrl} size={140} />
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -576,7 +576,7 @@ export default function AccountSettings() {
 
             {/* ── Recovery Codes ── */}
             {profileQuery.data?.twoFactorEnabled ? (
-                <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
+                <div className="rounded-lg border border-border bg-card p-6">
                     <h3 className="text-sm font-semibold mb-1">Recovery Codes</h3>
                     <p className="text-xs text-muted-foreground mb-4">
                         Recovery codes let you access your account if you lose your authenticator.
@@ -589,7 +589,7 @@ export default function AccountSettings() {
 
                     {showRecoveryCodes ? (
                         <div className="space-y-3">
-                            <div className="rounded-lg border border-border/60 bg-muted/30 p-4 font-mono text-xs grid grid-cols-2 gap-1.5">
+                            <div className="rounded-md border border-border bg-muted/30 p-4 font-mono text-xs grid grid-cols-2 gap-1.5">
                                 {showRecoveryCodes.map((code) => (
                                     <span key={code} className="select-all">{code}</span>
                                 ))}

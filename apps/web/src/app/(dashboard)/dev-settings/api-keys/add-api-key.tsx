@@ -101,9 +101,9 @@ export default function AddApiKey() {
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" />
-          Add API Key
+        <Button size="sm">
+          <Plus className="size-3.5" />
+          Create API key
         </Button>
       </DialogTrigger>
       {apiKey ? (

@@ -1,19 +1,17 @@
 "use client";
 
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import TemplateList from "./template-list";
 import CreateTemplate from "./create-template";
-import { H1 } from "@bytesend/ui";
 
 export default function TemplatesPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <H1>Templates</H1>
-          <p className="text-sm text-muted-foreground mt-1">Design reusable email templates</p>
-        </div>
-        <CreateTemplate />
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Templates"
+        description="Reusable emails you design once and send from the API or campaigns, with variables filled in per recipient."
+        actions={<CreateTemplate />}
+      />
       <TemplateList />
     </div>
   );

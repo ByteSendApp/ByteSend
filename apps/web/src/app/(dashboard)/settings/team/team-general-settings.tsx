@@ -4,9 +4,8 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Trash2, Upload, ImageIcon } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 
 import { Button } from "@bytesend/ui/src/button";
 import {
@@ -26,6 +25,10 @@ import {
   DialogTrigger,
 } from "@bytesend/ui/src/dialog";
 import { toast } from "@bytesend/ui/src/toaster";
+import { Callout } from "@bytesend/ui/src/callout";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { Panel, SettingRow } from "@bytesend/ui/src/panel";
+import { TeamAvatar } from "~/components/dashboard/team-avatar";
 
 import { api } from "~/trpc/react";
 import { useTeam } from "~/providers/team-context";
@@ -137,136 +140,104 @@ export default function TeamGeneralSettings() {
     });
   }
 
+  const header = <PageHeader title="General" description="Your team's name and image, as shown to members and in the team switcher." />;
+
+  if (!currentIsAdmin) {
+    return (
+      <>
+        {header}
+        <Callout tone="info" title="Only team admins can change these settings">
+          Ask an admin of {currentTeam?.name ?? "this team"} if something needs updating.
+        </Callout>
+      </>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-8 mt-6">
-      {!currentIsAdmin ? null : (
-        <>
-          {/* ── Team image ── */}
-          <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
-            <h3 className="text-sm font-semibold mb-1">Team Image</h3>
-            <p className="text-xs text-muted-foreground mb-5">
-              Shown in the sidebar and team switcher. Max 2 MB. JPEG, PNG, WebP or GIF.
-            </p>
+    <>
+      {header}
 
-            <div className="flex items-center gap-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 overflow-hidden">
-                {imagePreview ? (
-                  <Image
-                    src={imagePreview}
-                    alt="Team image"
-                    width={64}
-                    height={64}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <ImageIcon className="size-7 text-muted-foreground" />
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES.join(",")}
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
+      <Panel flush title="Team profile">
+        <SettingRow
+          title="Image"
+          description="Square images work best. JPEG, PNG, WebP or GIF, up to 2 MB."
+          control={
+            <div className="flex items-center gap-3">
+              <TeamAvatar image={imagePreview} name={currentTeam?.name ?? "Team"} size={40} />
+              <input ref={fileInputRef} type="file" accept={ACCEPTED_IMAGE_TYPES.join(",")} className="hidden" onChange={handleImageChange} />
+              <Button variant="outline" size="sm" isLoading={uploading} onClick={() => fileInputRef.current?.click()}>
+                <Upload className="size-3.5" />
+                {imagePreview ? "Change" : "Upload"}
+              </Button>
+              {imagePreview ? (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  isLoading={uploading}
-                  onClick={() => fileInputRef.current?.click()}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={handleRemoveImage}
+                  disabled={updateTeamMutation.isPending}
                 >
-                  <Upload className="size-3.5 mr-1.5" />
-                  {imagePreview ? "Change" : "Upload"}
+                  Remove
                 </Button>
-                {imagePreview && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRemoveImage}
-                    disabled={updateTeamMutation.isPending}
-                  >
-                    <Trash2 className="size-3.5 mr-1.5 text-destructive" />
-                    Remove
-                  </Button>
-                )}
-              </div>
+              ) : null}
             </div>
-          </div>
+          }
+        />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSaveName)}>
+            <SettingRow
+              title="Name"
+              description="Shown to everyone in the team."
+              control={
+                <div className="flex w-full items-start gap-2 sm:w-80">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="My team" className="h-8" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" size="sm" isLoading={updateTeamMutation.isPending} disabled={!form.formState.isDirty}>
+                    Save
+                  </Button>
+                </div>
+              }
+            />
+          </form>
+        </Form>
+      </Panel>
 
-          {/* ── Team name ── */}
-          <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
-            <h3 className="text-sm font-semibold mb-1">Team Name</h3>
-            <p className="text-xs text-muted-foreground mb-5">
-              This is the display name for your team.
-            </p>
-
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSaveName)} className="flex gap-3">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input placeholder="My Team" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  isLoading={updateTeamMutation.isPending}
-                >
-                  Save
-                </Button>
-              </form>
-            </Form>
-          </div>
-
-          {/* ── Danger zone ── */}
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
-            <h3 className="text-sm font-semibold text-destructive mb-1">
-              Danger Zone
-            </h3>
-            <p className="text-xs text-muted-foreground mb-5">
-              Deleting a team is permanent and will remove all associated data including domains,
-              emails, campaigns, and contacts.
-            </p>
-
+      <Panel flush tone="danger" title="Danger zone">
+        <SettingRow
+          title="Delete this team"
+          description="Permanently removes its domains, emails, contacts, campaigns and API keys. This can't be undone."
+          control={
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
                 <Button variant="destructive" size="sm">
-                  <Trash2 className="size-3.5 mr-1.5" />
-                  Delete Team
+                  <Trash2 className="size-3.5" />
+                  Delete team
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Delete team</DialogTitle>
+                  <DialogTitle>Delete {currentTeam?.name}?</DialogTitle>
                   <DialogDescription>
-                    This will permanently delete{" "}
-                    <span className="font-semibold text-foreground">
-                      {currentTeam?.name}
-                    </span>{" "}
-                    and all its data. This cannot be undone.
+                    Everything in this team is deleted for good: domains, emails, contacts, campaigns and API keys.
                   </DialogDescription>
                 </DialogHeader>
-
-                <div className="mt-2 flex flex-col gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Type <span className="font-mono font-semibold text-foreground">{currentTeam?.name}</span> to confirm.
+                <div className="space-y-2">
+                  <p className="text-[13px] text-muted-foreground">
+                    Type <span className="font-mono font-medium text-foreground">{currentTeam?.name}</span> to confirm.
                   </p>
-                  <Input
-                    value={confirmName}
-                    onChange={(e) => setConfirmName(e.target.value)}
-                    placeholder={currentTeam?.name}
-                  />
+                  <Input value={confirmName} onChange={(e) => setConfirmName(e.target.value)} placeholder={currentTeam?.name} />
                 </div>
-
-                <div className="flex justify-end gap-3 mt-4">
+                <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setDeleteOpen(false)}>
                     Cancel
                   </Button>
@@ -276,14 +247,14 @@ export default function TeamGeneralSettings() {
                     isLoading={deleteTeamMutation.isPending}
                     onClick={handleDeleteTeam}
                   >
-                    Delete Team
+                    Delete team
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
-        </>
-      )}
-    </div>
+          }
+        />
+      </Panel>
+    </>
   );
 }

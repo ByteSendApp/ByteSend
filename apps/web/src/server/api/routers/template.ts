@@ -90,7 +90,8 @@ export const templateRouter = createTRPCRouter({
         content: z.string().optional(),
       }),
     )
-    .mutation(async ({ ctx: { db }, input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
       const { templateId, ...data } = input;
       let html: string | null = null;
 

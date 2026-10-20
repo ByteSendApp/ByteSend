@@ -12,7 +12,7 @@ export function ChartTooltip({
   if (!row) return null;
 
   return (
-    <div className="flex min-w-36 flex-col gap-1.5 rounded-lg border border-border/60 bg-popover p-3 shadow-lg">
+    <div className="flex min-w-36 flex-col gap-1.5 rounded-lg border border-border bg-popover p-3 shadow-lg">
       <p className="text-xs text-muted-foreground">{row.date}</p>
       {series.map((s) => (
         <div key={s.key} className="flex items-center gap-2">

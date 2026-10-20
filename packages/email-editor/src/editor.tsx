@@ -111,13 +111,13 @@ export const Editor: React.FC<EditorProps> = ({
   });
 
   return (
-    <div
-      className="rounded-b-xl rounded-t-none bytesend-editor border border-border border-t-0 shadow-md overflow-hidden"
-      ref={menuContainerRef}
-    >
+    <div className="bytesend-editor flex flex-col" ref={menuContainerRef}>
       {editor ? <EditorToolbar editor={editor} /> : null}
-      <div className="bg-background text-foreground">
-        <EditorContent editor={editor} className="min-h-[50vh] outline-none p-4 sm:p-8" />
+      {/* The email sits on a white page at inbox width, whatever the dashboard theme, so it looks like what people receive. */}
+      <div className="bg-muted/40 px-2 py-6 sm:px-6 sm:py-10">
+        <div className="light mx-auto w-full max-w-[640px] overflow-hidden rounded-lg border border-border bg-background text-foreground shadow-sm">
+          <EditorContent editor={editor} className="min-h-[55vh] p-5 outline-none sm:p-10" />
+        </div>
       </div>
       {editor ? <TextMenu editor={editor} /> : null}
       {editor ? <LinkMenu editor={editor} appendTo={menuContainerRef} /> : null}

@@ -37,8 +37,8 @@ export const ResendTeamInvite: React.FC<{
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="sm" onClick={onResendInvite}>
-            <RotateCw className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" aria-label="Resend invite" onClick={onResendInvite}>
+            <RotateCw className="size-3.5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -51,7 +51,9 @@ export const ResendTeamInvite: React.FC<{
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
+              className="size-7 text-muted-foreground hover:text-foreground"
+              aria-label="Copy invite link"
               onClick={() => {
                 navigator.clipboard.writeText(
                   `${location.origin}/join-team?inviteId=${invite.id}`
@@ -59,7 +61,7 @@ export const ResendTeamInvite: React.FC<{
                 toast.success(`Invite link copied to clipboard`);
               }}
             >
-              <Copy className="h-4 w-4" />
+              <Copy className="size-3.5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

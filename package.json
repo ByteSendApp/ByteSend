@@ -15,6 +15,8 @@
     "build:web:local": "pnpm load-env -- turbo build --filter=@bytesend/email-editor  --filter=web ",
     "start:web:local": "pnpm load-env -- cd apps/web && pnpm start",
     "dev": "pnpm load-env -- turbo dev",
+    "dev:local": "dotenv -e .env.local -- turbo dev --env-mode=loose",
+    "dx:migrate": "dotenv -e .env.local -- pnpm --filter=web db:migrate-deploy",
     "test:web": "pnpm --filter=web test",
     "test:web:all": "pnpm test:infra:up && (pnpm --filter=web test:all; code=$?; pnpm test:infra:down; exit $code)",
     "test:web:all:raw": "pnpm --filter=web test:all",
@@ -61,8 +63,17 @@
     "turbo": "^2.5.2"
   },
   "pnpm": {
+    "packageExtensions": {
+      "@hookform/resolvers@5": {
+        "peerDependencies": {
+          "zod": "*"
+        }
+      }
+    },
     "overrides": {
-      "shiki": "3.3.0"
+      "shiki": "3.3.0",
+      "@types/react": "19.1.2",
+      "@types/react-dom": "19.1.2"
     }
   }
 }

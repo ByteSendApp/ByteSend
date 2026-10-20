@@ -1,39 +1,24 @@
 import { EmailStatus } from "@prisma/client";
+import { Badge, type BadgeProps } from "@bytesend/ui/src/badge";
 
-export const EmailStatusBadge: React.FC<{ status: EmailStatus }> = ({
-  status,
-}) => {
-  let badgeColor = "bg-muted/30 text-muted-foreground border border-border/40";
-  switch (status) {
-    case "DELIVERED":
-      badgeColor = "bg-green/15 text-green border border-green/25";
-      break;
-    case "BOUNCED":
-    case "FAILED":
-      badgeColor = "bg-red/15 text-red border border-red/25";
-      break;
-    case "CLICKED":
-      badgeColor = "bg-blue/15 text-blue border border-blue/25";
-      break;
-    case "OPENED":
-      badgeColor = "bg-primary/10 text-primary border border-primary/20";
-      break;
-    case "COMPLAINED":
-    case "DELIVERY_DELAYED":
-      badgeColor = "bg-yellow/15 text-yellow border border-yellow/25";
-      break;
-    default:
-      break;
-  }
-
-  return (
-    <div
-      className={`text-center min-w-24 rounded-md capitalize py-1 px-2 text-xs font-medium ${badgeColor}`}
-    >
-      {status.toLowerCase().split("_").join(" ")}
-    </div>
-  );
+const VARIANT: Partial<Record<EmailStatus, BadgeProps["variant"]>> = {
+  DELIVERED: "success",
+  OPENED: "info",
+  CLICKED: "brand",
+  BOUNCED: "danger",
+  FAILED: "danger",
+  REJECTED: "danger",
+  RENDERING_FAILURE: "danger",
+  HELD: "warning",
+  COMPLAINED: "warning",
+  DELIVERY_DELAYED: "warning",
 };
+
+export const EmailStatusBadge: React.FC<{ status: EmailStatus }> = ({ status }) => (
+  <Badge variant={VARIANT[status] ?? "neutral"} dot className="capitalize">
+    {status.toLowerCase().split("_").join(" ")}
+  </Badge>
+);
 
 export const EmailStatusIcon: React.FC<{ status: EmailStatus }> = ({
   status,

@@ -44,7 +44,7 @@ const STATUS_META: Record<TeamRow["status"], { label: string; tone: StatusTone }
 
 function SummaryTile({ label, value, tone }: { label: string; value: number; tone: StatusTone }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+    <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
       <StatusPill tone={tone}>{label}</StatusPill>
       <span className="font-mono text-xl font-semibold tabular-nums">{formatNumber(value)}</span>
     </div>
@@ -107,7 +107,7 @@ export default function AdminDeliverabilityPage() {
         </label>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

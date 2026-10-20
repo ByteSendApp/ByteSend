@@ -47,8 +47,8 @@ export const DeleteApiKey: React.FC<{
       isLoading={deleteApiKeyMutation.isPending}
       onConfirm={onApiKeyDelete}
       trigger={
-        <Button variant="ghost" size="sm">
-          <Trash2 className="h-4 w-4 text-red/80" />
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-destructive">
+          <Trash2 className="size-3.5" />
         </Button>
       }
       confirmLabel="Delete API key"

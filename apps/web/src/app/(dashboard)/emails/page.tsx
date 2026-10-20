@@ -1,15 +1,12 @@
 "use client";
 
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import EmailList from "./email-list";
-import { H1 } from "@bytesend/ui";
 
 export default function EmailsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <H1>Emails</H1>
-        <p className="text-sm text-muted-foreground mt-1">View and track all sent emails</p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Emails" description="Every email your team has sent, with its latest delivery status." />
       <EmailList />
     </div>
   );

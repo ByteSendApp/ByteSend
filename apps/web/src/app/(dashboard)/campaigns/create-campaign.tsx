@@ -96,9 +96,9 @@ export default function CreateCampaign({ intent, basePath }: CreateCampaignProps
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" />
-          {intent === "BROADCAST" ? "Create Broadcast" : "Create Campaign"}
+        <Button size="sm">
+          <Plus className="size-3.5" />
+          {intent === "BROADCAST" ? "New broadcast" : "New campaign"}
         </Button>
       </DialogTrigger>
       <DialogContent>

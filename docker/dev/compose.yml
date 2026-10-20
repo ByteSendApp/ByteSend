@@ -1,5 +1,10 @@
 name: bytesend-dev
 
+# `pnpm dx:up` starts what `pnpm dev` needs: Postgres, Redis and a fake SES.
+# Optional extras:
+#   --profile storage   S3-compatible storage for image uploads (RustFS, console on :9001)
+#   --profile app       the web app and SMTP server in containers instead of `pnpm dev`
+
 services:
   postgres:
     image: postgres:16
@@ -25,6 +30,7 @@ services:
     command: ["redis-server", "--maxmemory-policy", "noeviction"]
 
   web:
+    profiles: ["app"]
     build:
       context: ..
       dockerfile: ./docker/Dockerfile
@@ -42,16 +48,17 @@ services:
       - AWS_SECRET_KEY=minioadmin
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_SES_ENDPOINT=http://local-ses-sns:3000
-      - S3_COMPATIBLE_API_URL=http://minio:9002
+      - AWS_SNS_ENDPOINT=http://local-ses-sns:3000
+      - S3_COMPATIBLE_API_URL=http://storage:9000
       - S3_COMPATIBLE_PUBLIC_URL=http://localhost:9002
       - S3_COMPATIBLE_ACCESS_KEY=bytesend
       - S3_COMPATIBLE_SECRET_KEY=password
     depends_on:
       - postgres
       - redis
-      - minio
 
   smtp:
+    profiles: ["app"]
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.smtp
@@ -70,31 +77,37 @@ services:
       - web
 
   local-ses-sns:
+    # Built from packages/local-ses-sns. Inbox of captured mail at http://localhost:5350
     image: bytesend/local-ses-sns:latest
+    build: ../../packages/local-ses-sns
     container_name: bytesend-local-ses-sns
     restart: always
     ports:
       - "5350:3000"
     environment:
-      WEBHOOK_URL: http://host.docker.internal:3000/api/ses_callback
+      LOCALHOST_ALIAS: host.docker.internal
+    volumes:
+      - local-ses-sns:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  minio:
-    image: minio/minio
+  storage:
+    profiles: ["storage"]
+    # MinIO no longer publishes images, so local storage uses RustFS (S3-compatible).
+    image: rustfs/rustfs:latest
     container_name: bytesend-storage-dev
     ports:
-      - 9002:9002
+      - 9002:9000
       - 9001:9001
     volumes:
-      - minio:/data
+      - storage:/data
     environment:
-      MINIO_ROOT_USER: bytesend
-      MINIO_ROOT_PASSWORD: password
-    entrypoint: sh
-    command: -c 'mkdir -p /data/bytesend && minio server /data --console-address ":9001" --address ":9002"'
+      RUSTFS_ACCESS_KEY: bytesend
+      RUSTFS_SECRET_KEY: password
+      RUSTFS_CONSOLE_ENABLE: "true"
 
 volumes:
   database:
   redis:
-  minio:
+  storage:
+  local-ses-sns:

@@ -26,7 +26,7 @@ export default function DpaPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">
@@ -88,9 +88,9 @@ export default function DpaPage() {
 
           <section id="definitions" className="scroll-mt-24 mb-10">
             <h2 className="text-lg font-semibold mb-3">Definitions</h2>
-            <div className="overflow-hidden rounded-lg border border-border/60">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
-                <tbody className="divide-y divide-border/40">
+                <tbody className="divide-y divide-border/70">
                   {[
                     { term: "Personal Data", def: "Any information relating to an identified or identifiable natural person, as defined in the UK GDPR." },
                     { term: "Processing", def: "Any operation performed on personal data, including collection, storage, use, disclosure, or deletion." },
@@ -159,16 +159,16 @@ export default function DpaPage() {
               By accepting this DPA you provide general authorisation for us to engage the following
               sub-processors. We will notify you of any material changes to this list.
             </p>
-            <div className="overflow-hidden rounded-lg border border-border/60">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/60 bg-muted/40">
+                  <tr className="border-b border-border bg-muted/40">
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Sub-Processor</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Role</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Location</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40">
+                <tbody className="divide-y divide-border/70">
                   {[
                     { name: "NodeByte Hosting", role: "Application hosting and infrastructure", loc: "United Kingdom" },
                     { name: "Amazon Web Services (SES)", role: "Email delivery infrastructure", loc: "EU / US" },

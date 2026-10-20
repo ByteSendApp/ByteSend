@@ -45,7 +45,7 @@ export const DeleteDomain: React.FC<{ domain: Domain }> = ({ domain }) => {
       isLoading={deleteDomainMutation.isPending}
       onConfirm={onDomainDelete}
       trigger={
-        <Button variant="destructive" className="w-[150px]" size="sm">
+        <Button variant="destructive" size="sm">
           Delete domain
         </Button>
       }

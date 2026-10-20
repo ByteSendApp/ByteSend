@@ -1,43 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@bytesend/ui/src/button";
-import Spinner from "@bytesend/ui/src/spinner";
-import { CheckCircle2 } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { CheckCircle2, CreditCard, RotateCw } from "lucide-react";
+import { PLANS } from "@bytesend/lib";
+import { Button } from "@bytesend/ui/src/button";
+import { EmptyState } from "@bytesend/ui/src/empty-state";
+import { Panel } from "@bytesend/ui/src/panel";
+import Spinner from "@bytesend/ui/src/spinner";
 import { api } from "~/trpc/react";
-import { H1 } from "@bytesend/ui";
+
+const TIMEOUT_MS = 30_000;
 
 export default function PaymentsPage() {
-  const searchParams = useSearchParams();
+  return (
+    <Suspense fallback={null}>
+      <PaymentResult />
+    </Suspense>
+  );
+}
 
+function PaymentResult() {
+  const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
 
   return (
-    <div className="container mx-auto py-10">
-      <H1>Payment {success ? "Success" : canceled ? "Canceled" : "Unknown"}</H1>
-      {canceled ? (
-        <Link href="/settings/billing">
-          <Button>Go to billing</Button>
-        </Link>
-      ) : null}
-      {success ? <VerifySuccess /> : null}
-    </div>
+    <Panel flush className="mx-auto mt-6 max-w-xl">
+      {success ? (
+        <VerifySuccess />
+      ) : (
+        <EmptyState
+          className="py-16"
+          icon={<CreditCard />}
+          title={canceled ? "Checkout cancelled" : "Nothing to show here"}
+          description={canceled ? "You weren't charged. Your plan hasn't changed." : "This page shows the result of a checkout."}
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link href="/settings/billing">Back to billing</Link>
+            </Button>
+          }
+        />
+      )}
+    </Panel>
   );
 }
-
-const TIMEOUT_MS = 30_000;
 
 function VerifySuccess() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const utils = api.useUtils();
 
-  const { data: teams, refetch } = api.team.getTeams.useQuery(undefined, {
-    refetchInterval: 3000,
-  });
+  const { data: teams, refetch } = api.team.getTeams.useQuery(undefined, { refetchInterval: 3000 });
 
   const syncMutation = api.billing.syncSubscription.useMutation({
     onSuccess: async () => {
@@ -52,67 +67,71 @@ function VerifySuccess() {
     return () => clearTimeout(t);
   }, []);
 
-  // Use the active team ID from localStorage so we check the right team
+  // The active team is remembered in localStorage, so check that team rather than the first one.
   const [activeTeamId] = useState<number | null>(() => {
     if (typeof window === "undefined") return null;
     const stored = window.localStorage.getItem("bytesend:active-team-id");
     return stored ? parseInt(stored, 10) : null;
   });
 
-  const activeTeam = activeTeamId
-    ? teams?.find((t) => t.id === activeTeamId) ?? teams?.[0]
-    : teams?.[0];
+  const activeTeam = activeTeamId ? (teams?.find((t) => t.id === activeTeamId) ?? teams?.[0]) : teams?.[0];
 
-  if (activeTeam?.plan !== "FREE") {
+  if (activeTeam && activeTeam.plan !== "FREE") {
+    const planName = PLANS[activeTeam.plan]?.displayName ?? activeTeam.plan;
     return (
-      <div>
-        <div className="flex gap-2 items-center">
-          <CheckCircle2 className="h-4 w-4 text-green shrink-0" />
-          <p>Your account has been upgraded to the <strong>{activeTeam?.plan}</strong> plan.</p>
-        </div>
-        <Link href="/settings/billing" className="mt-8">
-          <Button className="mt-8">Go to billing</Button>
-        </Link>
-      </div>
+      <EmptyState
+        className="py-16"
+        icon={<CheckCircle2 className="text-success" />}
+        title={`You're on ${planName}`}
+        description={`Thanks! ${activeTeam.name} has been upgraded and the new limits apply straight away.`}
+        action={
+          <div className="flex gap-2">
+            <Button asChild size="sm">
+              <Link href="/dashboard">Go to the overview</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/settings/billing">Billing</Link>
+            </Button>
+          </div>
+        }
+      />
     );
   }
 
   if (timedOut || syncMutation.isError) {
     return (
-      <div className="space-y-4">
-        <p className="text-muted-foreground text-sm">
-          Your payment was received but the plan hasn&apos;t updated yet. Click below to sync directly from Stripe.
-        </p>
-        {sessionId && (
-          <p className="text-xs text-muted-foreground">Session: <code>{sessionId}</code></p>
-        )}
-        {syncMutation.isError && (
-          <p className="text-xs text-destructive">{syncMutation.error.message}</p>
-        )}
-        <div className="flex gap-3">
-          <Button
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-          >
-            {syncMutation.isPending ? (
-              <><Spinner className="h-4 w-4 mr-2" innerSvgClass="stroke-primary-foreground" /> Syncing...</>
-            ) : "Sync from Stripe"}
-          </Button>
-          <Link href="/settings/billing">
-            <Button variant="outline">Go to billing</Button>
-          </Link>
-        </div>
-      </div>
+      <EmptyState
+        className="py-16"
+        icon={<CreditCard />}
+        title="Payment received, plan not updated yet"
+        description={
+          <>
+            Stripe hasn&apos;t told us about it yet. Sync now to pull it straight from Stripe.
+            {syncMutation.isError ? <span className="mt-2 block text-destructive">{syncMutation.error.message}</span> : null}
+            {sessionId ? <span className="mt-2 block font-mono text-[11px]">Reference {sessionId}</span> : null}
+          </>
+        }
+        action={
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
+              {syncMutation.isPending ? <Spinner className="size-3.5" innerSvgClass="stroke-primary-foreground" /> : <RotateCw className="size-3.5" />}
+              Sync from Stripe
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/settings/billing">Billing</Link>
+            </Button>
+          </div>
+        }
+      />
     );
   }
 
   return (
-    <div className="flex gap-2 items-center">
-      <Spinner
-        className="h-5 w-5 stroke-muted-foreground"
-        innerSvgClass=" stroke-muted-foreground"
-      />
-      <p className="text-muted-foreground">Verifying payment</p>
-    </div>
+    <EmptyState
+      className="py-16"
+      icon={<Spinner className="size-5" innerSvgClass="stroke-muted-foreground" />}
+      title="Confirming your payment"
+      description="This usually takes a few seconds. You can leave this page; your plan updates either way."
+    />
   );
 }

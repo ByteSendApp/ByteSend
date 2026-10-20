@@ -155,7 +155,7 @@ export async function sendMail(
       return;
     }
 
-    const domains = allDomains.filter((d) => d.status === "VERIFIED" || d.status === "ACTIVE");
+    const domains = allDomains.filter((d) => d.status === "SUCCESS");
     const domain = domains[0] ?? allDomains[0]!;
 
     if (!domain) {

@@ -99,9 +99,9 @@ export default function AddContactBook() {
       onOpenChange={(_open) => (_open !== open ? onOpenChange(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Contact Book
+        <Button size="sm">
+          <Plus className="size-3.5" />
+          Add contact book
         </Button>
       </DialogTrigger>
 

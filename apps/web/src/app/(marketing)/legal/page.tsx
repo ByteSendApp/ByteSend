@@ -59,7 +59,7 @@ export default function LegalPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 sm:py-24">
         <div className="mb-12">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">NodeByte LTD</p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">Legal</h1>
@@ -74,7 +74,7 @@ export default function LegalPage() {
             <Link
               key={href}
               href={href}
-              className="group flex items-start justify-between gap-4 rounded-xl border border-border/50 bg-muted/20 px-5 py-4 hover:border-border hover:bg-muted/40 transition-all"
+              className="group flex items-start justify-between gap-4 rounded-lg border border-border bg-muted/20 px-5 py-4 hover:border-border hover:bg-muted/40 transition-all"
             >
               <div className="min-w-0">
                 <p className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">{title}</p>
@@ -88,9 +88,9 @@ export default function LegalPage() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-border/50 bg-muted/20 px-5 py-5">
+        <div className="rounded-lg border border-border bg-muted/20 px-5 py-5">
           <p className="text-sm font-medium mb-4">Contact us</p>
-          <div className="divide-y divide-border/40">
+          <div className="divide-y divide-border/70">
             {contacts.map(({ label, email }) => (
               <div key={email} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                 <span className="text-[13px] text-muted-foreground">{label}</span>

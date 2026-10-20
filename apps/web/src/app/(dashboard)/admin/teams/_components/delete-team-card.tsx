@@ -31,7 +31,7 @@ export function DeleteTeamCard({ team }: { team: { id: number; name: string } })
   });
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h3 className="text-sm font-medium text-destructive">Delete team</h3>
         <p className="text-xs text-muted-foreground">

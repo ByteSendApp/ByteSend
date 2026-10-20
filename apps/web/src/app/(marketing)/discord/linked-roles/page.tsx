@@ -38,15 +38,15 @@ export default async function LinkedRolesPage({ searchParams }: { searchParams: 
   return (
     <main className="min-h-[70vh] bg-background text-foreground">
       <div className="mx-auto max-w-xl px-6 py-24">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground">
-          <span className={`h-1.5 w-1.5 rounded-full ${status === "linked" ? "bg-[#00c3d6]" : "bg-muted-foreground"}`} />
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground">
+          <span className={`h-1.5 w-1.5 rounded-full ${status === "linked" ? "bg-primary" : "bg-muted-foreground"}`} />
           Discord linked roles
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">{copy.title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
         <p className="mt-3 text-muted-foreground">{copy.body}</p>
 
         {linked && (
-          <dl className="mt-8 divide-y divide-border/40 rounded-2xl border border-border/50 bg-muted/20">
+          <dl className="mt-8 divide-y divide-border/70 rounded-lg border border-border bg-muted/20">
             {[
               ["Shown on Discord as", linked.platformUsername],
               ["ByteSend user", "Yes"],

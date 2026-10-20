@@ -48,8 +48,8 @@ const DOMAIN_STATUS: Record<string, { label: string; tone: StatusTone }> = {
 
 function Panel({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-      <div className="border-b border-border/60 px-4 py-3">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
       </div>
@@ -69,10 +69,10 @@ function TeamDetailSkeleton() {
       <Skeleton className="h-8 w-64" />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
+          <Skeleton key={i} className="h-28 rounded-lg" />
         ))}
       </div>
-      <Skeleton className="h-72 w-full rounded-xl" />
+      <Skeleton className="h-72 w-full rounded-lg" />
     </div>
   );
 }
@@ -116,7 +116,7 @@ export default function AdminTeamDetailPage() {
         <Link href="/admin/teams" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Teams
         </Link>
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           {teamQuery.error?.message ?? "Team not found"}
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function AdminTeamDetailPage() {
               value={formatPercent(ratio(totals.delivered, totals.sent), 1)}
               hint={`${formatNumber(totals.delivered)} delivered`}
             />
-            <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
               <p className="text-xs font-medium text-muted-foreground">Hard bounce ({DELIVERABILITY_WINDOW_DAYS}d)</p>
               <RateGauge
                 value={team.deliverability.bounceRate}
@@ -227,7 +227,7 @@ export default function AdminTeamDetailPage() {
                 {formatPercent(BOUNCE_RATE_HARD_LIMIT, 0)}
               </p>
             </div>
-            <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
               <p className="text-xs font-medium text-muted-foreground">Complaints ({DELIVERABILITY_WINDOW_DAYS}d)</p>
               <RateGauge
                 value={team.deliverability.complaintRate}
@@ -261,7 +261,7 @@ export default function AdminTeamDetailPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm"
+                className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
               >
                 <span className="text-sm text-muted-foreground">{item.label}</span>
                 <span className="font-mono text-sm font-medium tabular-nums">{formatNumber(item.value)}</span>

@@ -1,6 +1,5 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@bytesend/ui/src/tabs";
-import { useUrlState } from "~/hooks/useUrlState";
 import {
   Select,
   SelectContent,
@@ -29,19 +28,19 @@ export default function DashboardFilters({
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="flex w-full items-center gap-2 sm:w-auto">
       <Select
         value={domain ?? "All Domains"}
         onValueChange={(val) => handleDomain(val)}
       >
-        <SelectTrigger className="w-full sm:w-[180px]">
+        <SelectTrigger className="h-8 min-w-0 flex-1 text-[13px] sm:w-44 sm:flex-none">
           {domain
             ? domainsQuery?.find((d) => d.id === Number(domain))?.name
-            : "All Domains"}
+            : "All domains"}
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="All Domains" className="capitalize">
-            All Domains
+            All domains
           </SelectItem>
           {domainsQuery &&
             domainsQuery.map((domain) => (
@@ -52,12 +51,12 @@ export default function DashboardFilters({
         </SelectContent>
       </Select>
       <Tabs value={days || "30"} onValueChange={(value) => setDays(value)}>
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="7" className="flex-1 sm:flex-none">
-            7 Days
+        <TabsList className="h-8 shrink-0">
+          <TabsTrigger value="7">
+            7d
           </TabsTrigger>
-          <TabsTrigger value="30" className="flex-1 sm:flex-none">
-            30 Days
+          <TabsTrigger value="30">
+            30d
           </TabsTrigger>
         </TabsList>
       </Tabs>

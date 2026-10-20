@@ -1,202 +1,156 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { H1 } from "@bytesend/ui";
+import { formatDate, formatDistanceToNow } from "date-fns";
+import { ScrollText } from "lucide-react";
 import { api } from "~/trpc/react";
-import Spinner from "@bytesend/ui/src/spinner";
-import { Input } from "@bytesend/ui/src/input";
-import { Badge } from "@bytesend/ui/src/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@bytesend/ui/src/select";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@bytesend/ui/src/table";
+import { Badge, type BadgeProps } from "@bytesend/ui/src/badge";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { FilterBar, SearchInput } from "@bytesend/ui/src/search-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@bytesend/ui/src/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@bytesend/ui/src/table";
 
 const SOURCE_FILTERS = ["ALL", "EMAIL", "WEBHOOK", "NOTIFICATION"] as const;
-
 type SourceFilter = (typeof SOURCE_FILTERS)[number];
 
+const SOURCE_LABEL: Record<SourceFilter, string> = {
+  ALL: "All sources",
+  EMAIL: "Emails",
+  WEBHOOK: "Webhooks",
+  NOTIFICATION: "Notifications",
+};
+
+const humanize = (value: string) => value.toLowerCase().replace(/_/g, " ");
+
+function statusVariant(status: string): BadgeProps["variant"] {
+  if (["DELIVERED", "SENT", "OPENED", "CLICKED", "SUCCESS"].includes(status)) return "success";
+  if (["FAILED", "BOUNCED", "COMPLAINED", "REJECTED", "DISCARDED"].includes(status)) return "danger";
+  if (["PENDING", "IN_PROGRESS", "QUEUED", "SCHEDULED", "DELIVERY_DELAYED"].includes(status)) return "warning";
+  return "neutral";
+}
+
+function detailFor(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const m = metadata as { lastError?: string | null; responseStatus?: number | null };
+  if (m.lastError) return m.lastError;
+  if (m.responseStatus) return `HTTP ${m.responseStatus}`;
+  return null;
+}
+
 export default function LogsPage() {
-    const [source, setSource] = useState<SourceFilter>("ALL");
-    const [status, setStatus] = useState("ALL");
-    const [search, setSearch] = useState("");
+  const [source, setSource] = useState<SourceFilter>("ALL");
+  const [status, setStatus] = useState("ALL");
+  const [search, setSearch] = useState("");
 
-    const logsQuery = api.logs.list.useQuery({
-        limit: 200,
-        source: source === "ALL" ? undefined : source,
+  const logsQuery = api.logs.list.useQuery({ limit: 200, source: source === "ALL" ? undefined : source });
+
+  const rows = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (logsQuery.data ?? []).filter((row) => {
+      if (status !== "ALL" && row.status !== status) return false;
+      if (!term) return true;
+      return [row.title, row.kind, row.status, row.target, detailFor(row.metadata)].filter(Boolean).join(" ").toLowerCase().includes(term);
     });
+  }, [logsQuery.data, search, status]);
 
-    const rows = useMemo(() => {
-        const base = logsQuery.data ?? [];
-        const searchTerm = search.trim().toLowerCase();
+  const statusOptions = useMemo(() => Array.from(new Set((logsQuery.data ?? []).map((row) => row.status))).sort(), [logsQuery.data]);
 
-        return base.filter((row) => {
-            if (status !== "ALL" && row.status !== status) return false;
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Audit log"
+        description="Email events, webhook deliveries and notifications for your team, newest first. Shows the latest 200."
+      />
 
-            if (!searchTerm) return true;
-
-            const haystack = [
-                row.title,
-                row.kind,
-                row.status,
-                row.target,
-                row.metadata?.lastError,
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            return haystack.includes(searchTerm);
-        });
-    }, [logsQuery.data, search, status]);
-
-    const statusOptions = useMemo(() => {
-        const unique = new Set<string>();
-        for (const row of logsQuery.data ?? []) unique.add(row.status);
-        return Array.from(unique).sort();
-    }, [logsQuery.data]);
-
-    return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <H1>Logs</H1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Unified audit trail for email events, webhook deliveries, and notifications.
-                    </p>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3">
-                    <Input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search logs"
-                        className="sm:col-span-1"
-                    />
-
-                    <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Source" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {SOURCE_FILTERS.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                    {option}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={status} onValueChange={setStatus}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">ALL</SelectItem>
-                            {statusOptions.map((s) => (
-                                <SelectItem key={s} value={s}>
-                                    {s}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            <div className="rounded-xl border border-border/60">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted/30">
-                            <TableHead className="rounded-tl-xl">Time</TableHead>
-                            <TableHead>Source</TableHead>
-                            <TableHead>Event</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Target</TableHead>
-                            <TableHead className="rounded-tr-xl">Details</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {logsQuery.isLoading ? (
-                            <TableRow className="h-28">
-                                <TableCell colSpan={6} className="text-center">
-                                    <Spinner className="mx-auto h-5 w-5" innerSvgClass="stroke-primary" />
-                                </TableCell>
-                            </TableRow>
-                        ) : rows.length === 0 ? (
-                            <TableRow className="h-28">
-                                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                                    No logs found for this filter set.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            rows.map((row) => (
-                                <TableRow key={`${row.source}-${row.id}`}>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true })}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline">{row.source}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="font-medium">{row.title}</div>
-                                        <div className="text-xs text-muted-foreground">{row.kind}</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <StatusBadge status={row.status} />
-                                    </TableCell>
-                                    <TableCell className="max-w-80 truncate text-sm text-muted-foreground">
-                                        {row.target}
-                                    </TableCell>
-                                    <TableCell className="max-w-80 truncate text-xs text-muted-foreground">
-                                        {row.metadata?.lastError
-                                            ? `Error: ${row.metadata.lastError}`
-                                            : row.metadata?.responseStatus
-                                                ? `HTTP ${row.metadata.responseStatus}`
-                                                : "-"}
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+      <FilterBar>
+        <SearchInput placeholder="Search events" className="w-full sm:w-72" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
+            <SelectTrigger className="h-8 w-full text-[13px] sm:w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SOURCE_FILTERS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {SOURCE_LABEL[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="h-8 w-full text-[13px] capitalize sm:w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Any status</SelectItem>
+              {statusOptions.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">
+                  {humanize(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-    );
-}
+      </FilterBar>
 
-function StatusBadge({ status }: { status: string }) {
-    const variant = statusColor(status);
-
-    return (
-        <Badge
-            variant="outline"
-            className={variant}
-        >
-            {status}
-        </Badge>
-    );
-}
-
-function statusColor(status: string): string {
-    if (["DELIVERED", "SENT", "OPENED", "CLICKED"].includes(status)) {
-        return "border-green/40 text-green";
-    }
-    if (["FAILED", "BOUNCED", "COMPLAINED", "REJECTED", "DISCARDED"].includes(status)) {
-        return "border-red/40 text-red";
-    }
-    if (["PENDING", "IN_PROGRESS", "QUEUED", "SCHEDULED"].includes(status)) {
-        return "border-yellow/40 text-yellow";
-    }
-    return "border-border/60 text-muted-foreground";
+      <Panel flush>
+        {logsQuery.isLoading ? (
+          <ListSkeleton rows={8} />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon={<ScrollText />}
+            title={logsQuery.data?.length ? "Nothing matches these filters" : "No activity yet"}
+            description={logsQuery.data?.length ? "Try another source, status or search." : "Sends, webhook deliveries and notifications will be recorded here."}
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Event</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                <TableHead className="hidden md:table-cell">Target</TableHead>
+                <TableHead className="hidden lg:table-cell">Detail</TableHead>
+                <TableHead className="w-32 text-right">When</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const detail = detailFor(row.metadata);
+                return (
+                  <TableRow key={`${row.source}-${row.id}`}>
+                    <TableCell className="max-w-0">
+                      <p className="truncate font-medium text-foreground">{row.title}</p>
+                      <p className="truncate text-xs capitalize text-muted-foreground">
+                        {humanize(row.source)} · {humanize(row.kind)}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant(row.status)} dot className="capitalize">
+                        {humanize(row.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden max-w-0 text-muted-foreground md:table-cell">
+                      <p className="truncate">{row.target}</p>
+                    </TableCell>
+                    <TableCell className="hidden max-w-0 text-xs text-muted-foreground lg:table-cell">
+                      <p className="truncate" title={detail ?? undefined}>
+                        {detail ?? "–"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      <span title={formatDate(new Date(row.createdAt), "PPpp")}>
+                        {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true })}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
+    </div>
+  );
 }

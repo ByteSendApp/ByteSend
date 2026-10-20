@@ -27,7 +27,7 @@ export async function WebhookPayloadDisplay({
   return (
     <div className="flex flex-col gap-3">
       <h4 className="font-medium text-sm">{title}</h4>
-      <div className="rounded-lg overflow-hidden border">
+      <div className="overflow-hidden rounded-md border border-border">
         <CodeBlock lang={lang} className="text-xs max-h-[300px] overflow-auto">
           {displayContent}
         </CodeBlock>

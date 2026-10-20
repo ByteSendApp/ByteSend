@@ -1,27 +1,27 @@
 import { useTheme } from "@bytesend/ui";
 
+// Recharts writes these into SVG attributes, which can't read CSS variables, so they mirror the theme tokens.
+const LIGHT = {
+  delivered: "#0057ff",
+  bounced: "#dc2f44",
+  complained: "#d98a0b",
+  opened: "#7c4ddb",
+  clicked: "#0a9bd8",
+  xaxis: "#6b7080",
+  grid: "#e6e8ee",
+};
+
+const DARK = {
+  delivered: "#4f8dff",
+  bounced: "#f2606f",
+  complained: "#f5b74f",
+  opened: "#a78bfa",
+  clicked: "#38c6ff",
+  xaxis: "#8b90a0",
+  grid: "#1d2027",
+};
+
 export function useColors() {
   const { resolvedTheme } = useTheme();
-
-  const lightColors = {
-    delivered: "#40a02b",
-    bounced: "#d20f39",
-    complained: "#df8e1d",
-    opened: "#8839ef",
-    clicked: "#04a5e5",
-    xaxis: "#6D6F84",
-  };
-
-  const darkColors = {
-    delivered: "#a6e3a1",
-    bounced: "#f38ba8",
-    complained: "#F9E2AF",
-    opened: "#cba6f7",
-    clicked: "#93c5fd",
-    xaxis: "#AAB1CD",
-  };
-
-  const currentColors = resolvedTheme === "dark" ? darkColors : lightColors;
-
-  return currentColors;
+  return resolvedTheme === "dark" ? DARK : LIGHT;
 }

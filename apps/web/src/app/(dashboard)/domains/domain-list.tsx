@@ -1,78 +1,103 @@
 "use client";
 
-import { Domain } from "@prisma/client";
+import { DomainStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronRight, Globe } from "lucide-react";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@bytesend/ui/src/table";
 import { api } from "~/trpc/react";
+import { RegionLabel } from "~/components/dashboard/region-label";
 import { DomainStatusBadge } from "./domain-badge";
-import Spinner from "@bytesend/ui/src/spinner";
-import { Globe, ChevronRight } from "lucide-react";
 
-export default function DomainsList() {
-  const domainsQuery = api.domain.domains.useQuery();
+const NEEDS_DNS: DomainStatus[] = [DomainStatus.FAILED, DomainStatus.PENDING, DomainStatus.NOT_STARTED, DomainStatus.TEMPORARY_FAILURE];
 
-  return (
-    <div className="rounded-xl border border-border/60 overflow-hidden">
-      {/* Table header */}
-      <div className="hidden sm:grid sm:grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 py-2.5 border-b border-border/60 bg-muted/30">
-        <span className="text-xs font-medium text-muted-foreground">Domain</span>
-        <span className="text-xs font-medium text-muted-foreground">Status</span>
-        <span className="text-xs font-medium text-muted-foreground">Region</span>
-        <span className="text-xs font-medium text-muted-foreground">Added</span>
-        <span className="w-4" />
-      </div>
-
-      {domainsQuery.isLoading ? (
-        <div className="flex justify-center py-16">
-          <Spinner className="w-5 h-5" innerSvgClass="stroke-primary" />
-        </div>
-      ) : domainsQuery.data?.length ? (
-        <div className="divide-y divide-border/40">
-          {domainsQuery.data.map((domain) => (
-            <DomainRow key={domain.id} domain={domain} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
-          <Globe className="h-8 w-8 text-muted-foreground/40" />
-          <p className="text-sm font-medium text-foreground">No domains yet</p>
-          <p className="text-xs text-muted-foreground">Add a domain to start sending emails</p>
-        </div>
-      )}
-    </div>
-  );
+function formatRate(part: number, total: number) {
+  if (total === 0) return "–";
+  return `${((part / total) * 100).toFixed(part / total < 0.1 ? 2 : 1)}%`;
 }
 
-const DomainRow: React.FC<{ domain: Domain }> = ({ domain }) => {
+export default function DomainsList({ action }: { action?: React.ReactNode }) {
+  const router = useRouter();
+  const domainsQuery = api.domain.domains.useQuery();
+  const statsQuery = api.domain.domainStats.useQuery();
+
+  if (domainsQuery.isLoading) {
+    return (
+      <Panel flush>
+        <ListSkeleton rows={4} />
+      </Panel>
+    );
+  }
+
+  if (!domainsQuery.data?.length) {
+    return (
+      <Panel flush>
+        <EmptyState
+          icon={<Globe />}
+          title="Add your first domain"
+          description="You send from your own domain. Add it here, then add the DNS records we give you to verify it."
+          action={action}
+        />
+      </Panel>
+    );
+  }
+
   return (
-    <Link
-      href={`/domains/${domain.id}`}
-      className="flex sm:grid sm:grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-muted/30 transition-colors group"
-    >
-      <div className="flex items-center gap-2.5 min-w-0">
-        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm font-medium truncate">{domain.name}</span>
-      </div>
-
-      <div className="hidden sm:block">
-        <DomainStatusBadge status={domain.status} />
-      </div>
-
-      <div className="hidden sm:block">
-        <span className="text-sm text-muted-foreground">{domain.region}</span>
-      </div>
-
-      <div className="hidden sm:block">
-        <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2 ml-auto sm:hidden">
-        <DomainStatusBadge status={domain.status} />
-      </div>
-
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0 hidden sm:block" />
-    </Link>
+    <Panel flush>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Domain</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="hidden md:table-cell">Region</TableHead>
+            <TableHead className="hidden text-right sm:table-cell">Sent · 30d</TableHead>
+            <TableHead className="hidden text-right lg:table-cell">Bounce rate</TableHead>
+            <TableHead className="hidden lg:table-cell">Added</TableHead>
+            <TableHead className="w-8" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {domainsQuery.data.map((domain) => {
+            const stats = statsQuery.data?.[domain.id];
+            const href = `/domains/${domain.id}`;
+            return (
+              <TableRow key={domain.id} className="group cursor-pointer" onClick={() => router.push(href)}>
+                <TableCell>
+                  <Link href={href} className="font-medium text-foreground" onClick={(e) => e.stopPropagation()}>
+                    {domain.name}
+                  </Link>
+                  {NEEDS_DNS.includes(domain.status) ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {domain.status === DomainStatus.FAILED ? "DNS records not found. Open to see what to fix." : "Waiting for DNS records"}
+                    </p>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  <DomainStatusBadge status={domain.status} />
+                </TableCell>
+                <TableCell className="hidden text-muted-foreground md:table-cell">
+                  <RegionLabel region={domain.region} />
+                </TableCell>
+                <TableCell className="hidden text-right sm:table-cell">
+                  {stats ? stats.sent.toLocaleString() : <span className="text-muted-foreground">0</span>}
+                </TableCell>
+                <TableCell className="hidden text-right text-muted-foreground lg:table-cell">
+                  {stats ? formatRate(stats.hardBounced, stats.delivered + stats.hardBounced) : "–"}
+                </TableCell>
+                <TableCell className="hidden text-muted-foreground lg:table-cell">
+                  {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
+                </TableCell>
+                <TableCell className="text-right">
+                  <ChevronRight className="ml-auto size-4 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </Panel>
   );
-};
+}

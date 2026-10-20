@@ -49,10 +49,10 @@ export function StatCard({
   const isGood = lowerIsBetter ? !isUp : isUp;
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-card px-4 py-3">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="font-mono text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+        <p className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
           {value}
         </p>
         {change === undefined ? null : change === null ? (
@@ -79,7 +79,7 @@ export function StatCard({
 
 export function StatCardSkeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-7 w-20" />
       <Skeleton className="h-8 w-full" />

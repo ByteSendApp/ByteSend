@@ -49,7 +49,7 @@ function ToolbarButton({
       className={cn(
         "flex items-center justify-center h-7 w-7 rounded text-sm transition-colors",
         isActive
-          ? "bg-accent text-accent-foreground"
+          ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
     >
@@ -64,7 +64,7 @@ function Divider() {
 
 export function EditorToolbar({ editor }: { editor: Editor }) {
   return (
-    <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 border-b border-border bg-muted/50">
+    <div className="sticky top-12 z-10 flex flex-wrap items-center gap-0.5 border-b border-border bg-background/95 px-3 py-1.5 backdrop-blur sm:px-6">
       {/* Content type */}
       <ToolbarButton
         onClick={() => editor.chain().focus().setParagraph().run()}

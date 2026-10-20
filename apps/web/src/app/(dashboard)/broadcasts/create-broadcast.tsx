@@ -61,9 +61,9 @@ export default function CreateBroadcast() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="h-4 w-4 mr-1" />
-                    New Broadcast
+                <Button size="sm">
+                    <Plus className="size-3.5" />
+                    New broadcast
                 </Button>
             </DialogTrigger>
             <DialogContent>

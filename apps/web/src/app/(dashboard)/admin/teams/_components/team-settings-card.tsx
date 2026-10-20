@@ -95,7 +95,7 @@ export function TeamSettingsCard({ team }: { team: TeamSettingsValues }) {
   const isPending = updateTeam.isPending;
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-5">
       <div className="mb-5">
         <h3 className="text-sm font-medium text-foreground">Limits</h3>
         <p className="text-xs text-muted-foreground">

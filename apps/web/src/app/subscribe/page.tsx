@@ -1,3 +1,5 @@
+import { Button } from "@bytesend/ui/src/button";
+import { RecipientPage } from "~/components/recipient-page";
 import { confirmDoubleOptInSubscription } from "~/server/service/double-opt-in-service";
 import { redirect } from "next/navigation";
 
@@ -116,90 +118,55 @@ export default async function SubscribePage({
 
   if (status === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-          <h1 className="text-2xl font-semibold text-center">
-            Subscription Confirmed
-          </h1>
-          <p className="text-sm text-muted-foreground text-center">
-            Your subscription is confirmed and you will receive future emails.
-          </p>
-        </div>
-      </div>
+      <RecipientPage tone="success" title="You're subscribed">
+        Thanks for confirming. You'll get their emails from now on.
+      </RecipientPage>
     );
   }
 
   if (status === "error" && (!contactId || !expiresAt || !hash)) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-          <h1 className="text-2xl font-semibold text-center">
-            Confirmation Failed
-          </h1>
-          <p className="text-sm text-muted-foreground text-center">
-            {normalizedError ?? "Unable to confirm your subscription."}
-          </p>
-        </div>
-      </div>
+      <RecipientPage tone="error" title="We couldn't confirm that">
+        {normalizedError ?? "Unable to confirm your subscription."}
+      </RecipientPage>
     );
   }
 
   if (!contactId || !expiresAt || !hash || !hasValidExpiry) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-          <h1 className="text-2xl font-semibold text-center">Invalid Link</h1>
-          <p className="text-sm text-muted-foreground text-center">
-            This confirmation link is invalid. Please request a new one.
-          </p>
-        </div>
-      </div>
+      <RecipientPage tone="error" title="This link doesn't work">
+        It may be incomplete or already used. Sign up again to get a new confirmation email.
+      </RecipientPage>
     );
   }
 
   if (isExpired) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-          <h1 className="text-2xl font-semibold text-center">
-            Confirmation Failed
-          </h1>
-          <p className="text-sm text-muted-foreground text-center">
-            Confirmation link has expired
-          </p>
-        </div>
-      </div>
+      <RecipientPage tone="error" title="We couldn't confirm that">
+        Confirmation links expire after a while. Sign up again to get a fresh one.
+      </RecipientPage>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="max-w-md w-full space-y-4 p-8 rounded-2xl border border-border/40 bg-card/80">
-        <h1 className="text-2xl font-semibold text-center">
-          Confirm Subscription
-        </h1>
-        <p className="text-sm text-muted-foreground text-center">
-          Click the button below to confirm your subscription.
-        </p>
-
-        {normalizedError ? (
-          <p className="text-sm text-red text-center">{normalizedError}</p>
-        ) : null}
-
-        {!isFatalError ? (
-          <form action={confirmSubscriptionAction} className="pt-2">
+    <RecipientPage
+      tone="pending"
+      title="Confirm your subscription"
+      action={
+        !isFatalError ? (
+          <form action={confirmSubscriptionAction}>
             <input type="hidden" name="contactId" value={contactId} />
             <input type="hidden" name="expiresAt" value={expiresAt} />
             <input type="hidden" name="hash" value={hash} />
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-colors"
-            >
-              Confirm subscription
-            </button>
+            <Button type="submit" className="h-10 w-full">
+              Yes, subscribe me
+            </Button>
           </form>
-        ) : null}
-      </div>
-    </div>
+        ) : null
+      }
+    >
+      One click and you&apos;re on the list. If you didn&apos;t sign up, ignore this page and you won&apos;t hear from them.
+      {normalizedError ? <p className="mt-3 text-destructive">{normalizedError}</p> : null}
+    </RecipientPage>
   );
 }

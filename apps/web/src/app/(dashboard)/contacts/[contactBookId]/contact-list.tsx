@@ -24,7 +24,11 @@ import { getGravatarUrl } from "~/utils/gravatar-utils";
 import DeleteContact from "./delete-contact";
 import EditContact from "./edit-contact";
 import { ResendDoubleOptInConfirmation } from "./resend-double-opt-in-confirmation";
-import { Input } from "@bytesend/ui/src/input";
+import { Badge } from "@bytesend/ui/src/badge";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { FilterBar, SearchInput } from "@bytesend/ui/src/search-input";
+import { PaginationBar } from "@bytesend/ui/src/pagination-bar";
 import { useDebouncedCallback } from "use-debounce";
 import { getContactPropertyValue } from "~/lib/contact-properties";
 import {
@@ -34,7 +38,7 @@ import {
   TooltipTrigger,
 } from "@bytesend/ui/src/tooltip";
 import { UnsubscribeReason } from "@prisma/client";
-import { Download } from "lucide-react";
+import { Download, Users } from "lucide-react";
 
 function sanitizeFilename(
   name: string | undefined,
@@ -188,181 +192,132 @@ export default function ContactList({
     URL.revokeObjectURL(url);
   };
 
+  const contacts = contactsQuery.data?.contacts ?? [];
+  const totalPages = contactsQuery.data?.totalPage ?? 0;
+  const hasFilters = Boolean(search || status);
+
   return (
     <TooltipProvider>
-      <div className="mt-10 flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <Input
-              placeholder="Search by email or name"
-              className="w-88 mr-4"
-              defaultValue={search ?? ""}
-              onChange={(e) => debouncedSearch(e.target.value)}
-            />
-          </div>
+      <div className="flex flex-col gap-3">
+        <FilterBar>
+          <SearchInput
+            placeholder="Search by email or name"
+            className="w-full sm:w-72"
+            defaultValue={search ?? ""}
+            onChange={(e) => debouncedSearch(e.target.value)}
+          />
           <div className="flex gap-2">
             <Select value={status ?? "All"} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-45 capitalize">
-                {status || "All statuses"}
-              </SelectTrigger>
+              <SelectTrigger className="h-8 w-full text-[13px] capitalize sm:w-40">{status || "Any status"}</SelectTrigger>
               <SelectContent>
-                <SelectItem value="All" className=" capitalize">
-                  All statuses
-                </SelectItem>
-                <SelectItem value="Subscribed" className=" capitalize">
-                  Subscribed
-                </SelectItem>
-                <SelectItem value="Unsubscribed" className=" capitalize">
-                  Unsubscribed
-                </SelectItem>
+                <SelectItem value="All">Any status</SelectItem>
+                <SelectItem value="Subscribed">Subscribed</SelectItem>
+                <SelectItem value="Unsubscribed">Unsubscribed</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              onClick={handleExport}
-              disabled={exportQuery.isFetching}
-              size="sm"
-              variant="outline"
-            >
-              {exportQuery.isFetching ? (
-                <Spinner
-                  className="w-4 h-4 mr-2"
-                  innerSvgClass="stroke-primary"
-                />
-              ) : (
-                <Download className="w-4 h-4 mr-2" />
-              )}
-              Export
+            <Button onClick={handleExport} disabled={exportQuery.isFetching} size="sm" variant="outline">
+              {exportQuery.isFetching ? <Spinner className="size-3.5" innerSvgClass="stroke-primary" /> : <Download className="size-3.5" />}
+              Export CSV
             </Button>
           </div>
-        </div>
-        <div className="flex flex-col rounded-xl border border-border/60">
-          <Table className="">
-            <TableHeader className="">
-              <TableRow className=" bg-muted/30">
-                <TableHead className="rounded-tl-xl">Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="">Created At</TableHead>
-                <TableHead className="rounded-tr-xl">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contactsQuery.isLoading ? (
-                <TableRow className="h-32">
-                  <TableCell colSpan={4} className="text-center py-4">
-                    <Spinner
-                      className="w-6 h-6 mx-auto"
-                      innerSvgClass="stroke-primary"
-                    />
-                  </TableCell>
+        </FilterBar>
+
+        <Panel
+          flush
+          footer={
+            totalPages > 1 ? (
+              <PaginationBar
+                page={pageNumber}
+                hasNext={pageNumber < totalPages}
+                onPageChange={(next) => setPage(String(next))}
+                summary={`Page ${pageNumber} of ${totalPages}`}
+              />
+            ) : null
+          }
+        >
+          {contactsQuery.isLoading ? (
+            <ListSkeleton rows={6} />
+          ) : contacts.length === 0 ? (
+            <EmptyState
+              icon={<Users />}
+              title={hasFilters ? "No contacts match" : "This list is empty"}
+              description={
+                hasFilters ? "Try a different search or status." : "Add contacts one by one or import a CSV using the buttons above."
+              }
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Contact</TableHead>
+                  <TableHead className="w-32">Status</TableHead>
+                  <TableHead className="hidden w-36 sm:table-cell">Added</TableHead>
+                  <TableHead className="w-28" />
                 </TableRow>
-              ) : contactsQuery.data?.contacts.length ? (
-                contactsQuery.data?.contacts.map((contact) => {
-                  const isPendingConfirmation =
-                    Boolean(doubleOptInEnabled) &&
-                    !contact.subscribed &&
-                    !contact.unsubscribeReason;
+              </TableHeader>
+              <TableBody>
+                {contacts.map((contact) => {
+                  const isPendingConfirmation = Boolean(doubleOptInEnabled) && !contact.subscribed && !contact.unsubscribeReason;
+                  const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
 
                   return (
-                    <TableRow key={contact.id} className="">
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
+                    <TableRow key={contact.id}>
+                      <TableCell className="max-w-0">
+                        <div className="flex items-center gap-2.5">
                           <Image
-                            src={getGravatarUrl(contact.email, {
-                              size: 75,
-                              defaultImage: "robohash",
-                            })}
-                            alt={contact.email + "'s gravatar"}
-                            width={35}
-                            height={35}
-                            className="rounded-full"
+                            src={getGravatarUrl(contact.email, { size: 56, defaultImage: "robohash" })}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="size-7 shrink-0 rounded-full border border-border bg-muted"
                           />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">
-                              {contact.email}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {contact.firstName} {contact.lastName}
-                            </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground">{contact.email}</p>
+                            {name ? <p className="truncate text-xs text-muted-foreground">{name}</p> : null}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         {contact.subscribed ? (
-                          <div className="text-center min-w-24 px-2 rounded capitalize py-1 text-xs bg-green/15 text-green border border-green/25">
+                          <Badge variant="success" dot>
                             Subscribed
-                          </div>
+                          </Badge>
                         ) : isPendingConfirmation ? (
-                          <div className="text-center min-w-24 px-2 rounded capitalize py-1 text-xs bg-yellow/20 text-yellow border border-yellow/20">
+                          <Badge variant="warning" dot>
                             Pending
-                          </div>
+                          </Badge>
                         ) : (
                           <Tooltip>
                             <TooltipTrigger>
-                              <div className="text-center min-w-24 px-2 rounded capitalize py-1 text-xs bg-red/10 text-red border border-red/10">
+                              <Badge variant="neutral" dot>
                                 Unsubscribed
-                              </div>
+                              </Badge>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>
-                                {getUnsubscribeReason(
-                                  contact.unsubscribeReason ??
-                                    UnsubscribeReason.UNSUBSCRIBED,
-                                )}
-                              </p>
+                              <p>{getUnsubscribeReason(contact.unsubscribeReason ?? UnsubscribeReason.UNSUBSCRIBED)}</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
                       </TableCell>
-                      <TableCell className="">
-                        {formatDistanceToNow(new Date(contact.createdAt), {
-                          addSuffix: true,
-                        })}
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
+                        {formatDistanceToNow(new Date(contact.createdAt), { addSuffix: true })}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex justify-end gap-1">
                           {isPendingConfirmation ? (
-                            <ResendDoubleOptInConfirmation
-                              contactBookId={contactBookId}
-                              contactId={contact.id}
-                              email={contact.email}
-                            />
+                            <ResendDoubleOptInConfirmation contactBookId={contactBookId} contactId={contact.id} email={contact.email} />
                           ) : null}
-                          <EditContact
-                            contact={contact}
-                            contactBookVariables={contactBookVariables}
-                          />
+                          <EditContact contact={contact} contactBookVariables={contactBookVariables} />
                           <DeleteContact contact={contact} />
                         </div>
                       </TableCell>
                     </TableRow>
                   );
-                })
-              ) : (
-                <TableRow className="h-32">
-                  <TableCell colSpan={4} className="text-center py-4">
-                    No contacts found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex gap-4 justify-end">
-          <Button
-            size="sm"
-            onClick={() => setPage((pageNumber - 1).toString())}
-            disabled={pageNumber === 1}
-          >
-            Previous
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setPage((pageNumber + 1).toString())}
-            disabled={pageNumber >= (contactsQuery.data?.totalPage ?? 0)}
-          >
-            Next
-          </Button>
-        </div>
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </Panel>
       </div>
     </TooltipProvider>
   );

@@ -48,11 +48,11 @@ export const DeleteTeamMember: React.FC<{
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-destructive" aria-label={self ? "Leave team" : "Remove member"}>
           {self ? (
-            <LogOut className="h-4 w-4 text-red/80" />
+            <LogOut className="size-3.5" />
           ) : (
-            <Trash2 className="h-4 w-4 text-red/80" />
+            <Trash2 className="size-3.5" />
           )}
         </Button>
       </DialogTrigger>

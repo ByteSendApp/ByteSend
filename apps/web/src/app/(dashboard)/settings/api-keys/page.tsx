@@ -1,22 +1,18 @@
 "use client";
 
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import AddApiKey from "../../dev-settings/api-keys/add-api-key";
 import ApiList from "../../dev-settings/api-keys/api-list";
-import { H1 } from "@bytesend/ui";
 
 export default function SettingsApiKeysPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <H1>API Keys</H1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage API keys for programmatic access
-          </p>
-        </div>
-        <AddApiKey />
-      </div>
+    <>
+      <PageHeader
+        title="API keys"
+        description="Keys your app uses to send through the API and SDKs. Treat them like passwords: they're only shown once."
+        actions={<AddApiKey />}
+      />
       <ApiList />
-    </div>
+    </>
   );
 }

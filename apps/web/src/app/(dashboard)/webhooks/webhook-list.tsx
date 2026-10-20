@@ -8,10 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@bytesend/ui/src/table";
-import Spinner from "@bytesend/ui/src/spinner";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
 import { api } from "~/trpc/react";
 import { formatDistanceToNow } from "date-fns";
-import { Edit3, MoreVertical, Pause, Play } from "lucide-react";
+import { Edit3, MoreVertical, Pause, Play, Webhook } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
 import { toast } from "@bytesend/ui/src/toaster";
 import { DeleteWebhook } from "./delete-webhook";
@@ -23,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bytesend/ui/src/popover";
-import { type Webhook } from "@prisma/client";
+import { type Webhook as WebhookRow } from "@prisma/client";
 import { WebhookStatusBadge } from "./webhook-status-badge";
 
 export function WebhookList() {
@@ -54,95 +55,86 @@ export function WebhookList() {
     );
   }
 
+  if (webhooksQuery.isLoading) {
+    return (
+      <Panel flush>
+        <ListSkeleton rows={3} />
+      </Panel>
+    );
+  }
+
+  if (webhooks.length === 0) {
+    return (
+      <Panel flush>
+        <EmptyState
+          icon={<Webhook />}
+          title="No webhooks yet"
+          description="Add an endpoint and ByteSend will POST to it whenever something happens to your email: delivered, bounced, complained, opened, clicked and more."
+          action={
+            <Button asChild size="sm" variant="outline">
+              <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer">
+                Read the webhook docs
+              </a>
+            </Button>
+          }
+        />
+      </Panel>
+    );
+  }
+
   return (
-    <div className="mt-10">
-        <div className="rounded-xl border border-border/60">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="rounded-tl-xl">URL</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last success</TableHead>
-              <TableHead>Last failure</TableHead>
-              <TableHead className="rounded-tr-xl text-right">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {webhooksQuery.isLoading ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={5} className="py-4 text-center">
-                  <Spinner
-                    className="mx-auto h-6 w-6"
-                    innerSvgClass="stroke-primary"
+    <Panel flush>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Endpoint</TableHead>
+            <TableHead className="w-32">Status</TableHead>
+            <TableHead className="hidden w-36 md:table-cell">Last delivered</TableHead>
+            <TableHead className="hidden w-36 md:table-cell">Last failed</TableHead>
+            <TableHead className="w-12" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {webhooks.map((webhook) => (
+            <TableRow key={webhook.id} className="cursor-pointer" onClick={() => router.push(`/webhooks/${webhook.id}`)}>
+              <TableCell className="max-w-0">
+                <p className="truncate font-mono text-xs text-foreground">{webhook.url}</p>
+              </TableCell>
+              <TableCell>
+                <WebhookStatusBadge status={webhook.status} />
+              </TableCell>
+              <TableCell className="hidden text-muted-foreground md:table-cell">
+                {webhook.lastSuccessAt ? formatDistanceToNow(webhook.lastSuccessAt, { addSuffix: true }) : "Never"}
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {webhook.lastFailureAt ? (
+                  <span className="text-destructive">{formatDistanceToNow(webhook.lastFailureAt, { addSuffix: true })}</span>
+                ) : (
+                  <span className="text-muted-foreground">Never</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                  <WebhookActions
+                    webhook={webhook}
+                    onEdit={() => setEditingId(webhook.id)}
+                    onToggleStatus={() => handleToggleStatus(webhook.id, webhook.status)}
+                    isToggling={setStatusMutation.isPending}
                   />
-                </TableCell>
-              </TableRow>
-            ) : webhooks.length === 0 ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={5} className="py-4 text-center">
-                  <p>No webhooks configured</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              webhooks.map((webhook) => (
-                <TableRow
-                  key={webhook.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/webhooks/${webhook.id}`)}
-                >
-                  <TableCell className="max-w-xs truncate ">
-                    {webhook.url}
-                  </TableCell>
-                  <TableCell>
-                    <WebhookStatusBadge status={webhook.status} />
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {webhook.lastSuccessAt
-                      ? formatDistanceToNow(webhook.lastSuccessAt, {
-                          addSuffix: true,
-                        })
-                      : "Never"}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {webhook.lastFailureAt
-                      ? formatDistanceToNow(webhook.lastFailureAt, {
-                          addSuffix: true,
-                        })
-                      : "Never"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div
-                      className="flex items-center justify-end"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <WebhookActions
-                        webhook={webhook}
-                        onEdit={() => setEditingId(webhook.id)}
-                        onToggleStatus={() =>
-                          handleToggleStatus(webhook.id, webhook.status)
-                        }
-                        isToggling={setStatusMutation.isPending}
-                      />
-                    </div>
-                    {editingId === webhook.id ? (
-                      <EditWebhookDialog
-                        webhook={webhook}
-                        open={editingId === webhook.id}
-                        onOpenChange={(open) =>
-                          setEditingId(open ? webhook.id : null)
-                        }
-                      />
-                    ) : null}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+                </div>
+                {editingId === webhook.id ? (
+                  <EditWebhookDialog
+                    webhook={webhook}
+                    open={editingId === webhook.id}
+                    onOpenChange={(open) => setEditingId(open ? webhook.id : null)}
+                  />
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Panel>
   );
 }
 
@@ -152,7 +144,7 @@ function WebhookActions({
   onToggleStatus,
   isToggling,
 }: {
-  webhook: Webhook;
+  webhook: WebhookRow;
   onEdit: () => void;
   onToggleStatus: () => void;
   isToggling: boolean;
@@ -165,16 +157,16 @@ function WebhookActions({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <MoreVertical className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground" aria-label="Webhook actions">
+          <MoreVertical className="size-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 rounded-xl p-1" align="end">
+      <PopoverContent className="w-44 p-1" align="end">
         <div className="flex flex-col">
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onEdit();
               setOpen(false);
@@ -186,7 +178,7 @@ function WebhookActions({
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onToggleStatus();
               setOpen(false);

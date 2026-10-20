@@ -3,47 +3,75 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Button } from "@bytesend/ui/src/button";
 import { Menu, X } from "lucide-react";
+import { Button } from "@bytesend/ui/src/button";
 
-export function TopNavClient({ isCloud }: { isCloud?: boolean }) {
+export function TopNavClient({ links }: { links: Array<{ href: string; label: string }> }) {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
-  const ctaHref = session ? "/dashboard" : "/login";
-  const ctaLabel = session ? "Dashboard" : "Get started";
 
   return (
     <>
-      {/* Desktop CTA */}
-      <Button size="sm" className="ml-2 rounded-lg hidden sm:inline-flex" asChild>
-        <Link href={ctaHref}>{ctaLabel}</Link>
-      </Button>
+      <div className="hidden items-center gap-2 md:flex">
+        {session ? (
+          <Button size="sm" asChild>
+            <Link href="/dashboard">Dashboard</Link>
+          </Button>
+        ) : (
+          <>
+            <Button size="sm" variant="ghost" asChild>
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/signup">Start free</Link>
+            </Button>
+          </>
+        )}
+      </div>
 
-      {/* Mobile hamburger */}
       <button
+        type="button"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
-        className="sm:hidden p-1.5 rounded-lg hover:bg-accent"
+        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {open ? <X className="size-5" /> : <Menu className="size-5" />}
       </button>
 
-      {/* Mobile dropdown */}
-      {open && (
-        <div className="sm:hidden fixed top-13.25 inset-x-0 z-50 border-t border-border/40 bg-background/90 backdrop-blur-xl">
-          <div className="mx-auto max-w-5xl px-6 py-4 flex flex-col gap-1 text-sm">
-            {isCloud && <Link href="/#features" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Features</Link>}
-            {isCloud && <Link href="/#pricing" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Pricing</Link>}
-            {isCloud && <Link href="/changelog" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Changelog</Link>}
-            <a href="https://discord.gg/C2Q4GHXKQA" target="_blank" rel="noopener noreferrer" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Discord</a>
-            <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer" className="py-2.5 hover:text-primary transition-colors" onClick={() => setOpen(false)}>Docs</a>
-            <Button className="w-full mt-2 rounded-lg" asChild>
-              <Link href={ctaHref} onClick={() => setOpen(false)}>{ctaLabel}</Link>
-            </Button>
-          </div>
+      {open ? (
+        <div className="fixed inset-x-0 top-14 z-50 border-b border-border bg-background md:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col px-4 py-3 text-[15px]">
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} className="border-b border-border/60 py-3 text-foreground last:border-0" onClick={() => setOpen(false)}>
+                {link.label}
+              </Link>
+            ))}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {session ? (
+                <Button className="col-span-2" asChild>
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" asChild>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      Sign in
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup" onClick={() => setOpen(false)}>
+                      Start free
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </nav>
         </div>
-      )}
+      ) : null}
     </>
   );
 }

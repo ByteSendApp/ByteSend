@@ -127,8 +127,8 @@ export const EditContact: React.FC<{
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Edit className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground">
+          <Edit className="size-3.5" />
         </Button>
       </DialogTrigger>
       <DialogContent>

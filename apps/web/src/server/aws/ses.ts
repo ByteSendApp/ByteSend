@@ -33,6 +33,8 @@ async function getAccountId(region: string) {
 
   const stsClient = new STSClient({
     region: region,
+    // Local development points SES at the emulator, which also answers STS.
+    endpoint: env.AWS_SES_ENDPOINT,
     credentials: {
       accessKeyId: env.AWS_ACCESS_KEY,
       secretAccessKey: env.AWS_SECRET_KEY,

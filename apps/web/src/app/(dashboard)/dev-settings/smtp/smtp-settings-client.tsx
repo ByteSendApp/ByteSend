@@ -1,19 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@bytesend/ui/src/card";
-import { TextWithCopyButton } from "@bytesend/ui/src/text-with-copy";
-import { Input } from "@bytesend/ui/src/input";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
+import { CopyField } from "@bytesend/ui/src/copy-field";
+import { Input } from "@bytesend/ui/src/input";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { Panel, SettingRow } from "@bytesend/ui/src/panel";
 import { toast } from "@bytesend/ui/src/toaster";
 import { api } from "~/trpc/react";
-import { RotateCcw } from "lucide-react";
 
 interface Props {
   smtpHost: string;
@@ -22,18 +17,7 @@ interface Props {
   currentSmtpUsername: string | null;
 }
 
-const STATIC_FIELDS = [
-  { label: "Host", key: "host" },
-  { label: "Port", key: "port", hint: "For encrypted/TLS connections use 2465, 587, or 2587" },
-  { label: "Password", key: "password", hint: "Use any of your API keys as the password" },
-] as const;
-
-export function SmtpSettingsClient({
-  smtpHost,
-  smtpPort,
-  smtpDefaultUsername,
-  currentSmtpUsername,
-}: Props) {
+export function SmtpSettingsClient({ smtpHost, smtpPort, smtpDefaultUsername, currentSmtpUsername }: Props) {
   const [username, setUsername] = useState(currentSmtpUsername ?? "");
   const [isDirty, setIsDirty] = useState(false);
 
@@ -42,24 +26,14 @@ export function SmtpSettingsClient({
       toast.success("SMTP username updated");
       setIsDirty(false);
     },
-    onError: (e) => {
-      toast.error(e.message);
-    },
+    onError: (e) => toast.error(e.message),
   });
 
   const effectiveUsername = currentSmtpUsername ?? smtpDefaultUsername;
 
-  const staticValues: Record<string, string> = {
-    host: smtpHost,
-    port: smtpPort,
-    password: "YOUR_API_KEY",
-  };
-
   const handleSave = () => {
     const trimmed = username.trim();
-    updateMutation.mutate({
-      smtpUsername: trimmed === "" || trimmed === smtpDefaultUsername ? null : trimmed,
-    });
+    updateMutation.mutate({ smtpUsername: trimmed === "" || trimmed === smtpDefaultUsername ? null : trimmed });
   };
 
   const handleReset = () => {
@@ -67,91 +41,78 @@ export function SmtpSettingsClient({
     updateMutation.mutate({ smtpUsername: null });
   };
 
+  const connection = [
+    { label: "Host", value: smtpHost, hint: null },
+    { label: "Port", value: smtpPort, hint: "465 uses SSL. For STARTTLS use 587, 2465 or 2587." },
+    { label: "Username", value: effectiveUsername, hint: currentSmtpUsername ? null : "The default for your team" },
+    { label: "Password", value: "Any API key", hint: "Create one under API keys. Sending-only keys work." },
+  ];
+
   return (
-    <Card className="max-w-2xl border-border/60">
-      <CardHeader>
-        <CardTitle className="text-base">SMTP credentials</CardTitle>
-        <CardDescription>
-          Send emails using SMTP instead of the REST API.{" "}
-          <a
-            href="https://docs.bytesend.cloud/get-started/smtp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Learn more
-          </a>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-5">
-        {/* Static fields */}
-        <div className="grid gap-5 sm:grid-cols-2">
-          {STATIC_FIELDS.map((field) => (
-            <div key={field.key}>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {field.label}
-              </label>
-              <TextWithCopyButton
-                className="mt-1.5 rounded-lg p-2.5 w-full bg-muted/50 border border-border/50 font-mono text-sm"
-                value={staticValues[field.key]!}
-              />
-              {"hint" in field && field.hint && (
-                <p className="mt-1.5 text-xs text-muted-foreground">{field.hint}</p>
-              )}
+    <>
+      <PageHeader
+        title="SMTP"
+        description={
+          <>
+            Send through SMTP from apps that can&apos;t use the API, such as WordPress, Supabase Auth or a mail client.{" "}
+            <a href="https://docs.bytesend.cloud/get-started/smtp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              SMTP guide
+            </a>
+          </>
+        }
+      />
+
+      <Panel flush title="Connection details" description="Paste these into your app's SMTP settings.">
+        <div className="divide-y divide-border/70">
+          {connection.map((row) => (
+            <div key={row.label} className="grid gap-1.5 px-4 py-3 sm:grid-cols-[8rem_1fr] sm:items-center sm:gap-4">
+              <div>
+                <p className="text-[13px] font-medium text-foreground">{row.label}</p>
+                {row.hint ? <p className="text-xs text-muted-foreground sm:hidden">{row.hint}</p> : null}
+              </div>
+              <div className="min-w-0 sm:max-w-md">
+                {row.label === "Password" ? (
+                  <p className="text-[13px] text-muted-foreground">{row.value}</p>
+                ) : (
+                  <CopyField value={row.value} />
+                )}
+                {row.hint ? <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{row.hint}</p> : null}
+              </div>
             </div>
           ))}
         </div>
+      </Panel>
 
-        {/* Editable username */}
-        <div className="border-t border-border/60 pt-5">
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Username
-            </label>
-            {currentSmtpUsername && (
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={updateMutation.isPending}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Reset to default
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setIsDirty(true);
-              }}
-              placeholder={smtpDefaultUsername}
-              className="font-mono text-sm"
-              maxLength={64}
-            />
-            {isDirty && (
-              <Button
-                onClick={handleSave}
-                disabled={updateMutation.isPending}
-                size="sm"
-              >
-                {updateMutation.isPending ? "Saving…" : "Save"}
-              </Button>
-            )}
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Your current username is{" "}
-            <code className="font-mono bg-muted px-1 py-0.5 rounded border border-border/60 text-[11px]">
-              {effectiveUsername}
-            </code>
-            {!currentSmtpUsername && (
-              <span className="ml-1 text-muted-foreground/60">(default)</span>
-            )}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      <Panel flush title="Custom username">
+        <SettingRow
+          title="Username"
+          description="Change it if your app needs something specific. Leave empty to use the default."
+          control={
+            <div className="flex w-full items-center gap-2 sm:w-80">
+              <Input
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setIsDirty(true);
+                }}
+                placeholder={smtpDefaultUsername}
+                className="h-8 font-mono text-[13px]"
+                maxLength={64}
+              />
+              {isDirty ? (
+                <Button size="sm" onClick={handleSave} isLoading={updateMutation.isPending}>
+                  Save
+                </Button>
+              ) : currentSmtpUsername ? (
+                <Button size="sm" variant="ghost" onClick={handleReset} disabled={updateMutation.isPending} className="text-muted-foreground">
+                  <RotateCcw className="size-3.5" />
+                  Reset
+                </Button>
+              ) : null}
+            </div>
+          }
+        />
+      </Panel>
+    </>
   );
 }

@@ -21,7 +21,7 @@ export default function DmcaPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">
@@ -74,7 +74,7 @@ export default function DmcaPage() {
             <p className="text-muted-foreground leading-relaxed text-sm mb-4">
               Send your DMCA takedown notice to our designated copyright agent by email:
             </p>
-            <div className="rounded-lg border border-border/60 bg-muted/30 p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="rounded-lg border border-border bg-muted/30 p-5 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1">
                 <p className="text-sm font-medium">Copyright Agent: NodeByte LTD</p>
                 <p className="text-sm text-muted-foreground mt-0.5">Designated agent for copyright matters</p>

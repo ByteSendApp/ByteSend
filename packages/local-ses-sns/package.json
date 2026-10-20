@@ -1,0 +1,26 @@
+{
+  "name": "@bytesend/local-ses-sns",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local stand-in for Amazon SES v2 and SNS, for developing ByteSend without an AWS account",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "emulator": "node src/index.ts",
+    "emulator:watch": "node --watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.7",
+    "mailparser": "^3.7.2"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3"
+  }
+}

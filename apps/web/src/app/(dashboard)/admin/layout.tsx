@@ -3,10 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { H1 } from "@bytesend/ui";
 import Spinner from "@bytesend/ui/src/spinner";
-import { isCloud, isSelfHosted } from "~/utils/common";
-import { AdminCommandSearch } from "./_components/admin-command-search";
+import { isSelfHosted } from "~/utils/common";
 
 export default function AdminLayout({
   children,
@@ -32,18 +30,5 @@ export default function AdminLayout({
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <H1>Admin</H1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Platform health, customers, and infrastructure
-          </p>
-        </div>
-        {isCloud() ? <AdminCommandSearch /> : null}
-      </div>
-      <div className="min-w-0 space-y-6">{children}</div>
-    </div>
-  );
+  return <div className="min-w-0 space-y-5">{children}</div>;
 }

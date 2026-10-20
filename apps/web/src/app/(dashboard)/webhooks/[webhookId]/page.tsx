@@ -1,16 +1,14 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import Link from "next/link";
 import { api } from "~/trpc/react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@bytesend/ui/src/breadcrumb";
+import { formatDistanceToNow } from "date-fns";
+import Spinner from "@bytesend/ui/src/spinner";
+import { Callout } from "@bytesend/ui/src/callout";
+import { EmptyState } from "@bytesend/ui/src/empty-state";
+import { PageHeader } from "@bytesend/ui/src/page-header";
+import { useBreadcrumb } from "~/components/dashboard/breadcrumbs";
+import { WebhookStatusBadge } from "../webhook-status-badge";
 import { Button } from "@bytesend/ui/src/button";
 import {
   Edit3,
@@ -19,7 +17,7 @@ import {
   Pause,
   Play,
   TestTube,
-  CircleEllipsis,
+  Webhook as WebhookIcon,
 } from "lucide-react";
 import { toast } from "@bytesend/ui/src/toaster";
 import { WebhookInfo } from "./webhook-info";
@@ -61,17 +59,17 @@ function WebhookDetailActions({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="default" className="gap-1">
-          <MoreVertical className="h-4 -ml-2" />
-          Actions
+        <Button variant="outline" size="sm">
+          More
+          <MoreVertical className="size-3.5 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-52 rounded-xl p-1" align="end">
+      <PopoverContent className="w-48 p-1" align="end">
         <div className="flex flex-col">
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onTest();
               setOpen(false);
@@ -84,7 +82,7 @@ function WebhookDetailActions({
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onEdit();
               setOpen(false);
@@ -96,7 +94,7 @@ function WebhookDetailActions({
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onToggleStatus();
               setOpen(false);
@@ -118,7 +116,7 @@ function WebhookDetailActions({
           <Button
             variant="ghost"
             size="sm"
-            className="justify-start rounded-lg hover:bg-accent"
+            className="h-8 justify-start font-normal"
             onClick={() => {
               onRotateSecret();
               setOpen(false);
@@ -210,84 +208,70 @@ export default function WebhookDetailPage({
     );
   };
 
+  useBreadcrumb(`/webhooks/${webhookId}`, webhook ? webhook.url.replace(/^https?:\/\//, "") : undefined);
+
   if (webhookQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Loading webhook...</p>
+      <div className="flex items-center justify-center py-24">
+        <Spinner className="size-5" />
       </div>
     );
   }
 
   if (!webhook) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Webhook not found</p>
-      </div>
-    );
+    return <EmptyState icon={<WebhookIcon />} title="Webhook not found" description="It may have been deleted, or it belongs to another team." />;
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="/webhooks" className="text-lg">
-                  Webhooks
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="text-lg" />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-lg max-w-[500px] truncate">
-                {webhook.url}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title={<span className="font-mono text-base sm:text-lg">{webhook.url.replace(/^https?:\/\//, "")}</span>}
+        meta={<WebhookStatusBadge status={webhook.status} />}
+        description={`Created ${formatDistanceToNow(webhook.createdAt, { addSuffix: true })}`}
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={handleTest} disabled={testWebhook.isPending}>
+              <TestTube className="size-3.5" />
+              Send test
+            </Button>
+            <WebhookDetailActions
+              webhook={webhook}
+              onTest={handleTest}
+              onEdit={() => setIsEditDialogOpen(true)}
+              onToggleStatus={() => handleToggleStatus(webhook.status)}
+              onRotateSecret={handleRotateSecret}
+              isTestPending={testWebhook.isPending}
+              isToggling={setStatusMutation.isPending}
+              isRotating={updateWebhook.isPending}
+            />
+          </>
+        }
+      />
 
-        <WebhookDetailActions
-          webhook={webhook}
-          onTest={handleTest}
-          onEdit={() => setIsEditDialogOpen(true)}
-          onToggleStatus={() => handleToggleStatus(webhook.status)}
-          onRotateSecret={handleRotateSecret}
-          isTestPending={testWebhook.isPending}
-          isToggling={setStatusMutation.isPending}
-          isRotating={updateWebhook.isPending}
-        />
-      </div>
+      {webhook.status === "AUTO_DISABLED" ? (
+        <Callout tone="danger" title="This webhook was turned off after repeated failures">
+          Check the endpoint is reachable and answers with a 2xx status, then use <strong>More → Re-enable</strong>.
+        </Callout>
+      ) : null}
 
       <WebhookInfo webhook={webhook} />
 
-      <div className="h-[calc(100vh-280px)] min-h-[600px] flex gap-6">
-        <div className="w-1/2 flex flex-col">
-          <WebhookCallsTable
-            webhookId={webhookId}
-            selectedCallId={selectedCallId}
-            onSelectCall={setSelectedCallId}
-          />
+      <div className="grid gap-4 lg:h-[calc(100vh-320px)] lg:min-h-[560px] lg:grid-cols-2">
+        <div className="flex min-h-0 flex-col">
+          <WebhookCallsTable webhookId={webhookId} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} />
         </div>
-
-        <div className="w-1/2 overflow-auto">
+        <div className="min-h-0 overflow-auto">
           {selectedCallId ? (
             <WebhookCallDetails callId={selectedCallId} />
           ) : (
-            <div className="h-full flex items-center justify-center border rounded-xl bg-muted/10 border-dashed text-muted-foreground">
-              Select a webhook call to view details
+            <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-dashed border-border text-[13px] text-muted-foreground">
+              Pick a delivery to see the request and response
             </div>
           )}
         </div>
       </div>
 
-      {isEditDialogOpen && (
-        <EditWebhookDialog
-          webhook={webhook}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-        />
-      )}
+      {isEditDialogOpen && <EditWebhookDialog webhook={webhook} open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />}
     </div>
   );
 }

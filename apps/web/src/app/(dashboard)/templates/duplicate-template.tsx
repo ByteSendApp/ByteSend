@@ -45,8 +45,8 @@ export const DuplicateTemplate: React.FC<{
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent">
-          <Copy className="h-[18px] w-[18px] text-blue/80" />
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" aria-label="Duplicate template">
+          <Copy className="size-3.5" />
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -7,7 +7,11 @@ import { useDebouncedCallback } from "use-debounce";
 import { SuppressionReason } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@bytesend/ui/src/button";
-import { Input } from "@bytesend/ui/src/input";
+import { Badge } from "@bytesend/ui/src/badge";
+import { Panel } from "@bytesend/ui/src/panel";
+import { EmptyState, ListSkeleton } from "@bytesend/ui/src/empty-state";
+import { FilterBar, SearchInput } from "@bytesend/ui/src/search-input";
+import { PaginationBar } from "@bytesend/ui/src/pagination-bar";
 import {
   Select,
   SelectContent,
@@ -23,15 +27,20 @@ import {
   TableHeader,
   TableRow,
 } from "@bytesend/ui/src/table";
-import { Trash2, Download } from "lucide-react";
+import { Download, ShieldCheck, Trash2 } from "lucide-react";
 import RemoveSuppressionDialog from "./remove-suppression";
-import Spinner from "@bytesend/ui/src/spinner";
 import { toast } from "@bytesend/ui/src/toaster";
 
 const reasonLabels = {
-  HARD_BOUNCE: "Hard Bounce",
+  HARD_BOUNCE: "Hard bounce",
   COMPLAINT: "Complaint",
-  MANUAL: "Manual",
+  MANUAL: "Added by you",
+} as const;
+
+const REASON_VARIANT = {
+  HARD_BOUNCE: "danger",
+  COMPLAINT: "warning",
+  MANUAL: "neutral",
 } as const;
 
 export default function SuppressionList() {
@@ -115,126 +124,104 @@ export default function SuppressionList() {
     }
   };
 
+  const suppressions = suppressionsQuery.data?.suppressions ?? [];
+  const pageNumber = parseInt(page || "1");
+  const hasFilters = Boolean(search || reason);
+
   return (
-    <div className="mt-10 flex flex-col gap-4">
-      {/* Header and Export */}
-      <div className="flex justify-between items-center">
-        {/* Filters */}
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search by email address..."
-            className="max-w-sm"
-            defaultValue={search || ""}
-            onChange={(e) => debouncedSearch(e.target.value)}
-          />
+    <div className="flex flex-col gap-3">
+      <FilterBar>
+        <SearchInput
+          placeholder="Search by email address"
+          className="w-full sm:w-72"
+          defaultValue={search || ""}
+          onChange={(e) => debouncedSearch(e.target.value)}
+        />
+        <div className="flex gap-2">
           <Select value={reason || "all"} onValueChange={handleReasonFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by reason" />
+            <SelectTrigger className="h-8 w-full text-[13px] sm:w-40">
+              <SelectValue placeholder="Any reason" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Reasons</SelectItem>
-              <SelectItem value="HARD_BOUNCE">Hard Bounce</SelectItem>
+              <SelectItem value="all">Any reason</SelectItem>
+              <SelectItem value="HARD_BOUNCE">Hard bounce</SelectItem>
               <SelectItem value="COMPLAINT">Complaint</SelectItem>
-              <SelectItem value="MANUAL">Manual</SelectItem>
+              <SelectItem value="MANUAL">Added by you</SelectItem>
             </SelectContent>
           </Select>
-        </div>{" "}
-        <Button
-          variant="outline"
-          onClick={handleExport}
-          disabled={exportQuery.isFetching}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button>
-      </div>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exportQuery.isFetching}>
+            <Download className="size-3.5" />
+            Export CSV
+          </Button>
+        </div>
+      </FilterBar>
 
-      {/* Table */}
-      <div className="flex flex-col rounded-xl border border-border/60">
-        <Table className="">
-          <TableHeader className="">
-            <TableRow className=" bg-muted/30">
-              <TableHead className="rounded-tl-xl">Email</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Added</TableHead>
-              <TableHead className="rounded-tr-xl">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {suppressionsQuery.isLoading ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={4} className="text-center py-4">
-                  <Spinner
-                    className="w-6 h-6 mx-auto"
-                    innerSvgClass="stroke-primary"
-                  />
-                </TableCell>
+      <Panel
+        flush
+        footer={
+          suppressions.length || pageNumber > 1 ? (
+            <PaginationBar
+              page={pageNumber}
+              hasNext={Boolean(suppressionsQuery.data?.pagination?.hasNext)}
+              onPageChange={(next) => setPage(String(next))}
+            />
+          ) : null
+        }
+      >
+        {suppressionsQuery.isLoading ? (
+          <ListSkeleton rows={6} />
+        ) : suppressions.length === 0 ? (
+          <EmptyState
+            icon={<ShieldCheck />}
+            title={hasFilters ? "No addresses match" : "Nothing suppressed yet"}
+            description={
+              hasFilters
+                ? "Try a different search or reason."
+                : "When an address bounces or someone marks your email as spam, it's added here automatically so you don't send to it again."
+            }
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Address</TableHead>
+                <TableHead className="w-36">Reason</TableHead>
+                <TableHead className="hidden w-40 sm:table-cell">Added</TableHead>
+                <TableHead className="w-12" />
               </TableRow>
-            ) : suppressionsQuery.data?.suppressions.length === 0 ? (
-              <TableRow className="h-32">
-                <TableCell colSpan={4} className="text-center py-4">
-                  No suppressed emails found
-                </TableCell>
-              </TableRow>
-            ) : (
-              suppressionsQuery.data?.suppressions.map((suppression) => (
+            </TableHeader>
+            <TableBody>
+              {suppressions.map((suppression) => (
                 <TableRow key={suppression.id}>
-                  <TableCell className="font-medium">
-                    {suppression.email}
+                  <TableCell className="max-w-0 font-medium">
+                    <p className="truncate">{suppression.email}</p>
                   </TableCell>
                   <TableCell>
-                    <div
-                      className={`text-center w-[130px] rounded capitalize py-1 text-xs ${
-                        suppression.reason === "HARD_BOUNCE"
-                          ? "bg-red/15 text-red border border-red/20"
-                          : suppression.reason === "COMPLAINT"
-                            ? "bg-yellow/15 text-yellow border border-yellow/20"
-                            : "bg-blue/15 text-blue border border-blue/20"
-                      }`}
-                    >
+                    <Badge variant={REASON_VARIANT[suppression.reason]} dot>
                       {reasonLabels[suppression.reason]}
-                    </div>
+                    </Badge>
                   </TableCell>
-
-                  <TableCell className="text-muted-foreground">
-                    {formatDistanceToNow(new Date(suppression.createdAt), {
-                      addSuffix: true,
-                    })}
+                  <TableCell className="hidden text-muted-foreground sm:table-cell">
+                    {formatDistanceToNow(new Date(suppression.createdAt), { addSuffix: true })}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-destructive"
+                      aria-label={`Remove ${suppression.email}`}
                       onClick={() => handleRemove(suppression.email)}
                       disabled={removeMutation.isPending}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="size-3.5" />
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex gap-4 justify-end">
-        <Button
-          size="sm"
-          onClick={() => setPage(String(parseInt(page || "1") - 1))}
-          disabled={parseInt(page || "1") === 1}
-        >
-          Previous
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setPage(String(parseInt(page || "1") + 1))}
-          disabled={!suppressionsQuery.data?.pagination?.hasNext}
-        >
-          Next
-        </Button>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
 
       <RemoveSuppressionDialog
         email={emailToRemove}

@@ -144,13 +144,13 @@ puts res.body`;
     ];
 
     return (
-        <section id="developers" className="border-t border-border/30 bg-muted/20 py-20 sm:py-28">
-            <div className="mx-auto max-w-6xl px-6">
+        <section id="developers" className="scroll-mt-16 border-t border-border bg-muted/30 py-20 sm:py-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-start">
                     {/* Left: text */}
                     <div className="lg:pt-4">
-                        <p className="text-sm font-medium uppercase tracking-wider text-brand-blue dark:text-brand-sky mb-3">Developer-first</p>
-                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                        <p className="mb-3 font-mono text-xs font-medium uppercase tracking-[0.14em] text-primary">Developer-first</p>
+                        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                             Up and running<br />in minutes
                         </h2>
                         <p className="mt-4 text-muted-foreground leading-relaxed">
@@ -174,20 +174,20 @@ puts res.body`;
                         </ul>
 
                         <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                            <Button className="rounded-xl" asChild>
+                            <Button className="h-10 px-5" asChild>
                                 <a href="https://docs.bytesend.cloud" target="_blank" rel="noopener noreferrer">
                                     View the docs
                                 </a>
                             </Button>
-                            <Button variant="outline" className="rounded-xl" asChild>
+                            <Button variant="outline" className="h-10 px-5" asChild>
                                 <Link href={APP_URL}>Get your API key</Link>
                             </Button>
                         </div>
                     </div>
 
                     {/* Right: code block */}
-                    <div className="rounded-xl border border-border/40 overflow-hidden" id={containerId}>
-                        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-muted/40">
+                    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_30px_80px_-40px_rgba(0,87,255,0.4)]" id={containerId}>
+                        <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/40">
                             <div className="flex gap-1.5">
                                 <span className="h-2.5 w-2.5 rounded-full bg-red-400/50" />
                                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/50" />
@@ -207,7 +207,7 @@ puts res.body`;
                                 data-lang-slot={lang.key}
                                 className={idx === 0 ? "block" : "hidden"}
                             >
-                                <div className="px-5 pt-3 text-[11px] text-muted-foreground font-mono bg-background/95 border-b border-border/20">
+                                <div className="px-5 pt-3 text-[11px] text-muted-foreground font-mono bg-background/95 border-b border-border/70">
                                     {lang.file}
                                 </div>
                                 <HighlightedSnippet code={lang.code} lang={lang.shikiLang} theme={resolvedTheme} />

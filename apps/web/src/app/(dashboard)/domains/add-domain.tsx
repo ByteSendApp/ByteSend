@@ -22,7 +22,7 @@ import {
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as tldts from "tldts";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -47,6 +47,15 @@ const domainSchema = z.object({
 
 export default function AddDomain() {
   const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get("add") === "1") {
+      setOpen(true);
+      router.replace("/domains");
+    }
+  }, [searchParams, router]);
 
   const regionQuery = api.domain.getAvailableRegions.useQuery();
   const limitsQuery = api.limits.get.useQuery({ type: LimitReason.DOMAIN });
@@ -65,7 +74,6 @@ export default function AddDomain() {
   });
 
   const utils = api.useUtils();
-  const router = useRouter();
 
   const singleRegion =
     regionQuery.data?.length === 1 ? regionQuery.data[0] : undefined;
@@ -129,20 +137,19 @@ export default function AddDomain() {
       open={open}
       onOpenChange={(_open) => (_open !== open ? onOpenChange(_open) : null)}
     >
-      <DialogTrigger asChild>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-            <Plus className="h-4 w-4" />
+      <div className="flex items-center gap-3">
+        {limitsQuery.data && limitsQuery.data.limit !== -1 ? (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {limitsQuery.data.currentCount} of {limitsQuery.data.limit} domains
+          </span>
+        ) : null}
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="size-4" />
             Add domain
           </Button>
-          {/* Show usage counter next to button */}
-          {limitsQuery.data && limitsQuery.data.limit !== -1 && (
-            <span className="text-xs text-muted-foreground">
-              {limitsQuery.data.currentCount} / {limitsQuery.data.limit}
-            </span>
-          )}
-        </div>
-      </DialogTrigger>
+        </DialogTrigger>
+      </div>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add a domain</DialogTitle>
@@ -229,7 +236,7 @@ export default function AddDomain() {
             </Form>
           )}
 
-          <div className="pt-2 border-t border-border/40">
+          <div className="pt-2 border-t border-border/70">
             {isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
                 You've reached your domain limit of {limitsQuery.data?.limit}. Purchase an extra slot to add more.
@@ -244,6 +251,7 @@ export default function AddDomain() {
               onClick={async () => {
                 try {
                   const url = await purchaseDomainsAddonMutation.mutateAsync({ quantity: 1 });
+                  if (!url) throw new Error("Couldn't open checkout. Try again in a moment.");
                   window.location.href = url;
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : "Failed to open checkout");

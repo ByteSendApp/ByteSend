@@ -58,7 +58,7 @@ export function ConnectedAccounts({
   const providerIds = [...new Set([...(availableProviders ?? []), ...linked.map((account) => account.provider)])];
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
+    <div className="rounded-lg border border-border bg-card p-6">
       <h3 className="text-sm font-semibold mb-1">Connected Accounts</h3>
       <p className="text-xs text-muted-foreground mb-5">
         Sign in with these providers. Reconnect one to refresh the email and avatar it shares with ByteSend.
@@ -69,7 +69,7 @@ export function ConnectedAccounts({
       ) : providerIds.length === 0 ? (
         <p className="text-xs text-muted-foreground">No sign-in providers are configured on this instance.</p>
       ) : (
-        <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
+        <ul className="divide-y divide-border/60 rounded-lg border border-border">
           {providerIds.map((providerId) => {
             const meta = PROVIDER_META[providerId] ?? { name: providerId, icon: SiGithub };
             const Icon = meta.icon;

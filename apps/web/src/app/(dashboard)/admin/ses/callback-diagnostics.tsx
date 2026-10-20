@@ -55,7 +55,7 @@ export default function CallbackDiagnostics() {
       </div>
 
       {data?.lastRejected && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
           <p className="font-medium text-destructive">Callbacks are being rejected</p>
           <p className="mt-1 text-muted-foreground">
             SNS posted from <code className="font-mono text-xs">{data.lastRejected.topicArn}</code>{" "}
@@ -66,18 +66,18 @@ export default function CallbackDiagnostics() {
       )}
 
       {diagnosticsQuery.isLoading ? (
-        <div className="flex h-32 items-center justify-center rounded-xl border">
+        <div className="flex h-32 items-center justify-center rounded-lg border">
           <Spinner className="h-6 w-6" innerSvgClass="stroke-primary" />
         </div>
       ) : diagnosticsQuery.error ? (
-        <p className="rounded-xl border p-4 text-sm text-destructive">{diagnosticsQuery.error.message}</p>
+        <p className="rounded-lg border p-4 text-sm text-destructive">{diagnosticsQuery.error.message}</p>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {data?.regions.map((region) => {
             const subscription = SUBSCRIPTION_TONE[region.subscription.state]!;
             const healthy = region.problems.length === 0;
             return (
-              <div key={region.settingId} className="rounded-xl border border-border/60 p-4">
+              <div key={region.settingId} className="rounded-lg border border-border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono text-sm font-medium">{region.region}</span>
                   <StatusPill tone={healthy ? "success" : "destructive"}>
@@ -115,7 +115,7 @@ export default function CallbackDiagnostics() {
                 </dl>
 
                 {!healthy && (
-                  <ul className="mt-4 space-y-1.5 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                  <ul className="mt-4 space-y-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
                     {region.problems.map((problem) => (
                       <li key={problem} className="flex gap-2">
                         <span className="mt-1.5 size-1 shrink-0 rounded-full bg-destructive" />

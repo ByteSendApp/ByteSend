@@ -2,7 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import { Check, Minus } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
+import { Reveal } from "./Reveal";
+import { Section, SectionHeader } from "./Section";
 
 // Competitor details as published on their pricing and docs pages; re-check before changing claims.
 const COMPARISON_CHECKED = "October 2026";
@@ -19,7 +22,7 @@ const comparisonRows: { feature: string; bs: string | boolean; resend: string | 
     { feature: "Open source", bs: true, resend: false, sendgrid: false, postmark: false, ses: false },
 ];
 
-const APP_URL = "/login";
+const APP_URL = "/signup";
 
 export function ComparisonTable() {
 
@@ -27,72 +30,62 @@ export function ComparisonTable() {
     const vals = (row: (typeof comparisonRows)[0]) => [row.bs, row.resend, row.sendgrid, row.postmark, row.ses] as (string | boolean)[];
 
     return (
-        <section className="py-20 sm:py-28 border-t border-border/30">
-            <div className="mx-auto max-w-6xl px-6">
-                <div className="text-center max-w-2xl mx-auto mb-12">
-                    <p className="text-sm font-medium uppercase tracking-wider text-brand-blue dark:text-brand-sky mb-3">Compare</p>
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Why teams choose ByteSend</h2>
-                    <p className="mt-4 text-muted-foreground">
-                        See how we stack up against Resend, SendGrid, Postmark, and AWS SES.
-                    </p>
-                </div>
+        <Section>
+            <SectionHeader
+                eyebrow="Compare"
+                title="Why teams choose ByteSend"
+                description="How we stack up against Resend, SendGrid, Postmark and sending through AWS SES directly."
+            />
 
-                <div className="overflow-x-auto rounded-2xl border border-border/40">
-                    <table className="w-full text-sm border-collapse">
-                        <thead>
-                            <tr className="border-b border-border/40 bg-muted/30">
-                                <th className="text-left font-medium text-muted-foreground px-5 py-3.5 w-55">Feature</th>
-                                {cols.map((col, i) => (
-                                    <th
-                                        key={col}
-                                        className={`text-center font-semibold px-4 py-3.5 ${i === 0 ? "text-primary" : "text-foreground/70"}`}
+            <Reveal className="overflow-x-auto rounded-lg border border-border bg-card">
+                <table className="w-full border-collapse text-[13px]">
+                    <thead>
+                        <tr className="border-b border-border">
+                            <th className="w-52 px-4 py-3 text-left text-xs font-medium text-muted-foreground">Feature</th>
+                            {cols.map((col, i) => (
+                                <th
+                                    key={col}
+                                    className={`px-4 py-3 text-center text-xs font-semibold ${i === 0 ? "bg-primary/[0.06] text-primary" : "text-muted-foreground"}`}
+                                >
+                                    {col}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {comparisonRows.map((row) => (
+                            <tr key={row.feature} className="border-b border-border/70 last:border-0">
+                                <td className="px-4 py-3 font-medium text-foreground">{row.feature}</td>
+                                {vals(row).map((val, vi) => (
+                                    <td
+                                        key={vi}
+                                        className={`px-4 py-3 text-center tabular-nums ${vi === 0 ? "bg-primary/[0.06] font-medium text-foreground" : "text-muted-foreground"}`}
                                     >
-                                        {col}
-                                    </th>
+                                        <CompCell val={val} />
+                                    </td>
                                 ))}
                             </tr>
-                        </thead>
-                        <tbody>
-                            {comparisonRows.map((row, ri) => (
-                                <tr
-                                    key={row.feature}
-                                    className={`border-b border-border/30 last:border-0 ${ri % 2 === 0 ? "" : "bg-muted/10"}`}
-                                >
-                                    <td className="px-5 py-3.5 text-muted-foreground font-medium">{row.feature}</td>
-                                    {vals(row).map((val, vi) => (
-                                        <td
-                                            key={vi}
-                                            className={`text-center px-4 py-3.5 tabular-nums ${vi === 0 ? "font-medium" : "text-muted-foreground"}`}
-                                        >
-                                            <CompCell val={val} />
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
+            </Reveal>
 
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                    Based on each provider&apos;s published plans, checked {COMPARISON_CHECKED}. Free tiers for ByteSend and
-                    Resend are for transactional email.
-                </p>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+                Based on each provider&apos;s published plans, checked {COMPARISON_CHECKED}.
+            </p>
 
-                <div className="mt-10 text-center">
-                    <p className="text-sm text-muted-foreground mb-4">Ready to switch? Migration takes minutes.</p>
-                    <Button size="lg" className="px-8 h-12 text-base rounded-xl" asChild>
-                        <Link href={APP_URL}>Get started free</Link>
-                    </Button>
-                </div>
+            <div className="mt-8 text-center">
+                <Button className="h-10 px-5" asChild>
+                    <Link href={APP_URL}>Switch in minutes</Link>
+                </Button>
             </div>
-        </section>
+        </Section>
     );
-
 }
 
 function CompCell({ val }: { val: string | boolean }) {
-    if (val === true) return <span className="font-semibold text-brand-teal" aria-label="Yes">✓</span>;
-    if (val === false) return <span className="text-muted-foreground/40" aria-label="No">—</span>;
+    if (val === true) return <Check className="mx-auto size-4 text-primary" aria-label="Yes" />;
+    if (val === false) return <Minus className="mx-auto size-4 text-muted-foreground/40" aria-label="No" />;
     return <span>{val}</span>;
 }
 

@@ -49,7 +49,7 @@ export function AuditLogTable({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

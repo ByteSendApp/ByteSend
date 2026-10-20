@@ -27,7 +27,7 @@ const STATUS_META: Record<string, { label: string; tone: StatusTone }> = {
 
 function SummaryTile({ label, value, tone }: { label: string; value: number; tone?: StatusTone }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+    <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
       {tone ? <StatusPill tone={tone}>{label}</StatusPill> : <span className="text-sm text-muted-foreground">{label}</span>}
       <span className="font-mono text-xl font-semibold tabular-nums">{formatNumber(value)}</span>
     </div>
@@ -67,7 +67,7 @@ export default function AdminBlacklistsPage() {
       />
 
       {overview && !overview.usesDqsKey ? (
-        <div className="flex gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div className="flex gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
           <p className="text-foreground">
             No <code className="font-mono text-xs">SPAMHAUS_DQS_KEY</code> is set. Spamhaus, SURBL and URIBL refuse queries from
@@ -83,7 +83,7 @@ export default function AdminBlacklistsPage() {
         <SummaryTile label="Unknown" value={unknownDomains} tone="muted" />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

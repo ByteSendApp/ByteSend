@@ -57,16 +57,16 @@ export const TogglePauseCampaign: React.FC<{
       {mode === "icon" ? (
         <Button
           variant="ghost"
-          size="sm"
-          className="p-0 hover:bg-transparent"
+          size="icon"
+          className="size-7 text-muted-foreground hover:text-foreground"
           onClick={onToggle}
           disabled={pending}
           title={isPaused ? "Resume" : "Pause"}
         >
           {isPaused ? (
-            <Play className="h-[18px] w-[18px] text-green/80" />
+            <Play className="size-3.5" />
           ) : (
-            <Pause className="h-[18px] w-[18px] text-orange/80" />
+            <Pause className="size-3.5" />
           )}
         </Button>
       ) : (

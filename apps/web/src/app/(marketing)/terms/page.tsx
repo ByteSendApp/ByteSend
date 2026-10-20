@@ -28,7 +28,7 @@ export default function TermsPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">

@@ -24,7 +24,7 @@ export function DailyBarChart({
   const isEmpty = data.every((row) => series.every((s) => !Number(row[s.key])));
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-4">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-sm font-medium text-foreground">{title}</h3>

@@ -48,21 +48,21 @@ export function ProfileSetup() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
-      <div className="w-full max-w-md rounded-2xl border border-border/40 bg-card shadow-xl p-8 space-y-6">
+      <div className="w-full max-w-md space-y-5 rounded-lg border border-border bg-card p-6 shadow-xl sm:p-8">
         {/* Header */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20 mb-1">
+          <div className="mb-1 flex size-11 items-center justify-center rounded-lg border border-border bg-muted/50">
             <BrandMark size={17} />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Set up your profile</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">What should we call you?</h2>
           <p className="text-sm text-muted-foreground">
-            Tell us a little about yourself before you get started
+            Your name shows to teammates and in the audit log.
           </p>
         </div>
 
         {/* Avatar preview */}
         <div className="flex justify-center">
-          <Avatar className="size-20 ring-2 ring-primary/20">
+          <Avatar className="size-16 border border-border">
             <AvatarImage src={imageUrl} alt={name} />
             <AvatarFallback className="text-lg bg-primary/10 text-primary font-semibold">
               {initials || "?"}
@@ -73,7 +73,7 @@ export function ProfileSetup() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive/25 bg-destructive/[0.06] p-3 text-[13px] text-destructive">
               {error}
             </div>
           )}
@@ -89,7 +89,7 @@ export function ProfileSetup() {
               required
               autoComplete="name"
               autoFocus
-              className="h-11 rounded-xl"
+              className="h-10"
             />
           </div>
 
@@ -104,13 +104,13 @@ export function ProfileSetup() {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               autoComplete="photo"
-              className="h-11 rounded-xl"
+              className="h-10"
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full h-11 rounded-xl shadow-lg shadow-primary/20"
+            className="h-10 w-full"
             disabled={updateProfile.isPending || !name.trim()}
           >
             {updateProfile.isPending ? (

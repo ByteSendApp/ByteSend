@@ -90,11 +90,11 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col sm:flex-row gap-10 w-full">
-        <div className="w-full sm:w-1/2 border border-border/60 rounded-xl p-4">
+      <div className="grid w-full gap-4 sm:grid-cols-2">
+        <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex justify-between">
             <div className=" flex items-center gap-2">
-              <div className="text-muted-foreground font-mono">Bounce Rate</div>
+              <div className="text-[13px] font-medium text-foreground">Bounce rate · account</div>
               <Tooltip>
                 <TooltipTrigger>
                   <InfoIcon className=" h-3.5  w-3.5 text-muted-foreground" />
@@ -108,7 +108,7 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
             <div></div>
           </div>
           <div className="flex items-baseline gap-4">
-            <div className="text-2xl mt-2 font-mono">
+            <div className="mt-1.5 text-xl font-semibold tabular-nums tracking-tight">
               {metrics?.bounceRate.toFixed(2)}%
             </div>
             <StatusBadge status={bounceStatus} />
@@ -185,7 +185,7 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
                   if (!data) return null;
 
                   return (
-                    <div className="bg-background border shadow-lg p-2 rounded-xl flex flex-col gap-2 px-4">
+                    <div className="flex flex-col gap-1.5 rounded-md border border-border bg-popover px-3 py-2 shadow-lg">
                       <p className="text-sm text-muted-foreground">
                         {data.name}
                       </p>
@@ -240,11 +240,9 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-full sm:w-1/2 border border-border/60 rounded-xl p-4">
+        <div className="rounded-lg border border-border bg-card p-4">
           <div className=" flex items-center gap-2">
-            <div className=" text-muted-foreground font-mono">
-              Complaint Rate
-            </div>
+            <div className="text-[13px] font-medium text-foreground">Complaint rate · account</div>
             <Tooltip>
               <TooltipTrigger>
                 <InfoIcon className=" h-3.5 w-3.5 text-muted-foreground" />
@@ -256,7 +254,7 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
             </Tooltip>
           </div>
           <div className="flex items-baseline gap-4">
-            <div className="text-2xl mt-2 font-mono">
+            <div className="mt-1.5 text-xl font-semibold tabular-nums tracking-tight">
               {metrics?.complaintRate.toFixed(2)}%
             </div>
             <StatusBadge status={complaintStatus} />
@@ -324,7 +322,7 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
                   if (!data) return null;
 
                   return (
-                    <div className="bg-background border shadow-lg p-2 rounded-xl flex flex-col gap-2 px-4">
+                    <div className="flex flex-col gap-1.5 rounded-md border border-border bg-popover px-3 py-2 shadow-lg">
                       <p className="text-sm text-muted-foreground">
                         {data.name}
                       </p>

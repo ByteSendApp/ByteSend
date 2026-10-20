@@ -1,18 +1,24 @@
 "use client";
 
+import { Suspense } from "react";
+import { PageHeader } from "@bytesend/ui/src/page-header";
 import DomainsList from "./domain-list";
 import AddDomain from "./add-domain";
 
 export default function DomainsPage() {
+  const addDomain = (
+    <Suspense fallback={null}>
+      <AddDomain />
+    </Suspense>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Domains</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your verified sending domains</p>
-        </div>
-        <AddDomain />
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Domains"
+        description="The domains you send from, and the DNS records that prove you own them."
+        actions={addDomain}
+      />
       <DomainsList />
     </div>
   );

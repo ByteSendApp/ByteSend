@@ -20,7 +20,7 @@ export default function CookiePolicyPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">
@@ -85,7 +85,7 @@ export default function CookiePolicyPage() {
                   desc: "Used to remember your preferences such as sidebar state and theme. These do not track you across sites.",
                 },
               ].map(({ name, required, desc }) => (
-                <div key={name} className="rounded-lg border border-border/60 bg-muted/30 p-4">
+                <div key={name} className="rounded-lg border border-border bg-muted/30 p-4">
                   <div className="flex items-center gap-2 mb-1.5">
                     <p className="text-sm font-medium">{name}</p>
                     {required && (
@@ -99,7 +99,7 @@ export default function CookiePolicyPage() {
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-border/60 bg-muted/30 p-4">
+            <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4">
               <p className="text-sm font-medium mb-1.5">We do <em>not</em> use tracking or advertising cookies</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 ByteSend does not set any third-party advertising cookies, retargeting pixels, or
@@ -110,16 +110,16 @@ export default function CookiePolicyPage() {
 
           <section id="third-party" className="scroll-mt-24 mb-10">
             <h2 className="text-lg font-semibold mb-3">Third-Party Services</h2>
-            <div className="overflow-hidden rounded-lg border border-border/60">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/60 bg-muted/40">
+                  <tr className="border-b border-border bg-muted/40">
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Service</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Purpose</th>
                     <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider text-muted-foreground">Cookies / Storage</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40">
+                <tbody className="divide-y divide-border/70">
                   {[
                     { service: "Simple Analytics", purpose: "Aggregate, privacy-friendly analytics", cookies: "None (no cookies or fingerprinting)" },
                     { service: "Stripe", purpose: "Payment processing (billing pages only)", cookies: "Stripe sets cookies for fraud prevention and session management on payment flows" },

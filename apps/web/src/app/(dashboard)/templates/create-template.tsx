@@ -79,9 +79,9 @@ export default function CreateTemplate() {
       onOpenChange={(_open) => (_open !== open ? setOpen(_open) : null)}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" />
-          Create Template
+        <Button size="sm">
+          <Plus className="size-3.5" />
+          New template
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -18,6 +18,9 @@ const {
         account: {
             findMany: vi.fn(),
         },
+        blocklistEntry: {
+            findFirst: vi.fn(),
+        },
         pendingEmailChange: {
             findUnique: vi.fn(),
             upsert: vi.fn(),
@@ -83,6 +86,17 @@ describe("userRouter.requestEmailChange", () => {
         mockDb.user.findFirst.mockReset();
         mockDb.pendingEmailChange.upsert.mockReset();
         mockSendEmailChangeVerificationEmail.mockReset();
+        mockDb.blocklistEntry.findFirst.mockReset();
+        mockDb.blocklistEntry.findFirst.mockResolvedValue(null);
+    });
+
+    it("rejects an address on the blocklist", async () => {
+        mockDb.blocklistEntry.findFirst.mockResolvedValue({ id: "blk_1", type: "EMAIL", value: "banned@example.com" });
+        const caller = createCaller(getCtx());
+        await expect(caller.requestEmailChange({ email: "banned@example.com" })).rejects.toMatchObject({
+            code: "FORBIDDEN",
+        });
+        expect(mockDb.pendingEmailChange.upsert).not.toHaveBeenCalled();
     });
 
     it("rejects when new email same as current", async () => {

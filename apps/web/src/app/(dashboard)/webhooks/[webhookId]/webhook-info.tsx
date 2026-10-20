@@ -1,14 +1,14 @@
 "use client";
 
 import { WebhookCallStatus, type Webhook } from "@prisma/client";
-import { formatDistanceToNow } from "date-fns";
 import { Copy, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@bytesend/ui/src/button";
 import { toast } from "@bytesend/ui/src/toaster";
 import { api } from "~/trpc/react";
 import { Badge } from "@bytesend/ui/src/badge";
-import { WebhookStatusBadge } from "../webhook-status-badge";
+import { KeyValueList } from "@bytesend/ui/src/panel";
+import { Stat, StatGroup } from "@bytesend/ui/src/stat";
 
 export function WebhookInfo({ webhook }: { webhook: Webhook }) {
   const [showSecret, setShowSecret] = useState(false);
@@ -51,93 +51,56 @@ export function WebhookInfo({ webhook }: { webhook: Webhook }) {
     toast.success("Secret copied to clipboard");
   };
 
+  const listOrAll = (items: string[], all: string) =>
+    items.length === 0 ? (
+      <span className="text-foreground">{all}</span>
+    ) : (
+      <span className="flex flex-wrap justify-end gap-1">
+        {items.slice(0, 3).map((item) => (
+          <Badge key={item} variant="neutral" className="font-mono text-[11px]">
+            {item}
+          </Badge>
+        ))}
+        {items.length > 3 ? <span className="text-xs text-muted-foreground">+{items.length - 3} more</span> : null}
+      </span>
+    );
+
   return (
-    <div className="flex items-start gap-6 justify-between mt-5 mb-10">
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">Events</span>
-        <div className="flex items-center gap-1 flex-wrap font-mono text-sm">
-          {webhook.eventTypes.length === 0 ? (
-            <span className="text-sm">All events</span>
-          ) : (
-            <>
-              {webhook.eventTypes.slice(0, 2).map((event) => (
-                <Badge key={event} variant="outline">
-                  {event}
-                </Badge>
-              ))}
-              {webhook.eventTypes.length > 2 && (
-                <span className="text-xs text-muted-foreground">
-                  +{webhook.eventTypes.length - 2} more
+    <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+      <StatGroup className="md:grid-flow-row md:grid-cols-3">
+        <Stat label="Delivered · 7d" value={deliveredCount.toLocaleString()} />
+        <Stat label="Failed · 7d" value={failedCount.toLocaleString()} tone={failedCount > 0 ? "danger" : "default"} />
+        <Stat label="Pending" value={pendingCount.toLocaleString()} />
+      </StatGroup>
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <KeyValueList
+          items={[
+            { label: "Events", value: listOrAll(webhook.eventTypes, "All events") },
+            { label: "Domains", value: listOrAll(selectedDomainLabels, "All domains") },
+            {
+              label: "Signing secret",
+              value: (
+                <span className="inline-flex items-center gap-1">
+                  <code className="max-w-48 truncate font-mono text-xs font-normal">
+                    {showSecret ? webhook.secret : "whsec_••••••••••••••••"}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="size-6 text-muted-foreground hover:text-foreground"
+                    aria-label={showSecret ? "Hide secret" : "Show secret"}
+                  >
+                    {showSecret ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleCopySecret} className="size-6 text-muted-foreground hover:text-foreground" aria-label="Copy secret">
+                    <Copy className="size-3.5" />
+                  </Button>
                 </span>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">Domains</span>
-        <div className="flex items-center gap-1 flex-wrap text-sm">
-          {(webhook.domainIds ?? []).length === 0 ? (
-            <span className="text-sm">All domains</span>
-          ) : (
-            <>
-              {selectedDomainLabels.slice(0, 2).map((domainName, index) => (
-                <Badge key={`${domainName}-${index}`} variant="outline">
-                  {domainName}
-                </Badge>
-              ))}
-              {(webhook.domainIds ?? []).length > 2 && (
-                <span className="text-xs text-muted-foreground">
-                  +{(webhook.domainIds ?? []).length - 2} more
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">Status</span>
-        <div className="flex items-center">
-          <WebhookStatusBadge status={webhook.status} />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">Created</span>
-        <span className="text-sm">
-          {formatDistanceToNow(webhook.createdAt, { addSuffix: true })}
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Signing Secret</span>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowSecret(!showSecret)}
-              className="h-5 w-5 text-muted-foreground hover:text-foreground"
-            >
-              {showSecret ? (
-                <EyeOff className="h-3 w-3" />
-              ) : (
-                <Eye className="h-3 w-3" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCopySecret}
-              className="h-5 w-5 text-muted-foreground hover:text-foreground"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-        <code className="text-xs bg-muted px-2 py-1 rounded font-mono w-60 inline-block truncate">
-          {showSecret ? webhook.secret : "whsec_••••••••••••••••••••••••"}
-        </code>
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   );

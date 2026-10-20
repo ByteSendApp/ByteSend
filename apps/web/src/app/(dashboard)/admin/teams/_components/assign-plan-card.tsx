@@ -44,7 +44,7 @@ export function AssignPlanCard({ teamId, currentPlan }: { teamId: number; curren
   });
 
   return (
-    <div className="space-y-4 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+    <div className="space-y-4 rounded-lg border border-border bg-card p-5">
       <div>
         <h3 className="text-sm font-medium text-foreground">Plan</h3>
         <p className="text-xs text-muted-foreground">
@@ -87,10 +87,10 @@ export function AssignPlanCard({ teamId, currentPlan }: { teamId: number; curren
         </div>
       </div>
       {checkoutUrl ? (
-        <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+        <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
           <p className="text-xs text-muted-foreground">Share this link with the team:</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 truncate rounded border border-border/60 bg-background px-2 py-1 font-mono text-xs">
+            <code className="flex-1 truncate rounded border border-border bg-background px-2 py-1 font-mono text-xs">
               {checkoutUrl}
             </code>
             <Button

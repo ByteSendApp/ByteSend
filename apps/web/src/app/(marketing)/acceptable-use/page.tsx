@@ -21,7 +21,7 @@ export default function AcceptableUsePage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:flex lg:gap-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-24 lg:flex lg:gap-16">
         {/* Sticky sidebar nav */}
         <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-24">
@@ -109,7 +109,7 @@ export default function AcceptableUsePage() {
                   desc: "Do not use the transactional email API to send promotional or marketing messages. Transactional API endpoints are for account notifications, password resets, order confirmations, and similar operational communications only.",
                 },
               ].map(({ title, desc }) => (
-                <div key={title} className="rounded-lg border border-border/60 bg-muted/30 p-4">
+                <div key={title} className="rounded-lg border border-border bg-muted/30 p-4">
                   <p className="text-sm font-medium mb-1">{title}</p>
                   <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
                 </div>

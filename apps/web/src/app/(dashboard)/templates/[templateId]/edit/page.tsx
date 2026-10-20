@@ -110,9 +110,9 @@ function TemplateEditor({
   };
 
   return (
-    <div className="-mx-4 md:-mx-6 h-full min-h-full flex flex-col">
+    <div className="h-full min-h-full flex flex-col">
       {/* Sticky top bar */}
-      <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 h-12 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur">
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 h-12 shrink-0 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/templates" className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -156,7 +156,7 @@ function TemplateEditor({
       </div>
 
       {/* Settings strip */}
-      <div className="border-b border-border/60 bg-muted/20 px-4 sm:px-6 pt-4 pb-3 overflow-x-auto">
+      <div className="border-b border-border bg-muted/20 px-4 sm:px-6 pt-4 pb-3 overflow-x-auto">
         <div className="flex items-center gap-4 min-w-0">
           <label className="text-xs text-muted-foreground w-16 shrink-0">Subject</label>
           <input
@@ -188,21 +188,21 @@ function TemplateEditor({
       </div>
 
       {/* Variables + hints strip */}
-      <div className="border-b border-border/60 bg-background px-4 sm:px-6 py-3">
+      <div className="border-b border-border bg-background px-4 sm:px-6 py-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span className="font-medium text-foreground/60">Variables:</span>
           {["{{email}}", "{{firstName}}", "{{lastName}}"].map((v) => (
-            <code key={v} className="font-mono bg-muted px-1.5 py-0.5 rounded border border-border/60 text-[11px]">{v}</code>
+            <code key={v} className="font-mono bg-muted px-1.5 py-0.5 rounded border border-border text-[11px]">{v}</code>
           ))}
           <span className="text-border/60">·</span>
-          <span>Type <code className="font-mono bg-muted px-1 py-0.5 rounded border border-border/60 text-[11px]">/</code> for blocks</span>
+          <span>Type <code className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[11px]">/</code> for blocks</span>
           <span className="text-border/60 hidden sm:inline">·</span>
-          <span className="hidden sm:inline">Use <code className="font-mono bg-muted px-1 py-0.5 rounded border border-border/60 text-[11px]">{"{{var,fallback=Default}}"}</code> for fallbacks</span>
+          <span className="hidden sm:inline">Use <code className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[11px]">{"{{var,fallback=Default}}"}</code> for fallbacks</span>
         </div>
       </div>
 
       {/* Email canvas */}
-      <div className="flex-1 bg-muted/10 px-0 pt-0 pb-6">
+      <div className="flex-1">
         <div className="w-full">
           <Editor
             initialContent={json}

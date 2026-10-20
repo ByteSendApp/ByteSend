@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bytesend/ui/src/select";
-import { TextWithCopyButton } from "@bytesend/ui/src/text-with-copy";
+import { CopyField } from "@bytesend/ui/src/copy-field";
+import { RegionLabel } from "~/components/dashboard/region-label";
 import { toast } from "@bytesend/ui/src/toaster";
 import type { AppRouter } from "~/server/api/root";
 import { useTeam } from "~/providers/team-context";
@@ -134,13 +135,13 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
 
   if (!move) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-border/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
             <p className="text-sm font-semibold text-foreground">Sending region</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Mail for this domain is sent from <span className="font-mono text-foreground">{domain.region}</span>.
+              Mail for this domain is sent from <RegionLabel region={domain.region} full />.
               {domain.retiredRegion && domain.retiredRegionAt
                 ? ` The previous region (${domain.retiredRegion}) is retired after ${format(
                     new Date(new Date(domain.retiredRegionAt).getTime() + 24 * 60 * 60 * 1000),
@@ -165,8 +166,8 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
   const [dkimRecord, mxRecord] = move.records;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-amber-500/30">
-      <div className="flex flex-col gap-3 border-b border-amber-500/20 bg-amber-500/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="overflow-hidden rounded-lg border border-warning/30 bg-card">
+      <div className="flex flex-col gap-3 border-b border-warning/20 bg-warning/[0.06] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             Moving region
@@ -206,7 +207,7 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
         </div>
       </div>
 
-      <ol className="divide-y divide-border/40">
+      <ol className="divide-y divide-border/70">
         {dkimRecord ? (
           <li className="space-y-2 px-4 py-3">
             <div className="flex items-center justify-between gap-3">
@@ -218,9 +219,9 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
             </div>
             <div className="grid gap-2 text-xs sm:grid-cols-[6rem_1fr]">
               <span className="text-muted-foreground">Name</span>
-              <TextWithCopyButton value={dkimRecord.name} />
+              <CopyField value={dkimRecord.name} />
               <span className="text-muted-foreground">Value</span>
-              <TextWithCopyButton value={dkimRecord.value} className="max-w-90 truncate" />
+              <CopyField value={dkimRecord.value} />
             </div>
           </li>
         ) : null}
@@ -235,7 +236,7 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
             </div>
             <div className="grid gap-2 text-xs sm:grid-cols-[6rem_1fr]">
               <span className="text-muted-foreground">Value</span>
-              <TextWithCopyButton value={mxRecord.value} />
+              <CopyField value={mxRecord.value} />
               <span className="text-muted-foreground">Priority</span>
               <span>{mxRecord.priority}</span>
             </div>

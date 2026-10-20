@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     siteName: "ByteSend",
     images: [
       {
-        url: "https://embrly.ca/ibNxG/eq0hwI.png/raw",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "ByteSend – The email platform for modern teams",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ByteSend – The email platform for modern teams",
     description: "Send product, transactional and marketing emails. Pay only for what you send.",
-    images: ["https://embrly.ca/ibNxG/eq0hwI.png/raw"], 
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,

@@ -2,17 +2,14 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@bytesend/ui/src/button";
 import { ProductPreview } from "./ProductPreview";
+import { HeroBackdrop } from "./HeroBackdrop";
 
 const APP_URL = "/signup";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* A faint grid that fades out, for depth without decoration. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_70%_55%_at_50%_0%,black,transparent)]"
-      />
+      <HeroBackdrop />
 
       <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
         <div className="mx-auto max-w-3xl text-center">
@@ -21,7 +18,7 @@ export function Hero() {
             className="group mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground shadow-xs transition-colors hover:border-primary/40 hover:text-foreground"
           >
             <span className="rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-primary">New</span>
-            Local currency pricing and the Scale plan
+            Inbound email, DMARC reports and test mode
             <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
           </Link>
 

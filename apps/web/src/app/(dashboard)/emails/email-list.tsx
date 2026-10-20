@@ -16,6 +16,7 @@ import { FilterBar, SearchInput } from "@bytesend/ui/src/search-input";
 import { toast } from "@bytesend/ui/src/toaster";
 import { formatDate, formatDistanceToNow } from "date-fns";
 import { EmailStatus } from "@prisma/client";
+import { Badge } from "@bytesend/ui/src/badge";
 import { EmailStatusBadge } from "./email-status-badge";
 import EmailDetails from "./email-details";
 import dynamic from "next/dynamic";
@@ -297,7 +298,14 @@ export default function EmailsList() {
                       <p className="truncate text-xs text-muted-foreground md:hidden">{email.subject}</p>
                     </TableCell>
                     <TableCell>
-                      <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+                      <span className="flex items-center gap-1.5">
+                        <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+                        {email.isTest ? (
+                          <Badge variant="warning" title="Sent with a test API key: nothing was delivered">
+                            Test
+                          </Badge>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden max-w-0 text-muted-foreground md:table-cell">
                       <p className="truncate">{email.subject}</p>

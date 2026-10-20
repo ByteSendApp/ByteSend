@@ -6,6 +6,7 @@ import Spinner from "@bytesend/ui/src/spinner";
 import { Callout } from "@bytesend/ui/src/callout";
 import { CopyButton } from "@bytesend/ui/src/copy-field";
 import { KeyValueList } from "@bytesend/ui/src/panel";
+import { Badge } from "@bytesend/ui/src/badge";
 import { EmailStatusBadge, EmailStatusIcon } from "./email-status-badge";
 import { formatDate } from "date-fns";
 import { EmailStatus } from "@prisma/client";
@@ -24,6 +25,9 @@ import {
 } from "@bytesend/lib/src/constants/ses-errors";
 import CancelEmail from "./cancel-email";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Maximize2 } from "lucide-react";
+import { Button } from "@bytesend/ui/src/button";
 
 export default function EmailDetails({ emailId }: { emailId: string }) {
   const emailQuery = api.email.getEmail.useQuery({ id: emailId });
@@ -46,7 +50,16 @@ export default function EmailDetails({ emailId }: { emailId: string }) {
   return (
     <div className="flex h-full flex-col gap-5 overflow-auto p-1 no-scrollbar">
       <div className="space-y-1.5 pr-8">
-        <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+        <div className="flex items-center gap-1.5">
+          <EmailStatusBadge status={email.latestStatus ?? "SENT"} />
+          {email.isTest ? <Badge variant="warning">Test</Badge> : null}
+          <Button size="sm" variant="ghost" className="ml-auto h-7 gap-1.5 px-2 text-xs text-muted-foreground" asChild>
+            <Link href={`/emails/${email.id}`}>
+              <Maximize2 className="size-3.5" />
+              Open full page
+            </Link>
+          </Button>
+        </div>
         <h2 className="text-base font-semibold leading-snug text-foreground [overflow-wrap:anywhere]">
           {email.subject || "(no subject)"}
         </h2>

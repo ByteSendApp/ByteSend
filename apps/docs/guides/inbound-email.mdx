@@ -1,0 +1,144 @@
+---
+title: Receiving email
+description: "Receive email on your own domain and handle it with webhooks, the API or forwarding"
+icon: inbox
+---
+
+ByteSend can receive email as well as send it. Use it for support inboxes, reply handling ("reply to this email to comment"), parsing invoices or anything else your app needs to read.
+
+Received mail is:
+
+- sent to your app as an `email.received` [webhook](/guides/webhooks),
+- available from the API at `GET /v1/inbound/emails`,
+- shown on the **Inbox** page in the dashboard, and
+- optionally forwarded to another mailbox.
+
+Messages and attachments are kept for **30 days**, then deleted.
+
+## Your hosted address
+
+Every team gets an address that works straight away, with no DNS changes. You'll find it under **Inbox → Addresses**, for example:
+
+```
+acme@in.bytesend.cloud
+```
+
+Anything after a `+` still reaches you, so you can tell senders apart: `acme+orders@in.bytesend.cloud`, `acme+ticket-4821@in.bytesend.cloud`.
+
+## Receiving on your own domain
+
+You receive on a **subdomain** of a domain you already send from, such as `reply.acme.com`. Only that subdomain's mail comes to ByteSend: your normal mailboxes on `acme.com` (Google Workspace, Microsoft 365 and so on) keep working.
+
+<Steps>
+  <Step title="Pick a subdomain">
+    Go to **Inbox → Addresses**, choose the domain, type a subdomain (for example `reply`) and select **Set up**. The domain must already be verified for sending.
+  </Step>
+  <Step title="Add the DNS records">
+    Add the MX record shown, for example:
+
+    | Type | Name | Value | Priority |
+    | --- | --- | --- | --- |
+    | MX | `reply` | `inbound-smtp.us-east-1.amazonaws.com` | 10 |
+
+    If your domain sends from a region that can't receive mail, you'll also see a TXT record for a DKIM key. Add that too.
+  </Step>
+  <Step title="Check DNS">
+    Select **Check DNS**. Once the records are found, the status changes to **Receiving** and mail to `anything@reply.acme.com` arrives in your inbox.
+  </Step>
+</Steps>
+
+## The `email.received` webhook
+
+Add a webhook and choose the **email.received** event (under *Inbound events*). Each message is posted as JSON:
+
+```json
+{
+  "id": "call_abc123",
+  "type": "email.received",
+  "version": "2026-01-18",
+  "createdAt": "2026-10-21T09:41:13.000Z",
+  "teamId": 123,
+  "data": {
+    "id": "inb_4f1c2a9e8d7b6a5c4f3e2d1c",
+    "recipient": "support@reply.acme.com",
+    "from": "jane@example.com",
+    "fromName": "Jane Doe",
+    "to": ["support@reply.acme.com"],
+    "cc": [],
+    "replyTo": [],
+    "subject": "Where is my order?",
+    "text": "Hi, my order hasn't arrived yet...",
+    "html": "<p>Hi, my order hasn't arrived yet...</p>",
+    "messageId": "<CAB8x...@mail.gmail.com>",
+    "inReplyTo": "<0100018f...@us-east-1.amazonses.com>",
+    "inReplyToEmailId": "cm4x9...",
+    "attachments": [
+      {
+        "id": "att_9b8c7d6e5f4a3b2c1d0e9f8a",
+        "filename": "receipt.pdf",
+        "contentType": "application/pdf",
+        "size": 48213,
+        "url": "https://bytesend.cloud/api/inbound/attachments/inb_.../att_...?expires=...&sig=..."
+      }
+    ],
+    "authentication": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "spam": "pass", "virus": "pass" },
+    "domainId": 12,
+    "receivedAt": "2026-10-21T09:41:12.000Z"
+  }
+}
+```
+
+- **Replies:** when someone replies to an email you sent through ByteSend, `inReplyToEmailId` is the id of your original email, so you can thread the conversation.
+- **Attachments:** `url` downloads the file and works for **one hour**. Download what you need when the webhook arrives, or fetch the email again from the API for a fresh link.
+- **Authentication:** `spf`, `dkim` and `dmarc` say whether the sender is who they claim to be. Be careful acting on mail where these are `fail`. Messages with a virus are kept but never forwarded.
+- Verify the webhook's signature as described in [Webhooks](/guides/webhooks#signature-verification).
+
+## Fetching received mail from the API
+
+```bash
+curl https://bytesend.cloud/api/v1/inbound/emails?limit=20 \
+  -H "Authorization: Bearer bs_..."
+```
+
+Filter with `recipient`, `since` (an ISO 8601 time) and `page`. Get one message, including its text, HTML and attachment links:
+
+```bash
+curl https://bytesend.cloud/api/v1/inbound/emails/inb_4f1c2a9e8d7b6a5c4f3e2d1c \
+  -H "Authorization: Bearer bs_..."
+```
+
+API keys limited to one domain only see mail received on that domain.
+
+## Forwarding
+
+Under **Inbox → Forwarding**, forward mail to another address. A rule matches:
+
+- a full address (`support@reply.acme.com`),
+- the part before the `@` on any of your addresses (`support`), or
+- everything (`*`).
+
+Forwarded mail is sent from `forwarding@` your verified domain, with the original sender as the reply-to address, so replying from your mailbox goes to the right person. Forwarded mail counts toward your sending.
+
+## Limits
+
+| Plan | Received each month |
+| --- | --- |
+| Free | 1,000 |
+| Starter | 10,000 |
+| Lite | 20,000 |
+| Pro | 50,000 |
+| Scale | 250,000 |
+| Lifetime | 250,000 |
+
+Mail beyond your allowance isn't stored. Messages can be up to 30 MB, the most Amazon SES accepts.
+
+## Self-hosting
+
+Receiving uses Amazon SES, which only receives mail in some AWS regions (including `us-east-1`, `us-west-2` and `eu-west-1`). To turn it on:
+
+1. Create an S3 bucket in that region, with a bucket policy that lets `ses.amazonaws.com` put objects in it.
+2. Create an SNS topic in the same region and subscribe `https://<your-app>/api/inbound_callback` to it over HTTPS.
+3. Set `INBOUND_REGION`, `INBOUND_S3_BUCKET` and `INBOUND_SNS_TOPIC_ARN`. Optionally set `INBOUND_HOSTED_DOMAIN` to give every team an address on a domain you own, and point that domain's MX at `inbound-smtp.<region>.amazonaws.com`.
+4. In **Admin → SES regions**, select **Create receiving rule**.
+
+For local development, `pnpm dx:up` and `pnpm dev:local` already work: open the emulator at `http://localhost:5350` and use **Send mail to ByteSend**.

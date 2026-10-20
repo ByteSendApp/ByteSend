@@ -26,6 +26,12 @@ export async function register() {
       const { initDomainHealthJob } = await import("~/server/jobs/domain-health-job");
       await initDomainHealthJob();
 
+      const { isInboundEnabled } = await import("~/server/service/inbound-storage");
+      if (isInboundEnabled()) {
+        const { initInboundJobs } = await import("~/server/jobs/inbound-job");
+        await initInboundJobs();
+      }
+
       if (isCloud()) {
         const { initBlacklistCheckJob } = await import("~/server/jobs/blacklist-check-job");
         await initBlacklistCheckJob();

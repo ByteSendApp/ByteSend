@@ -4,6 +4,7 @@ import { AdminPageHeader } from "../_components/admin-page-header";
 import AddSesConfiguration from "./add-ses-configuration";
 import CallbackDiagnostics from "./callback-diagnostics";
 import SesConfigurations from "./ses-configurations";
+import InboundSetup from "./inbound-setup";
 
 export default function AdminSesPage() {
   return (
@@ -14,6 +15,7 @@ export default function AdminSesPage() {
         actions={<AddSesConfiguration />}
       />
       <SesConfigurations />
+      <InboundSetup />
       <CallbackDiagnostics />
     </>
   );

@@ -1,0 +1,42 @@
+---
+title: Test mode
+description: "Build and test your integration with test API keys. Nothing is delivered, but every event and webhook happens"
+icon: flask-conical
+---
+
+A test API key works exactly like a live one, except nothing is sent. Emails are accepted, show up in your dashboard marked **Test**, and go through the same events a real email would, with webhooks. Use it in development, CI and staging.
+
+## Create a test key
+
+Go to **Settings → API keys → Create API key** and choose **Test**. Test keys start with `bs_test_`:
+
+```bash
+curl https://bytesend.cloud/api/v1/emails \
+  -H "Authorization: Bearer bs_test_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "from": "hello@acme.com", "to": "jane@example.com", "subject": "Hi", "text": "Hello" }'
+```
+
+Test keys work before your domain is verified, as long as it's been added to your team. Scheduling and cancelling behave the same as with a live key.
+
+## Choosing what happens
+
+The first recipient's address decides the outcome:
+
+| Recipient contains | What happens | Webhooks |
+| --- | --- | --- |
+| anything else | Delivered | `email.sent`, `email.delivered` |
+| `bounce`, e.g. `jane+bounce@example.com` | Permanent bounce | `email.sent`, `email.bounced` |
+| `complain`, e.g. `complaint@example.com` | Delivered, then marked as spam | `email.sent`, `email.delivered`, `email.complained` |
+
+Webhook payloads for test emails include `"test": true`, so your handler can tell them apart.
+
+## What test mode doesn't touch
+
+Test emails never count toward your monthly allowance or usage, and never affect your bounce and complaint rates. A simulated bounce or complaint doesn't add the address to your suppression list.
+
+## Limits
+
+- Test keys can send **1,000 emails a day** per team.
+- Test keys can't send campaigns, because those go to real contacts. Creating, scheduling or resuming a campaign that would send returns `403`.
+- Every other API call, such as contacts or domains, works on your real data.

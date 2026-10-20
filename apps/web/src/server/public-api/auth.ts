@@ -78,5 +78,14 @@ export const getTeamFromToken = async (c: Context) => {
       logger.error({ err }, "Failed to update lastUsed on API key")
     );
 
-  return { ...team, apiKeyId: apiKey.id, apiKey: { domainId: apiKey.domainId } };
+  return { ...team, apiKeyId: apiKey.id, apiKey: { domainId: apiKey.domainId, isTest: apiKey.isTest } };
 };
+
+export function assertLiveKey(team: { apiKey: { isTest: boolean } }, action: string) {
+  if (team.apiKey.isTest) {
+    throw new ByteSendApiError({
+      code: "FORBIDDEN",
+      message: `Test API keys can't ${action}. Use a live key.`,
+    });
+  }
+}

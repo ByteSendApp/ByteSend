@@ -96,6 +96,12 @@ function createDomain(id: number, status: DomainStatus): Domain {
     dnsIssuesSince: null,
     dnsIssuesNotifiedAt: null,
     dnsCheckedAt: null,
+    inboundEnabled: false,
+    inboundSubdomain: null,
+    inboundStatus: null,
+    inboundCheckedAt: null,
+    inboundDkimSelector: null,
+    inboundPublicKey: null,
   };
 }
 

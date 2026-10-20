@@ -9,8 +9,10 @@ const PROTECTED_PREFIXES = [
     "/contacts",
     "/dashboard",
     "/dev-settings",
+    "/dmarc",
     "/domains",
     "/emails",
+    "/inbox",
     "/logs",
     "/payments",
     "/settings",
@@ -32,8 +34,6 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Sessions are stored in the database, so the edge can only check that a session cookie exists;
-    // the server validates it (and enforces bans and 2FA) on every request.
     const hasSessionCookie = SESSION_COOKIES.some((name) => request.cookies.has(name));
     if (!hasSessionCookie) {
         const loginUrl = new URL("/login", request.url);
@@ -41,7 +41,6 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
 
-    // Only populated if the app switches to JWT sessions; database sessions have no decodable token.
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     if (!token) {
         return NextResponse.next();

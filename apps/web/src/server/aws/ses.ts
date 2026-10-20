@@ -51,7 +51,7 @@ async function getIdentityArn(domain: string, region: string) {
   return `arn:aws:ses:${region}:${accountId}:identity/${domain}`;
 }
 
-function getSesClient(region: string) {
+export function getSesClient(region: string) {
   return new SESv2Client({
     region: region,
     endpoint: env.AWS_SES_ENDPOINT,
@@ -62,7 +62,7 @@ function getSesClient(region: string) {
   });
 }
 
-function generateKeyPair() {
+export function generateKeyPair() {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", {
     modulusLength: 2048,
     publicKeyEncoding: {
@@ -369,10 +369,6 @@ export async function getConfigurationSetEventDestinations(configName: string, r
   }));
 }
 
-/**
- * Makes the ByteSend event destination on a configuration set enabled, pointed at `topicArn` and
- * publishing `eventTypes`, creating the destination (or the whole configuration set) if it's gone.
- */
 export async function repairConfigurationSetEventDestination(
   configName: string,
   topicArn: string,

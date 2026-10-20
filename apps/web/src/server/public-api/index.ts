@@ -33,6 +33,8 @@ import reputationMetricsData from "./api/analytics/reputation-metrics-data";
 import bulkAddContactsHandle from "./api/contacts/bulk-add-contacts";
 import bulkDeleteContacts from "./api/contacts/bulk-delete-contacts";
 import smtpAuth from "./api/smtp/smtp-auth";
+import listInbound from "./api/inbound/list-inbound";
+import getInbound from "./api/inbound/get-inbound";
 
 
 export const app = getApp();
@@ -43,6 +45,10 @@ createDomain(app);
 verifyDomain(app);
 getDomain(app);
 deleteDomain(app);
+
+/**Inbound email APIs */
+listInbound(app);
+getInbound(app);
 
 /**Email related APIs */
 getEmail(app);

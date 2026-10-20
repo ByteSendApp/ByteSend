@@ -5,16 +5,20 @@ import { smallNanoid } from "../nanoid";
 import { createSecureHash, verifySecureHash } from "../crypto";
 import { logger } from "../logger/log";
 
+export const TEST_KEY_PREFIX = "bs_test_";
+
 export async function addApiKey({
   name,
   permission,
   teamId,
   domainId,
+  isTest = false,
 }: {
   name: string;
   permission: ApiPermission;
   teamId: number;
   domainId?: number;
+  isTest?: boolean;
 }) {
   try {
     if (domainId !== undefined) {
@@ -35,7 +39,8 @@ export async function addApiKey({
     const token = randomBytes(16).toString("hex");
     const hashedToken = await createSecureHash(token);
 
-    const apiKey = `bs_${clientId}_${token}`;
+    const prefix = isTest ? TEST_KEY_PREFIX : "bs_";
+    const apiKey = `${prefix}${clientId}_${token}`;
 
     await db.apiKey.create({
       data: {
@@ -44,8 +49,9 @@ export async function addApiKey({
         teamId,
         domainId,
         tokenHash: hashedToken,
-        partialToken: `${apiKey.slice(0, 6)}...${apiKey.slice(-3)}`,
+        partialToken: `${apiKey.slice(0, prefix.length + 3)}...${apiKey.slice(-3)}`,
         clientId,
+        isTest,
       },
     });
     return apiKey;
@@ -56,9 +62,8 @@ export async function addApiKey({
 }
 
 export async function getTeamAndApiKey(apiKey: string) {
-  const parts = apiKey.split("_");
-  const clientId = parts[1];
-  const token = parts[2];
+  const isTestKey = apiKey.startsWith(TEST_KEY_PREFIX);
+  const [clientId, token] = isTestKey ? apiKey.slice(TEST_KEY_PREFIX.length).split("_") : apiKey.split("_").slice(1);
 
   if (!clientId || !token) {
     return null;
@@ -75,7 +80,7 @@ export async function getTeamAndApiKey(apiKey: string) {
     },
   });
 
-  if (!apiKeyRow) {
+  if (!apiKeyRow || apiKeyRow.isTest !== isTestKey) {
     return null;
   }
 

@@ -5,6 +5,7 @@ import { convert as htmlToText } from "html-to-text";
 import { getConfigurationSetName } from "~/utils/ses-utils";
 import { db } from "../db";
 import { sendRawEmail } from "../aws/ses";
+import { simulateTestEmail } from "./test-mode-service";
 import { getRedis, BULL_PREFIX } from "../redis";
 import { DEFAULT_QUEUE_OPTIONS } from "../queue/queue-constants";
 import { logger } from "../logger/log";
@@ -357,6 +358,11 @@ async function executeEmail(job: QueueEmailJob) {
       { emailId: job.data.emailId },
       `[EmailQueueService]: Email not found, skipping`
     );
+    return;
+  }
+
+  if (email.isTest) {
+    await simulateTestEmail(email);
     return;
   }
 

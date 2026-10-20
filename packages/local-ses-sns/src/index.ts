@@ -5,10 +5,10 @@ import { simpleParser, type AddressObject } from "mailparser";
 import { confirmSubscription, emitEvents, outcomeFor } from "./events.ts";
 import { ACCOUNT_ID, addMessage, persist, state, topicArn, type CapturedMessage } from "./store.ts";
 import { renderInbox, renderMessage } from "./ui.ts";
+import { deliverInbound, sampleDmarcReport } from "./inbound.ts";
 
 const app = new Hono();
 
-/** The SDK signs each request for a region; ARNs and captured mail use it. */
 function regionOf(c: Context) {
   const auth = c.req.header("authorization") ?? "";
   return /Credential=[^/]+\/\d+\/([a-z0-9-]+)\//.exec(auth)?.[1] ?? process.env.AWS_REGION ?? "us-east-1";
@@ -46,9 +46,6 @@ function ensureIdentity(name: string, region: string) {
   return (state.identities[name] ??= { name, region, createdAt: new Date().toISOString() });
 }
 
-/* ---------- SES v2 ---------- */
-
-// Every identity counts as verified, so local domains work without real DNS.
 app.post("/v2/email/identities", async (c) => {
   const body = await c.req.json<{ EmailIdentity: string; ConfigurationSetName?: string; DkimSigningAttributes?: { DomainSigningSelector?: string } }>();
   state.identities[body.EmailIdentity] = {
@@ -217,8 +214,6 @@ app.post("/v2/email/outbound-emails", async (c) => {
   return c.json({ MessageId: id });
 });
 
-/* ---------- SNS and STS (form-encoded, XML replies) ---------- */
-
 const xml = (c: Context, action: string, result: string, ns = "http://sns.amazonaws.com/doc/2010-03-31/") =>
   c.body(
     `<${action}Response xmlns="${ns}"><${action}Result>${result}</${action}Result><ResponseMetadata><RequestId>${randomUUID()}</RequestId></ResponseMetadata></${action}Response>`,
@@ -283,9 +278,45 @@ app.post("/", async (c) => {
   }
 });
 
-/* ---------- inbox ---------- */
+app.get("/", (c) => c.html(renderInbox(state.messages, { status: c.req.query("inbound"), detail: c.req.query("detail") })));
 
-app.get("/", (c) => c.html(renderInbox(state.messages)));
+app.post("/inbound", async (c) => {
+  const form = await c.req.parseBody();
+  const file = form.attachment;
+  const result = await deliverInbound({
+    from: String(form.from || "sender@example.com"),
+    to: String(form.to || ""),
+    subject: String(form.subject || "Test message"),
+    text: String(form.text || ""),
+    attachment:
+      file instanceof File && file.size > 0
+        ? { filename: file.name, contentType: file.type || "application/octet-stream", content: Buffer.from(await file.arrayBuffer()) }
+        : undefined,
+  });
+  console.log(`[local-ses-sns] inbound → ${form.to}: ${result.status} ${result.body}`);
+  const accepted = result.status >= 200 && result.status < 300;
+  return c.redirect(`/?inbound=${accepted ? "sent" : "failed"}&detail=${encodeURIComponent(`${result.status} ${result.body}`.slice(0, 200))}`);
+});
+
+app.post("/dmarc", async (c) => {
+  const form = await c.req.parseBody();
+  const domain = String(form.domain || "").trim().toLowerCase();
+  const result = await deliverInbound({
+    from: "noreply-dmarc-support@google.com",
+    to: String(form.to || ""),
+    subject: `Report domain: ${domain} Submitter: google.com Report-ID: ${Date.now()}`,
+    text: "This is an aggregate report from google.com.",
+    attachment: sampleDmarcReport(domain, String(form.selector || "bytesend")),
+  });
+  console.log(`[local-ses-sns] DMARC report for ${domain} → ${form.to}: ${result.status} ${result.body}`);
+  const accepted = result.status >= 200 && result.status < 300;
+  return c.redirect(`/?inbound=${accepted ? "sent" : "failed"}&detail=${encodeURIComponent(`${result.status} ${result.body}`.slice(0, 200))}`);
+});
+
+app.post("/api/inbound", async (c) => {
+  const body = await c.req.json<{ from?: string; to: string; subject?: string; text?: string; html?: string }>();
+  return c.json(await deliverInbound({ from: body.from ?? "sender@example.com", to: body.to, subject: body.subject ?? "Test message", text: body.text ?? "", html: body.html }));
+});
 app.get("/messages/:id", (c) => {
   const message = state.messages.find((m) => m.id === c.req.param("id"));
   return message ? c.html(renderMessage(message)) : c.text("Not found", 404);
@@ -303,6 +334,5 @@ app.all("*", (c) => {
   return c.json({});
 });
 
-// The Docker image sets PORT=3000 and maps it to 5350; run directly it uses 5350, clear of the web app on 3000.
 const port = Number(process.env.PORT ?? 5350);
 serve({ fetch: app.fetch, port }, () => console.log(`[local-ses-sns] listening on :${port}, inbox at http://localhost:${port}/`));

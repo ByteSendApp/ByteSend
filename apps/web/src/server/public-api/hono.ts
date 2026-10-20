@@ -12,7 +12,7 @@ import { logger } from "../logger/log";
 
 export type AppEnv = {
   Variables: {
-    team: Team & { apiKeyId: number; apiKey: { domainId: number | null } };
+    team: Team & { apiKeyId: number; apiKey: { domainId: number | null; isTest: boolean } };
   };
 };
 

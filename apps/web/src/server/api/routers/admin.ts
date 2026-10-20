@@ -17,6 +17,8 @@ import { createCheckoutSessionForTeam, type CheckoutPlan } from "~/server/billin
 import { TeamService } from "~/server/service/team-service";
 import { AdminOverviewService } from "~/server/service/admin-overview-service";
 import { AdminAuditService, diffFields } from "~/server/service/admin-audit-service";
+import { ensureReceivingRules, inboundMxHost } from "~/server/aws/ses-receiving";
+import { isInboundEnabled } from "~/server/service/inbound-storage";
 import { SesCallbackDiagnosticsService } from "~/server/service/ses-callback-diagnostics-service";
 import { BanService } from "~/server/service/ban-service";
 import { BlocklistService, normalizeBlocklistValue } from "~/server/service/blocklist-service";
@@ -172,6 +174,27 @@ export const adminRouter = createTRPCRouter({
       }
       return AdminDeliverabilityService.setTeamBlocked({ actor: actorFrom(ctx), ...input });
     }),
+
+  getInboundSetup: adminProcedure.query(() => ({
+    enabled: isInboundEnabled(),
+    region: env.INBOUND_REGION,
+    bucket: env.INBOUND_S3_BUCKET ?? null,
+    topicArn: env.INBOUND_SNS_TOPIC_ARN ?? null,
+    hostedDomain: env.INBOUND_HOSTED_DOMAIN ?? null,
+    mxHost: inboundMxHost(),
+  })),
+
+  setupInbound: adminProcedure.mutation(async ({ ctx }) => {
+    const result = await ensureReceivingRules();
+    await AdminAuditService.record({
+      actor: actorFrom(ctx),
+      action: "ses.inbound_setup",
+      targetType: "ses",
+      targetId: result.region,
+      metadata: result,
+    });
+    return result;
+  }),
 
   setTeamSendingApproved: adminProcedure
     .input(z.object({ teamId: z.number().int(), approved: z.boolean() }))

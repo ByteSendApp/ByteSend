@@ -68,7 +68,7 @@ export function parseDomainStatus(status?: string | null): DomainStatus {
   return DomainStatus.NOT_STARTED;
 }
 
-function buildDnsRecords(domain: Domain): DomainDnsRecord[] {
+export function buildDnsRecords(domain: Domain): DomainDnsRecord[] {
   const subdomainSuffix = domain.subdomain ? `.${domain.subdomain}` : "";
   const mailDomain = `mail${subdomainSuffix}`;
   const dkimSelector = domain.dkimSelector ?? "bytesend";
@@ -461,7 +461,11 @@ function buildDomainPayload(domain: Domain): DomainPayload {
   };
 }
 
-export async function validateDomainFromEmail(email: string, teamId: number) {
+export async function validateDomainFromEmail(
+  email: string,
+  teamId: number,
+  { requireVerified = true }: { requireVerified?: boolean } = {},
+) {
   const match = email.match(/<([^>]+)>/);
   let fromDomain: string | undefined;
 
@@ -495,7 +499,7 @@ export async function validateDomainFromEmail(email: string, teamId: number) {
     });
   }
 
-  if (domain.status !== "SUCCESS") {
+  if (requireVerified && domain.status !== "SUCCESS") {
     throw new ByteSendApiError({
       code: "BAD_REQUEST",
       message: `Domain: ${fromDomain} is not verified`,
@@ -510,7 +514,7 @@ export async function validateApiKeyDomainAccess(
   teamId: number,
   apiKey: ApiKey & { domain?: { name: string } | null },
 ) {
-  const domain = await validateDomainFromEmail(email, teamId);
+  const domain = await validateDomainFromEmail(email, teamId, { requireVerified: !apiKey.isTest });
 
   if (!apiKey.domainId) {
     return domain;

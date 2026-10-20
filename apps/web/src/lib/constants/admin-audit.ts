@@ -4,6 +4,7 @@ export const ADMIN_AUDIT_ACTIONS = {
   "ses.delete": "Deleted SES region",
   "ses.toggle": "Toggled SES region",
   "ses.repair": "Repaired SES callbacks",
+  "ses.inbound_setup": "Set up inbound receiving",
   "user.beta.update": "Changed beta access",
   "user.admin.update": "Changed admin role",
   "user.ban": "Banned user",

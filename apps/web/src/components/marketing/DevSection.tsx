@@ -164,6 +164,8 @@ puts res.body`;
                                 "REST API with Bearer auth and an OpenAPI spec",
                                 "Idempotency keys for safe retries",
                                 "Signed webhooks for every event",
+                                "Test keys that simulate delivery, bounces and complaints",
+                                "Receive email by webhook or API",
                                 "Drop-in SMTP relay: one config change",
                             ].map((item) => (
                                 <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">

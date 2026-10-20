@@ -112,6 +112,9 @@
             "group": "Integration Guides",
             "pages": [
               "guides/webhooks",
+              "guides/inbound-email",
+              "guides/dmarc-reports",
+              "guides/test-mode",
               "guides/error-codes"
             ]
           }
@@ -135,6 +138,13 @@
               "api-reference/emails/batch-email",
               "api-reference/emails/update-schedule",
               "api-reference/emails/cancel-schedule"
+            ]
+          },
+          {
+            "group": "Inbound",
+            "pages": [
+              "api-reference/inbound/list-inbound-emails",
+              "api-reference/inbound/get-inbound-email"
             ]
           },
           {

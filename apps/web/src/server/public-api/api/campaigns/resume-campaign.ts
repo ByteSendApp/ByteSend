@@ -1,3 +1,4 @@
+import { assertLiveKey } from "~/server/public-api/auth";
 import { createRoute, z } from "@hono/zod-openapi";
 import { PublicAPIApp } from "~/server/public-api/hono";
 import {
@@ -39,6 +40,7 @@ function resumeCampaignHandle(app: PublicAPIApp) {
   app.openapi(route, async (c) => {
     const team = c.var.team;
     const campaignId = c.req.param("campaignId");
+    assertLiveKey(team, "send campaigns");
 
     await resumeCampaign({
       campaignId,

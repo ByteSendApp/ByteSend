@@ -46,6 +46,12 @@ const STYLE = `
   .tabs a { padding:4px 10px; border-radius:6px; font-size:13px; color:var(--muted); }
   .tabs a.on { background:color-mix(in srgb, var(--fg) 8%, transparent); color:var(--fg); }
   .stack > * + * { margin-top:12px; }
+  .receive { margin-bottom:16px; } .receive summary { padding:12px 16px; cursor:pointer; font-weight:500; font-size:13px; }
+  .receive form { display:grid; gap:10px; padding:0 16px 16px; } .receive label { display:grid; gap:4px; font-size:12px; color:var(--muted); }
+  .receive input, .receive textarea { font:inherit; font-size:13px; color:var(--fg); background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:6px 8px; }
+  .receive button { justify-self:start; background:var(--accent); color:#fff; border-color:var(--accent); }
+  .notice { font-size:13px; padding:10px 12px; border-radius:6px; border:1px solid var(--border); margin:0 0 12px; }
+  .notice.ok { color:var(--ok); } .notice.bad { color:var(--bad); }
   @media (max-width:640px) { .hide-sm { display:none; } }
 `;
 
@@ -54,7 +60,7 @@ function page(title: string, body: string) {
 <title>${esc(title)}</title><style>${STYLE}</style></head><body><main>${body}</main></body></html>`;
 }
 
-export function renderInbox(messages: CapturedMessage[]) {
+export function renderInbox(messages: CapturedMessage[], inbound: { status?: string; detail?: string } = {}) {
   const rows = messages
     .map(
       (m) => `<tr>
@@ -70,13 +76,37 @@ export function renderInbox(messages: CapturedMessage[]) {
     "Local SES inbox",
     `<header><div><h1>Local SES inbox</h1><p class="sub">Mail ByteSend sent through this emulator. Nothing here leaves your machine.</p></div>
     <button onclick="fetch('/api/messages',{method:'DELETE'}).then(()=>location.reload())">Clear</button></header>
-    <div class="card">${
-      messages.length
-        ? `<table><thead><tr><th>Message</th><th>Outcome</th><th class="hide-sm">Received</th></tr></thead><tbody>${rows}</tbody></table>`
-        : `<div class="empty">No mail yet. Send something from ByteSend and it shows up here.<br><br>
+    ${inbound.status ? `<p class="notice ${inbound.status === "sent" ? "ok" : "bad"}">${inbound.status === "sent" ? "Delivered to ByteSend. Check the Inbox page." : `ByteSend didn't accept it: ${esc(inbound.detail ?? "")}`}</p>` : ""}
+    <details class="card receive"><summary>Send mail to ByteSend (test receiving)</summary>
+      <form method="post" action="/inbound" enctype="multipart/form-data">
+        <label>To <input name="to" required placeholder="acme@in.bytesend.test or support@reply.yourdomain.com"></label>
+        <label>From <input name="from" value="Jane Doe &lt;jane@example.com&gt;"></label>
+        <label>Subject <input name="subject" value="Hello from the emulator"></label>
+        <label>Message <textarea name="text" rows="4">This is a test message.</textarea></label>
+        <label>Attachment <input type="file" name="attachment"></label>
+        <button type="submit">Deliver</button>
+      </form>
+    </details>
+    <details class="card receive"><summary>Send a sample DMARC report</summary>
+      <form method="post" action="/dmarc">
+        <label>To (your DMARC address) <input name="to" required placeholder="acme+dmarc@in.bytesend.test"></label>
+        <label>Domain the report is about <input name="domain" required placeholder="a domain on your team, e.g. acme.com"></label>
+        <button type="submit">Deliver report</button>
+      </form>
+    </details>
+    <div class="card">${messages.length
+      ? `<table><thead><tr><th>Message</th><th>Outcome</th><th class="hide-sm">Received</th></tr></thead><tbody>${rows}</tbody></table>`
+      : `<div class="empty">No mail yet. Send something from ByteSend and it shows up here.<br><br>
            Tip: send to <code>bounce@simulator.amazonses.com</code> or <code>you+complaint@example.com</code> to test bounces and complaints.</div>`
     }</div>
-    <script>setTimeout(() => location.reload(), 5000)</script>`,
+    <script>
+      const seen = ${JSON.stringify(messages.map((m) => m.id).join(","))};
+      setInterval(async () => {
+        if (document.querySelector("details.receive[open]")) return;
+        const latest = await fetch("/api/messages").then((r) => r.json()).catch(() => null);
+        if (latest && latest.map((m) => m.id).join(",") !== seen) location.reload();
+      }, 5000);
+    </script>`,
   );
 }
 

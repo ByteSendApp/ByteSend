@@ -23,6 +23,7 @@ import { Switch } from "@bytesend/ui/src/switch";
 import DeleteDomain from "./delete-domain";
 import { DnsStatusBadge } from "./dns-status-badge";
 import { RegionMoveCard } from "./region-move-card";
+import { CloudflareSetup } from "./cloudflare-setup";
 import { Button } from "@bytesend/ui/src/button";
 import { toast } from "@bytesend/ui/src/toaster";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -250,6 +251,7 @@ export default function DomainItemPage({
         flush
         title="DNS records"
         description="Add these at your DNS provider (Cloudflare, Route 53, GoDaddy…). Copy each value exactly."
+        actions={<CloudflareSetup domainId={domain.id} domainName={domain.name} />}
       >
         <div className="hidden md:block">
           <Table>

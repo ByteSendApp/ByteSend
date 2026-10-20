@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@bytesend/ui/src/select";
+import { ChevronDown } from "lucide-react";
 import { FaRegCircleDot } from "react-icons/fa6";
 import { SiGo, SiPhp, SiPython, SiRuby, SiRust, SiTypescript } from "react-icons/si";
 
@@ -47,22 +41,25 @@ export function LangToggle({
     }
   }, [active, containerId]);
 
+  const activeKind = languages.find((l) => l.key === active)?.kind ?? "";
+
   return (
-    <Select value={active} onValueChange={setActive}>
-      <SelectTrigger className="h-8 min-w-40 bg-background text-xs sm:min-w-44">
-        <SelectValue placeholder="Select language" />
-      </SelectTrigger>
-      <SelectContent align="end" className="min-w-44">
+    <div className="relative">
+      <LangIcon kind={activeKind} className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+      <select
+        aria-label="Code language"
+        value={active}
+        onChange={(e) => setActive(e.target.value)}
+        className="h-8 min-w-40 cursor-pointer appearance-none rounded-md border border-input bg-background pl-8 pr-8 text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-44"
+      >
         {languages.map((l) => (
-          <SelectItem key={l.key} value={l.key} className="text-xs">
-            <span className="inline-flex items-center gap-2">
-              <LangIcon kind={l.kind} className="h-3.5 w-3.5 shrink-0" />
-              {l.label}
-            </span>
-          </SelectItem>
+          <option key={l.key} value={l.key}>
+            {l.label}
+          </option>
         ))}
-      </SelectContent>
-    </Select>
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    </div>
   );
 }
 

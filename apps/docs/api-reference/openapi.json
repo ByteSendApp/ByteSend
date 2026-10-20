@@ -2738,6 +2738,276 @@
           }
         }
       }
+    },
+    "/v1/inbound/emails": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "example": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only mail sent to this address",
+              "example": "support@reply.acme.com"
+            },
+            "required": false,
+            "name": "recipient",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Only mail received after this time (ISO 8601)"
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Received emails, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "recipient": {
+                            "type": "string"
+                          },
+                          "from": {
+                            "type": "string"
+                          },
+                          "fromName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "subject": {
+                            "type": "string"
+                          },
+                          "attachmentCount": {
+                            "type": "number"
+                          },
+                          "inReplyToEmailId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "receivedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "recipient",
+                          "from",
+                          "fromName",
+                          "subject",
+                          "attachmentCount",
+                          "inReplyToEmailId",
+                          "receivedAt"
+                        ]
+                      }
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "hasMore"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbound/emails/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "example": "inb_4f1c2a9e8d7b6a5c4f3e2d1c"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A received email, with signed links to its attachments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "recipient": {
+                      "type": "string"
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "fromName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "to": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "cc": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "replyTo": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "subject": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "html": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "messageId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "inReplyTo": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "inReplyToEmailId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "attachments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "filename": {
+                            "type": "string"
+                          },
+                          "contentType": {
+                            "type": "string"
+                          },
+                          "size": {
+                            "type": "number"
+                          },
+                          "url": {
+                            "type": "string",
+                            "description": "Signed download link, valid for one hour"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "filename",
+                          "contentType",
+                          "size"
+                        ]
+                      }
+                    },
+                    "authentication": {
+                      "type": "object",
+                      "properties": {
+                        "spf": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dkim": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dmarc": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "spam": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "virus": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "domainId": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "receivedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "recipient",
+                    "from",
+                    "to",
+                    "cc",
+                    "replyTo",
+                    "subject",
+                    "attachments",
+                    "authentication",
+                    "receivedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

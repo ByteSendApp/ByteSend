@@ -29,6 +29,7 @@ import {
   ContactEvents,
   DomainEvents,
   EmailEvents,
+  InboundEvents,
   WebhookEvents,
   type WebhookEventType,
 } from "@bytesend/lib/src/webhook/webhook-events";
@@ -62,6 +63,7 @@ const eventGroups: {
   { label: "Contact events", events: ContactEvents },
   { label: "Domain events", events: DomainEvents },
   { label: "Email events", events: EmailEvents },
+  { label: "Inbound events", events: InboundEvents },
 ];
 
 export function AddWebhook() {

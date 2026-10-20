@@ -1,3 +1,4 @@
+import { assertLiveKey } from "~/server/public-api/auth";
 import { createRoute, z } from "@hono/zod-openapi";
 import { PublicAPIApp } from "~/server/public-api/hono";
 import {
@@ -52,6 +53,7 @@ function scheduleCampaign(app: PublicAPIApp) {
     const team = c.var.team;
     const campaignId = c.req.param("campaignId");
     const body: CampaignScheduleInput = c.req.valid("json");
+    assertLiveKey(team, "send campaigns");
 
     await scheduleCampaignService({
       campaignId,

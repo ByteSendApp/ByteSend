@@ -11,6 +11,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2026-10-19
+
+### Added
+- **Dashboard overview**: the dashboard home now opens with a getting-started checklist, sending status (and exactly why sending is limited, when it is), usage against the monthly and daily limits, 7-day bounce and complaint rates against the pause thresholds, domain health and recent emails, above the existing analytics
+- **Domain DNS monitoring**: verified domains are re-checked twice a day, and if their DKIM, SPF or MAIL FROM records change, team admins are emailed (once the problem shows on two checks in a row) and again when it's fixed. The domain page shows the problem while it lasts
+- **Usage alerts for paid plans**: teams on paid plans are told at 80% and 100% of the emails included in their plan, once each per month
+- **Team notifications work**: Discord, Slack, Teams, Telegram and webhook providers now receive events. Previously nothing was ever sent to them. Domain verified/failed, DNS problems, usage alerts and campaign started/completed go to every provider. Per-email events (sent, delivered, bounced, complained, opened, clicked) and contact events are opt-in per provider and capped at 20 per minute per provider, so a busy team can't flood a channel
+- **Domain age**: new sending domains are looked up over RDAP. Domains registered in the last 30 days score higher in spam protection, and admins are alerted when one is added
+- Admins can approve a new team's sending early from the team page
+- **Scale plan**: $90/mo with 500,000 emails included, 30 domains and 50 team members, and the lowest overage rates
+- **Local prices and tax**: Checkout shows set prices in pounds and euros for UK and European customers, and can add VAT and sales tax with Stripe Tax (`STRIPE_AUTOMATIC_TAX=true`), including VAT number collection for businesses
+
+### Changed
+- **New pricing, now in US dollars**: Starter (was Hobby) $5/mo for 25,000 emails, Pro $20/mo for 100,000 and Scale $90/mo for 500,000, with lower overage rates. Existing subscribers keep the price they signed up at
+- **Free plan** now includes 5,000 emails a month and 200 a day (was 12,500 a month and 5,000 a day)
+- Lite and Lifetime are no longer sold. Teams already on them keep their plan, limits and price
+- **New-account limit**: free teams can send 50 emails a day during their first 7 days. Paying teams, custom plans and admin-approved teams are exempt
+- The admin panel now uses the main sidebar for its sections instead of a second navigation column
+- "Analytics" in the sidebar is now "Overview"
+- **New logo**: the Ribbon (an envelope inside a send arrow) is the main logo, and the Send B monogram is the app icon, favicon and team badge. Both are in `public/brand/` as SVGs, wordmarks, app icons and avatars
+
+### Fixed
+- A subscription's plan is read from its Stripe price, so re-seeding Stripe prices can no longer drop an existing subscriber to the free plan
+- Changing plan in the Stripe customer portal now moves the overage prices to the new plan too. Previously only the monthly price changed, so extra emails kept being billed at the old plan's rates
+- Removed the unused `stripe-integration.ts`, which no longer compiled
+- `docker/prod/compose.yml` and the Docker README pulled `bytesend/web` and `bytesend/smtp`, which don't exist; they now use the published `bytesend/bytesend` and `bytesend/smtp-proxy` images
+- The plans docs listed out-of-date limits and prices (including a 100 emails/month free tier, missing Hobby and Lite plans, and annual billing that isn't offered); they now match the plans in the app
+- Sheets and dialogs on phones no longer run off the edge of the screen, and tall dialogs scroll instead of overflowing
+- The logo in the site header, footer, sidebar, login, profile setup and loading screens is now the crisp vector mark, instead of an image with a dark tile baked in
+- Errors from notification provider settings (e.g. "Provider not found", invalid webhook URLs) now reach the dashboard and API with their message instead of an empty error
+
+---
+
 ## [0.6.0] - 2026-10-19
 
 ### Added
@@ -948,7 +981,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.3...v0.4.4

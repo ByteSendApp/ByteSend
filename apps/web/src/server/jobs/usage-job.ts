@@ -12,7 +12,7 @@ import { Plan } from "@prisma/client";
 
 const USAGE_QUEUE_NAME = "usage-reporting";
 
-const METERED_PLANS: Plan[] = ["HOBBY", "LITE", "BASIC"];
+const METERED_PLANS: Plan[] = ["HOBBY", "LITE", "BASIC", "SCALE"];
 
 const usageQueue = new Queue(USAGE_QUEUE_NAME, {
   connection: getRedis(),

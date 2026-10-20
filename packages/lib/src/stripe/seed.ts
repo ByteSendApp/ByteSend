@@ -16,7 +16,31 @@ export const METER_EVENT_NAMES = {
 } as const;
 
 /** Plans that use Stripe metered overage billing (excludes FREE and LIFETIME) */
-const METERED_PLANS: PlanType[] = ["HOBBY", "LITE", "BASIC"];
+const METERED_PLANS: PlanType[] = ["HOBBY", "BASIC", "SCALE"];
+
+/**
+ * Tags every price this version of the seed creates. Prices are matched on it, so changing the
+ * amounts means bumping this: the seed then creates new prices instead of reusing old ones, and
+ * existing subscriptions stay on the prices they signed up with.
+ */
+export const PRICING_VERSION = "2026-10-usd";
+
+/** Stripe's currency_options for the GBP/EUR versions of a USD price. */
+function currencyOptions(
+  local: Partial<Record<"gbp" | "eur", number>> | undefined,
+  key: "unit_amount" | "unit_amount_decimal",
+): Record<string, { unit_amount?: number; unit_amount_decimal?: string; tax_behavior?: "exclusive" }> | undefined {
+  if (!local) return undefined;
+  const options: Record<string, { unit_amount?: number; unit_amount_decimal?: string; tax_behavior?: "exclusive" }> = {};
+  for (const [currency, amount] of Object.entries(local)) {
+    if (amount === undefined) continue;
+    options[currency] =
+      key === "unit_amount"
+        ? { unit_amount: amount, tax_behavior: "exclusive" }
+        : { unit_amount_decimal: (amount * 100).toFixed(4), tax_behavior: "exclusive" };
+  }
+  return Object.keys(options).length ? options : undefined;
+}
 
 export interface StripeProductMapping {
   plan: PlanType;
@@ -115,6 +139,12 @@ export async function syncPlansToStripe(
         const plan = planType as PlanType;
         const productName = `${config.name} (${environment})`;
 
+        // Legacy plans keep the prices their customers already have; nothing new is created.
+        if (PLANS[plan].legacy) {
+          console.log(`Skipping legacy plan: ${plan}`);
+          continue;
+        }
+
         console.log(`Syncing plan: ${plan}`);
 
         // Search active products only (archived products are ignored)
@@ -162,31 +192,19 @@ export async function syncPlansToStripe(
         // ── Base subscription / one-time prices ──
         if (plan === "FREE") {
           console.log(`  └─ Free plan, no base price or metering`);
-        } else if (plan === "LIFETIME") {
-          const price = await createOrUpdatePrice(stripe, {
-            productId: product.id,
-            amount: config.priceOneTime ?? 6000,
-            currency: "cad",
-            billingScheme: "per_unit",
-            recurring: null,
-            nickname: `${config.name} — Lifetime access (one-time)`,
-            metadata: { type: "one-time", plan },
-          });
-          priceIds.oneTime = price.id;
-          console.log(`  └─ One-time: CA$${((config.priceOneTime ?? 6000) / 100).toFixed(2)} → ${price.id}`);
         } else {
-          // HOBBY, LITE, BASIC — monthly subscription
           const monthlyPrice = await createOrUpdatePrice(stripe, {
             productId: product.id,
             amount: config.priceMonthly!,
-            currency: "cad",
+            currency: "usd",
+            currencyOptions: currencyOptions(PLANS[plan].localMonthlyPrice, "unit_amount"),
             billingScheme: "per_unit",
             recurring: { interval: "month", usageType: "licensed" },
-            nickname: `${config.name} — Monthly subscription`,
-            metadata: { type: "monthly", plan },
+            nickname: `${config.name} (monthly)`,
+            metadata: { type: "monthly", plan, pricing: PRICING_VERSION },
           });
           priceIds.monthly = monthlyPrice.id;
-          console.log(`  └─ Monthly: CA$${(config.priceMonthly! / 100).toFixed(2)}/mo → ${monthlyPrice.id}`);
+          console.log(`  └─ Monthly: $${(config.priceMonthly! / 100).toFixed(2)}/mo → ${monthlyPrice.id}`);
         }
 
         // ── Metered overage prices (HOBBY, LITE, BASIC only) ──
@@ -199,26 +217,40 @@ export async function syncPlansToStripe(
           const marketingPrice = await createOrUpdateMeterPrice(stripe, {
             productId: product.id,
             unitAmountDecimal: marketingCents,
-            currency: "cad",
+            currency: "usd",
+            currencyOptions: currencyOptions(
+              planData.localUsageMetering && {
+                gbp: planData.localUsageMetering.gbp?.marketing,
+                eur: planData.localUsageMetering.eur?.marketing,
+              },
+              "unit_amount_decimal",
+            ),
             meterId: marketingMeter.id,
-            nickname: `Marketing email overage (CA$${planData.usageMetering.marketing}/email)`,
-            metadata: { type: "marketing-usage", plan },
+            nickname: `Marketing email overage ($${planData.usageMetering.marketing}/email)`,
+            metadata: { type: "marketing-usage", plan, pricing: PRICING_VERSION },
           });
           priceIds.marketingUsage = marketingPrice.id;
-          console.log(`  └─ Marketing overage: CA$${planData.usageMetering.marketing}/email → ${marketingPrice.id}`);
+          console.log(`  └─ Marketing overage: $${planData.usageMetering.marketing}/email → ${marketingPrice.id}`);
 
           // Transactional metered price — references the transactional meter
           const transactionalCents = (planData.usageMetering.transactional * 100).toFixed(4);
           const transactionalPrice = await createOrUpdateMeterPrice(stripe, {
             productId: product.id,
             unitAmountDecimal: transactionalCents,
-            currency: "cad",
+            currency: "usd",
+            currencyOptions: currencyOptions(
+              planData.localUsageMetering && {
+                gbp: planData.localUsageMetering.gbp?.transactional,
+                eur: planData.localUsageMetering.eur?.transactional,
+              },
+              "unit_amount_decimal",
+            ),
             meterId: transactionalMeter.id,
-            nickname: `Transactional email overage (CA$${planData.usageMetering.transactional}/email)`,
-            metadata: { type: "transactional-usage", plan },
+            nickname: `Transactional email overage ($${planData.usageMetering.transactional}/email)`,
+            metadata: { type: "transactional-usage", plan, pricing: PRICING_VERSION },
           });
           priceIds.transactionalUsage = transactionalPrice.id;
-          console.log(`  └─ Transactional overage: CA$${planData.usageMetering.transactional}/email → ${transactionalPrice.id}`);
+          console.log(`  └─ Transactional overage: $${planData.usageMetering.transactional}/email → ${transactionalPrice.id}`);
         }
 
         products.push({
@@ -265,6 +297,7 @@ interface CreatePriceParams {
   amount?: number | null;
   unitAmountDecimal?: string;
   currency: string;
+  currencyOptions?: Record<string, { unit_amount?: number; unit_amount_decimal?: string; tax_behavior?: "exclusive" }>;
   billingScheme: "per_unit";
   recurring: {
     interval: "month" | "year";
@@ -284,15 +317,15 @@ async function createOrUpdatePrice(
     amount,
     unitAmountDecimal,
     currency,
+    currencyOptions: options,
     billingScheme,
     recurring,
     nickname,
     metadata,
   } = params;
 
-  // Search for existing price with matching metadata
   const existingPrices = await stripe.prices.search({
-    query: `product:'${productId}' AND metadata['type']:'${metadata.type}'`,
+    query: `product:'${productId}' AND active:'true' AND metadata['type']:'${metadata.type}' AND metadata['pricing']:'${PRICING_VERSION}'`,
     limit: 1,
   });
 
@@ -304,8 +337,11 @@ async function createOrUpdatePrice(
     product: productId,
     currency,
     billing_scheme: billingScheme,
+    // Prices are quoted before VAT; Stripe Tax adds it on top in every currency.
+    tax_behavior: "exclusive",
     metadata,
     ...(nickname ? { nickname } : {}),
+    ...(options ? { currency_options: options as Stripe.PriceCreateParams["currency_options"] } : {}),
   };
 
   if (recurring) {
@@ -331,6 +367,7 @@ interface CreateMeterPriceParams {
   productId: string;
   unitAmountDecimal: string;
   currency: string;
+  currencyOptions?: Record<string, { unit_amount?: number; unit_amount_decimal?: string; tax_behavior?: "exclusive" }>;
   meterId: string;
   nickname?: string;
   metadata: Record<string, string>;
@@ -340,11 +377,10 @@ async function createOrUpdateMeterPrice(
   stripe: Stripe,
   params: CreateMeterPriceParams
 ): Promise<Stripe.Price> {
-  const { productId, unitAmountDecimal, currency, meterId, nickname, metadata } = params;
+  const { productId, unitAmountDecimal, currency, currencyOptions: options, meterId, nickname, metadata } = params;
 
-  // Search for existing price with matching metadata
   const existingPrices = await stripe.prices.search({
-    query: `product:'${productId}' AND metadata['type']:'${metadata.type}'`,
+    query: `product:'${productId}' AND active:'true' AND metadata['type']:'${metadata.type}' AND metadata['pricing']:'${PRICING_VERSION}'`,
     limit: 1,
   });
 
@@ -357,6 +393,7 @@ async function createOrUpdateMeterPrice(
     product: productId,
     currency,
     billing_scheme: "per_unit",
+    tax_behavior: "exclusive",
     unit_amount_decimal: unitAmountDecimal,
     recurring: {
       interval: "month",
@@ -364,6 +401,7 @@ async function createOrUpdateMeterPrice(
       meter: meterId,
     },
     ...(nickname ? { nickname } : {}),
+    ...(options ? { currency_options: options as Stripe.PriceCreateParams["currency_options"] } : {}),
     metadata,
   });
 }
@@ -377,6 +415,7 @@ export const DB_CONFIG_KEYS = {
     hobby: { monthly: "stripe.price.hobby.monthly", marketingUsage: "stripe.price.hobby.marketing_usage", transactionalUsage: "stripe.price.hobby.transactional_usage" },
     lite: { monthly: "stripe.price.lite.monthly", marketingUsage: "stripe.price.lite.marketing_usage", transactionalUsage: "stripe.price.lite.transactional_usage" },
     basic: { monthly: "stripe.price.basic.monthly", marketingUsage: "stripe.price.basic.marketing_usage", transactionalUsage: "stripe.price.basic.transactional_usage" },
+    scale: { monthly: "stripe.price.scale.monthly", marketingUsage: "stripe.price.scale.marketing_usage", transactionalUsage: "stripe.price.scale.transactional_usage" },
     lifetime: { oneTime: "stripe.price.lifetime.one_time" },
     addon: {
       domainMonthly: "stripe.price.addon.domain_monthly",
@@ -385,7 +424,7 @@ export const DB_CONFIG_KEYS = {
   },
   product: {
     free: "stripe.product.free", hobby: "stripe.product.hobby", lite: "stripe.product.lite",
-    basic: "stripe.product.basic", lifetime: "stripe.product.lifetime",
+    basic: "stripe.product.basic", scale: "stripe.product.scale", lifetime: "stripe.product.lifetime",
     addonDomain: "stripe.product.addon.domain",
     addonMember: "stripe.product.addon.member",
   },

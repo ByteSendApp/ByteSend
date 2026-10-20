@@ -11,58 +11,50 @@ export const STRIPE_PRODUCTS: Record<PlanType, StripeProductConfig> = {
     plan: "FREE",
     name: "ByteSend Free",
     description:
-      "Perfect for getting started with ByteSend. " +
-      "12,500 emails/month and 5,000 emails/day included (hard cap). " +
-      "Transactional emails only — marketing emails not available. " +
-      "Extra domains available at CA$1/domain/month.",
+      "Everything you need to start sending. 5,000 emails/month and 200/day included (hard cap).",
   },
 
   HOBBY: {
     plan: "HOBBY",
-    name: "ByteSend Hobby",
+    name: "ByteSend Starter",
     description:
-      "For hobbyists and side projects. " +
-      "25,000 emails/month included. " +
-      "Transactional and marketing emails included. " +
-      "Overage billed at CA$0.90/1,000 marketing emails and CA$0.40/1,000 transactional emails. " +
-      "No daily send cap on paid plans. " +
-      "Extra domains available at CA$1/domain/month.",
-    priceMonthly: 500, // CA$5/month
+      "For side projects and small apps. 25,000 emails/month included, no daily cap. " +
+      "Extra emails $0.40 per 1,000 transactional and $0.70 per 1,000 marketing.",
+    priceMonthly: 500,
   },
 
+  // Legacy: kept so existing subscribers resolve; not sold or re-seeded.
   LITE: {
     plan: "LITE",
     name: "ByteSend Lite",
-    description:
-      "For small teams and growing projects. " +
-      "50,000 emails/month included. " +
-      "Transactional and marketing emails included. " +
-      "Overage billed at CA$0.80/1,000 marketing emails and CA$0.35/1,000 transactional emails. " +
-      "No daily send cap on paid plans. " +
-      "Extra domains available at CA$1/domain/month.",
-    priceMonthly: 1000, // CA$10/month in cents
+    description: "Legacy plan. 50,000 emails/month included.",
+    priceMonthly: 1000,
   },
 
   BASIC: {
     plan: "BASIC",
     name: "ByteSend Pro",
     description:
-      "For teams with higher volume and tighter delivery requirements. " +
-      "100,000 emails/month included with unlimited daily sending. " +
-      "Overage billed at CA$0.70/1,000 marketing emails and CA$0.25/1,000 transactional emails. " +
-      "Up to 12 domains, 30 team members, 1,000 contacts.",
-    priceMonthly: 2000, // CA$20/month
+      "For growing products and teams. 100,000 emails/month included, no daily cap. " +
+      "Extra emails $0.35 per 1,000 transactional and $0.60 per 1,000 marketing.",
+    priceMonthly: 2000,
   },
 
+  SCALE: {
+    plan: "SCALE",
+    name: "ByteSend Scale",
+    description:
+      "For high-volume senders. 500,000 emails/month included, no daily cap. " +
+      "Extra emails $0.30 per 1,000 transactional and $0.50 per 1,000 marketing.",
+    priceMonthly: 9000,
+  },
+
+  // Legacy: kept so existing purchases resolve; not sold or re-seeded.
   LIFETIME: {
     plan: "LIFETIME",
     name: "ByteSend Lifetime",
-    description:
-      "One-time payment for long-term access to ByteSend. " +
-      "500,000 emails/month included with unlimited daily sending. " +
-      "Up to 30 domains, 100 team members, 10,000 contacts. " +
-      "No subscriptions, no renewals.",
-    priceOneTime: 19900, // CA$199 one-time purchase
+    description: "Legacy one-time plan. 500,000 emails/month included.",
+    priceOneTime: 19900,
   },
 };
 
@@ -73,15 +65,14 @@ export const STRIPE_ADDON_PRODUCTS = {
   EXTRA_MEMBER: {
     name: "ByteSend Extra Team Member",
     description:
-      "Add-on for team members beyond the included plan limit. " +
-      "Billed at CA$2.00 per additional member per month.",
-    priceMonthly: 200, // CA$2.00/month per member
+      "Add-on for team members beyond the included plan limit. $2 per additional member per month.",
+    priceMonthly: 200,
   },
   ADDITIONAL_DOMAIN: {
     name: "ByteSend Additional Domain",
     description:
-      "Order an additional sending domain at CA$1.00 per domain per month.",
-    priceMonthly: 100, // CA$1.00/month per domain
+      "An additional sending domain, $1 per domain per month.",
+    priceMonthly: 100,
   },
 } as const;
 
@@ -124,6 +115,12 @@ export const STRIPE_ENV_KEYS = {
     monthlyPrice: "STRIPE_BASIC_PRICE_ID",
     marketingUsagePrice: "STRIPE_BASIC_MARKETING_USAGE_PRICE_ID",
     transactionalUsagePrice: "STRIPE_BASIC_TRANSACTIONAL_USAGE_PRICE_ID",
+  },
+  SCALE: {
+    productId: "STRIPE_SCALE_PRODUCT_ID",
+    monthlyPrice: "STRIPE_SCALE_PRICE_ID",
+    marketingUsagePrice: "STRIPE_SCALE_MARKETING_USAGE_PRICE_ID",
+    transactionalUsagePrice: "STRIPE_SCALE_TRANSACTIONAL_USAGE_PRICE_ID",
   },
   LIFETIME: {
     productId: "STRIPE_LIFETIME_PRODUCT_ID",

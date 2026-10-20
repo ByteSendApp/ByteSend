@@ -1,7 +1,7 @@
 import { Reveal } from "./Reveal";
 
 const facts = [
-    { value: "12,500", label: "Free transactional emails a month" },
+    { value: "5,000", label: "Free emails a month" },
     { value: "AGPL-3.0", label: "Open source, every line" },
     { value: "REST · SMTP", label: "Plus TypeScript, Python and Go SDKs" },
     { value: "Docker", label: "Self-host on your own AWS account" },

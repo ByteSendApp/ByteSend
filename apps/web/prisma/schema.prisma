@@ -168,6 +168,7 @@ enum Plan {
   LITE
   HOBBY
   BASIC
+  SCALE
   LIFETIME
 }
 
@@ -186,6 +187,8 @@ model Team {
   isVerified                    Boolean                @default(false)
   dailyEmailLimit               Int                    @default(10000)
   isBlocked                     Boolean                @default(false)
+  /// Set by an admin to lift the new-team daily sending cap early.
+  sendingApprovedAt             DateTime?
   extraDomainSlots              Int                    @default(0)
   extraMemberSlots              Int                    @default(0)
   customPlanEnabled             Boolean                @default(false)
@@ -279,6 +282,14 @@ model Domain {
   errorMessage          String?
   subdomain             String?
   sesTenantId           String?
+  /// When the registrable domain was registered, from RDAP. Null if unknown.
+  registeredAt          DateTime?
+  registrationCheckedAt DateTime?
+  /// DNS problems found by the domain health monitor on a verified domain, e.g. a removed DKIM record.
+  dnsIssues             Json?
+  dnsIssuesSince        DateTime?
+  dnsIssuesNotifiedAt   DateTime?
+  dnsCheckedAt          DateTime?
   isVerifying           Boolean                @default(false)
   pendingRegion         String?
   pendingDkimSelector   String?
@@ -635,6 +646,8 @@ enum NotificationEventType {
   CAMPAIGN_STARTED
   CAMPAIGN_COMPLETED
   ERROR_ALERT
+  USAGE_ALERT
+  DOMAIN_HEALTH
 }
 
 model NotificationProvider {

@@ -7,8 +7,8 @@ import { Input } from "@bytesend/ui/src/input";
 import { Label } from "@bytesend/ui/src/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@bytesend/ui/src/avatar";
 import Spinner from "@bytesend/ui/src/spinner";
-import Image from "next/image";
 import { api } from "~/trpc/react";
+import { BrandMark } from "~/lib/brand";
 
 export function ProfileSetup() {
   const { data: session, update } = useSession();
@@ -52,13 +52,7 @@ export function ProfileSetup() {
         {/* Header */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20 mb-1">
-            <Image
-              src="/logo-squircle.png"
-              alt="ByteSend"
-              width={32}
-              height={32}
-              className="rounded-xl"
-            />
+            <BrandMark size={17} />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Set up your profile</h2>
           <p className="text-sm text-muted-foreground">

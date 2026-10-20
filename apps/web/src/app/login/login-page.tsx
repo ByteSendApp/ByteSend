@@ -2,7 +2,6 @@
 
 import { Button } from "@bytesend/ui/src/button";
 import { Input } from "@bytesend/ui/src/input";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { ClientSafeProvider, LiteralUnion, signIn } from "next-auth/react";
 import { BuiltInProviderType } from "next-auth/providers/index";
@@ -10,6 +9,7 @@ import Spinner from "@bytesend/ui/src/spinner";
 import Link from "next/link";
 import { useSearchParams as useNextSearchParams } from "next/navigation";
 import { FaDiscord, FaEnvelope, FaGithub, FaGoogle } from "react-icons/fa6";
+import { BrandMark } from "~/lib/brand";
 
 const SESSION_EMAIL_KEY = "bytesend_login_email";
 
@@ -216,13 +216,7 @@ export default function LoginPage({
         {/* Logo & heading */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-            <Image
-              src="/logo-squircle.png"
-              alt="ByteSend"
-              width={40}
-              height={40}
-              className="rounded-xl"
-            />
+            <BrandMark size={21} />
           </div>
           <div className="space-y-1.5">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">

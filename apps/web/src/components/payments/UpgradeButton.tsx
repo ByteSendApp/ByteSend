@@ -2,7 +2,7 @@ import { Button } from "@bytesend/ui/src/button";
 import Spinner from "@bytesend/ui/src/spinner";
 import { api } from "~/trpc/react";
 
-type CheckoutPlan = "HOBBY" | "LITE" | "BASIC" | "LIFETIME";
+type CheckoutPlan = "HOBBY" | "BASIC" | "SCALE";
 export type { CheckoutPlan };
 
 export const UpgradeButton = ({

@@ -43,6 +43,8 @@ const EVENT_TYPES = [
   { value: "CONTACT_CREATED", label: "Contact Created" },
   { value: "CONTACT_DELETED", label: "Contact Deleted" },
   { value: "DOMAIN_VERIFIED", label: "Domain Verified" },
+  { value: "DOMAIN_HEALTH", label: "Domain DNS Problems" },
+  { value: "USAGE_ALERT", label: "Usage Alerts" },
   { value: "CAMPAIGN_STARTED", label: "Campaign Started" },
   { value: "CAMPAIGN_COMPLETED", label: "Campaign Completed" },
   { value: "ERROR_ALERT", label: "Error Alert" },
@@ -375,7 +377,8 @@ export function NotificationProviderManager() {
             <div>
               <Label className="mb-2 block">Events to Monitor (Optional)</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Leave empty to monitor all events
+                Leave empty for domain, campaign, usage and error alerts. Per-email and contact events can be busy, so
+                they&apos;re only sent if you tick them, and are capped at 20 per minute per provider.
               </p>
               <div className="grid max-h-44 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-2 sm:grid-cols-2">
                 {EVENT_TYPES.map((event) => (

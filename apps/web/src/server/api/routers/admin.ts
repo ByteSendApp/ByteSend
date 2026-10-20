@@ -173,6 +173,24 @@ export const adminRouter = createTRPCRouter({
       return AdminDeliverabilityService.setTeamBlocked({ actor: actorFrom(ctx), ...input });
     }),
 
+  setTeamSendingApproved: adminProcedure
+    .input(z.object({ teamId: z.number().int(), approved: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const team = await db.team.update({
+        where: { id: input.teamId },
+        data: { sendingApprovedAt: input.approved ? new Date() : null },
+        select: { id: true, sendingApprovedAt: true },
+      });
+      await TeamService.invalidateTeamCache(input.teamId);
+      await AdminAuditService.record({
+        actor: actorFrom(ctx),
+        action: input.approved ? "team.sending.approve" : "team.sending.revoke",
+        targetType: "team",
+        targetId: input.teamId,
+      });
+      return team;
+    }),
+
   getTeamDetail: adminProcedure
     .input(z.object({ teamId: z.number().int() }))
     .query(async ({ input }) => {
@@ -859,7 +877,7 @@ export const adminRouter = createTRPCRouter({
         apiRateLimit: z.number().int().min(-1).max(10_000),
         dailyEmailLimit: z.number().int().min(-1).max(10_000_000),
         isBlocked: z.boolean(),
-        plan: z.enum(["FREE", "HOBBY", "LITE", "BASIC", "LIFETIME"]),
+        plan: z.enum(["FREE", "HOBBY", "LITE", "BASIC", "SCALE", "LIFETIME"]),
         extraDomainSlots: z.number().int().min(0).max(1_000).optional(),
         extraMemberSlots: z.number().int().min(0).max(1_000).optional(),
       }),
@@ -911,7 +929,7 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         teamId: z.number(),
-        plan: z.enum(["FREE", "HOBBY", "LITE", "BASIC", "LIFETIME"]),
+        plan: z.enum(["FREE", "HOBBY", "LITE", "BASIC", "SCALE", "LIFETIME"]),
         method: z.enum(["complimentary", "checkout_link"]),
       }),
     )

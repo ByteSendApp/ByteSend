@@ -23,9 +23,9 @@ docker build -f "$SCRIPT_DIR/Dockerfile" \
     --build-arg APP_VERSION="$APP_VERSION" \
     --build-arg GIT_SHA="$GIT_SHA" \
     --build-arg NEXT_PUBLIC_IS_CLOUD=false \
-    -t "bytesend/web:latest" \
-    -t "bytesend/web:$GIT_SHA" \
-    -t "bytesend/web:$APP_VERSION" \
+    -t "bytesend/bytesend:latest" \
+    -t "bytesend/bytesend:$GIT_SHA" \
+    -t "bytesend/bytesend:$APP_VERSION" \
     -t "ghcr.io/nodebyte/web:latest" \
     -t "ghcr.io/nodebyte/web:$GIT_SHA" \
     -t "ghcr.io/nodebyte/web:$APP_VERSION" \
@@ -36,9 +36,9 @@ echo ""
 echo "===== Building ByteSend SMTP Server ====="
 docker build -f "$SCRIPT_DIR/Dockerfile.smtp" \
     --progress=plain \
-    -t "bytesend/smtp:latest" \
-    -t "bytesend/smtp:$GIT_SHA" \
-    -t "bytesend/smtp:$APP_VERSION" \
+    -t "bytesend/smtp-proxy:latest" \
+    -t "bytesend/smtp-proxy:$GIT_SHA" \
+    -t "bytesend/smtp-proxy:$APP_VERSION" \
     -t "ghcr.io/nodebyte/smtp:latest" \
     -t "ghcr.io/nodebyte/smtp:$GIT_SHA" \
     -t "ghcr.io/nodebyte/smtp:$APP_VERSION" \
@@ -46,5 +46,5 @@ docker build -f "$SCRIPT_DIR/Dockerfile.smtp" \
 
 echo ""
 echo "===== Build Complete ====="
-echo "Web images: bytesend/web:latest (and tagged with $GIT_SHA and $APP_VERSION)"
-echo "SMTP images: bytesend/smtp:latest (and tagged with $GIT_SHA and $APP_VERSION)"
+echo "Web images: bytesend/bytesend:latest (and tagged with $GIT_SHA and $APP_VERSION)"
+echo "SMTP images: bytesend/smtp-proxy:latest (and tagged with $GIT_SHA and $APP_VERSION)"

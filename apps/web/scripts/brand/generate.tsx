@@ -8,7 +8,9 @@ import {
   BRAND_MARK_ASPECT,
   BRAND_NAME,
   BRAND_TAGLINE,
+  BrandIcon,
   BrandMark,
+  brandIconSvgString,
   brandMarkSvgString,
   type BrandMarkDetail,
 } from "../../src/lib/brand";
@@ -59,10 +61,17 @@ function encodeIco(frames: Array<{ size: number; data: Buffer }>) {
   return Buffer.concat([header, ...entries, ...frames.map((frame) => frame.data)]);
 }
 
-function Wordmark({ height, onDark }: { height: number; onDark: boolean }) {
+type Logo = "ribbon" | "icon";
+
+function Wordmark({ height, onDark, logo = "ribbon" }: { height: number; onDark: boolean; logo?: Logo }) {
+  const flapColor = onDark ? BRAND_COLORS.ink : BRAND_COLORS.paper;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: height * 0.16 }}>
-      <BrandMark size={height * 0.62} detail="full" />
+      {logo === "ribbon" ? (
+        <BrandMark size={height * 0.62} detail="full" flapColor={flapColor} />
+      ) : (
+        <BrandIcon size={height * 0.86} detail="full" />
+      )}
       <div style={{ display: "flex", fontFamily: "Sora", fontWeight: 800, fontSize: height * 0.62, letterSpacing: -height * 0.008 }}>
         <span style={{ color: onDark ? BRAND_COLORS.paper : BRAND_COLORS.ink }}>Byte</span>
         <span style={{ color: onDark ? BRAND_COLORS.sky : BRAND_COLORS.blue }}>Send</span>
@@ -71,14 +80,24 @@ function Wordmark({ height, onDark }: { height: number; onDark: boolean }) {
   );
 }
 
-function MarkOnly({ size, detail, background, radius = 0, inset = 0.14 }: {
+function Centered({ children }: { children: ReactElement }) {
+  return (
+    <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}>
+      {children}
+    </div>
+  );
+}
+
+function LogoOnly({ size, detail, logo = "icon", background, radius = 0, inset = 0.14 }: {
   size: number;
   detail: BrandMarkDetail;
+  logo?: Logo;
   background?: string;
   radius?: number;
   inset?: number;
 }) {
-  const markWidth = size * (1 - inset * 2);
+  const width = size * (1 - inset * 2);
+  const flapColor = background ?? BRAND_COLORS.paper;
   return (
     <div
       style={{
@@ -91,7 +110,11 @@ function MarkOnly({ size, detail, background, radius = 0, inset = 0.14 }: {
         borderRadius: radius,
       }}
     >
-      <BrandMark size={markWidth / BRAND_MARK_ASPECT} detail={detail} />
+      {logo === "ribbon" ? (
+        <BrandMark size={width / BRAND_MARK_ASPECT} detail={detail} flapColor={flapColor} />
+      ) : (
+        <BrandIcon size={width} detail={detail} />
+      )}
     </div>
   );
 }
@@ -122,7 +145,7 @@ function Banner({
       }}
     >
       <div style={{ position: "absolute", right: -60 * unit, top: height * 0.08, display: "flex", opacity: 0.06 }}>
-        <BrandMark size={height * 0.84} detail="full" />
+        <BrandMark size={height * 0.84} detail="full" flapColor={BRAND_COLORS.ink} />
       </div>
       <div
         style={{
@@ -168,34 +191,49 @@ async function main() {
     loadGoogleFont("Sora", 800),
   ]);
 
+  const ink = BRAND_COLORS.ink;
+
+  // Primary logo: the Ribbon.
   write("logo.svg", brandMarkSvgString({ detail: "full" }));
-  write("favicon.svg", brandMarkSvgString({ detail: "compact" }));
   write("brand/mark.svg", brandMarkSvgString({ detail: "full" }));
+  write("brand/mark-on-dark.svg", brandMarkSvgString({ detail: "full", flapColor: ink }));
   write("brand/mark-compact.svg", brandMarkSvgString({ detail: "compact" }));
   write("brand/mark-glyph.svg", brandMarkSvgString({ detail: "glyph" }));
   write("brand/mark-mono-black.svg", brandMarkSvgString({ detail: "full", variant: "mono", monoColor: "#000000" }));
   write("brand/mark-mono-white.svg", brandMarkSvgString({ detail: "full", variant: "mono", monoColor: "#ffffff" }));
+  write("logo.png", await png(<LogoOnly size={1024} detail="full" logo="ribbon" />, 1024, 1024, fonts));
 
-  write("logo.png", await png(<MarkOnly size={1024} detail="full" />, 1024, 1024, fonts));
-  write(
-    "logo-squircle.png",
-    await png(<MarkOnly size={512} detail="compact" background={BRAND_COLORS.ink} radius={116} inset={0.16} />, 512, 512, fonts),
-  );
-  write("nameplate.png", await png(<div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}><Wordmark height={320} onDark={false} /></div>, 1600, 500, fonts));
-  write("brand/wordmark-light.png", await png(<div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}><Wordmark height={320} onDark={false} /></div>, 1600, 500, fonts));
-  write("brand/wordmark-dark.png", await png(<div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}><Wordmark height={320} onDark /></div>, 1600, 500, fonts));
-  // Tight crops for places that scale a logo to a fixed height, such as the docs navbar.
-  write("brand/wordmark-light-tight.png", await png(<div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}><Wordmark height={250} onDark={false} /></div>, 1200, 220, fonts));
-  write("brand/wordmark-dark-tight.png", await png(<div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}><Wordmark height={250} onDark /></div>, 1200, 220, fonts));
-  write("brand/app-icon-1024.png", await png(<MarkOnly size={1024} detail="full" background={BRAND_COLORS.ink} radius={232} inset={0.16} />, 1024, 1024, fonts));
+  // Icon and monogram: the Send B.
+  write("brand/icon.svg", brandIconSvgString({ detail: "full" }));
+  write("brand/icon-compact.svg", brandIconSvgString({ detail: "compact" }));
+  write("brand/icon-glyph.svg", brandIconSvgString({ detail: "glyph" }));
+  write("brand/icon-tile.svg", brandIconSvgString({ detail: "full", tile: ink }));
+  write("brand/icon-mono-black.svg", brandIconSvgString({ detail: "full", variant: "mono", monoColor: "#000000" }));
+  write("brand/icon-mono-white.svg", brandIconSvgString({ detail: "full", variant: "mono", monoColor: "#ffffff" }));
+  write("favicon.svg", brandIconSvgString({ detail: "compact" }));
 
-  write("favicon_io/android-chrome-512x512.png", await png(<MarkOnly size={512} detail="full" background={BRAND_COLORS.ink} radius={116} inset={0.16} />, 512, 512, fonts));
-  write("favicon_io/android-chrome-192x192.png", await png(<MarkOnly size={192} detail="full" background={BRAND_COLORS.ink} radius={44} inset={0.16} />, 192, 192, fonts));
-  write("favicon_io/apple-touch-icon.png", await png(<MarkOnly size={180} detail="full" background={BRAND_COLORS.ink} inset={0.17} />, 180, 180, fonts));
+  for (const [suffix, logo] of [["", "ribbon"], ["-icon", "icon"]] as const) {
+    write(`brand/wordmark${suffix}-light.png`, await png(<Centered><Wordmark height={320} onDark={false} logo={logo} /></Centered>, 1600, 500, fonts));
+    write(`brand/wordmark${suffix}-dark.png`, await png(<Centered><Wordmark height={320} onDark logo={logo} /></Centered>, 1600, 500, fonts));
+    // Tight crops for places that scale a logo to a fixed height, such as the docs navbar.
+    write(`brand/wordmark${suffix}-light-tight.png`, await png(<Centered><Wordmark height={250} onDark={false} logo={logo} /></Centered>, 1200, 220, fonts));
+    write(`brand/wordmark${suffix}-dark-tight.png`, await png(<Centered><Wordmark height={250} onDark logo={logo} /></Centered>, 1200, 220, fonts));
+  }
+  write("nameplate.png", await png(<Centered><Wordmark height={320} onDark={false} /></Centered>, 1600, 500, fonts));
 
-  const favicon16 = await png(<MarkOnly size={16} detail="glyph" inset={0.02} />, 16, 16, fonts);
-  const favicon32 = await png(<MarkOnly size={32} detail="compact" inset={0.03} />, 32, 32, fonts);
-  const favicon48 = await png(<MarkOnly size={48} detail="compact" inset={0.04} />, 48, 48, fonts);
+  write("brand/app-icon-1024.png", await png(<LogoOnly size={1024} detail="full" background={ink} radius={232} inset={0.12} />, 1024, 1024, fonts));
+  write("brand/app-icon-ribbon-1024.png", await png(<LogoOnly size={1024} detail="full" logo="ribbon" background={ink} radius={232} inset={0.16} />, 1024, 1024, fonts));
+  write("brand/social-avatar.png", await png(<LogoOnly size={400} detail="full" background={ink} inset={0.14} />, 400, 400, fonts));
+  write("brand/social-avatar-ribbon.png", await png(<LogoOnly size={400} detail="full" logo="ribbon" background={ink} inset={0.15} />, 400, 400, fonts));
+  write("logo-squircle.png", await png(<LogoOnly size={512} detail="full" background={ink} radius={116} inset={0.12} />, 512, 512, fonts));
+
+  write("favicon_io/android-chrome-512x512.png", await png(<LogoOnly size={512} detail="full" background={ink} radius={116} inset={0.12} />, 512, 512, fonts));
+  write("favicon_io/android-chrome-192x192.png", await png(<LogoOnly size={192} detail="full" background={ink} radius={44} inset={0.12} />, 192, 192, fonts));
+  write("favicon_io/apple-touch-icon.png", await png(<LogoOnly size={180} detail="full" background={ink} inset={0.13} />, 180, 180, fonts));
+
+  const favicon16 = await png(<LogoOnly size={16} detail="glyph" inset={0} />, 16, 16, fonts);
+  const favicon32 = await png(<LogoOnly size={32} detail="compact" inset={0.02} />, 32, 32, fonts);
+  const favicon48 = await png(<LogoOnly size={48} detail="compact" inset={0.03} />, 48, 48, fonts);
   write("favicon_io/favicon-16x16.png", favicon16);
   write("favicon_io/favicon-32x32.png", favicon32);
   const ico = encodeIco([
@@ -212,7 +250,6 @@ async function main() {
   // X's mobile app zooms the header, crops both sides and overlays buttons in the top corners,
   // so the lockup stays small and centred inside the area every client shows.
   write("brand/x-header.png", await png(<Banner width={1500} height={500} contentScale={0.82} />, 1500, 500, fonts));
-  write("brand/social-avatar.png", await png(<MarkOnly size={400} detail="full" background={BRAND_COLORS.ink} inset={0.15} />, 400, 400, fonts));
 
   console.log(`\n${BRAND_NAME} brand assets generated.`);
 }

@@ -2,12 +2,40 @@ import {
   NotificationProviderType,
   NotificationEventType,
   WebhookStatus,
+  Prisma,
 } from "@prisma/client";
 import { createHmac, randomUUID } from "crypto";
 import { db } from "../db";
 import { logger } from "../logger/log";
 import { ByteSendApiError } from "../public-api/api-error";
 import { env } from "~/env";
+import { getRedis, redisKey } from "../redis";
+
+/**
+ * Events that can fire once per email or contact. They're opt-in (a provider must select them
+ * explicitly), rate-limited per provider, and never copied to the admin Discord, so a busy team
+ * can't flood a channel, trip Discord/Slack rate limits or bury platform alerts.
+ */
+export const HIGH_VOLUME_EVENTS = new Set<NotificationEventType>([
+  "EMAIL_SENT",
+  "EMAIL_DELIVERED",
+  "EMAIL_BOUNCED",
+  "EMAIL_COMPLAINED",
+  "EMAIL_OPENED",
+  "EMAIL_CLICKED",
+  "CONTACT_CREATED",
+  "CONTACT_DELETED",
+]);
+export const HIGH_VOLUME_PER_PROVIDER_PER_MINUTE = 20;
+const OPT_IN_CACHE_SECONDS = 60;
+
+/** A provider with no events selected receives everything except the high-volume ones. */
+export function providerReceives(eventTypes: NotificationEventType[], eventType: NotificationEventType) {
+  if (eventTypes.includes(eventType)) return true;
+  return eventTypes.length === 0 && !HIGH_VOLUME_EVENTS.has(eventType);
+}
+
+const optInCacheKey = (teamId: number) => redisKey(`notif:optin:${teamId}`);
 
 export type DiscordConfig = {
   webhookUrl: string;
@@ -79,6 +107,7 @@ export class NotificationProviderService {
         isActive: true,
       },
     });
+    await this.clearOptInCache(params.teamId);
 
     logger.info(
       { providerId: provider.id, type: params.type },
@@ -102,15 +131,15 @@ export class NotificationProviderService {
     });
 
     if (!provider) {
-      throw new ByteSendApiError("NOT_FOUND", "Provider not found");
+      throw new ByteSendApiError({ code: "NOT_FOUND", message: "Provider not found" });
     }
 
     if (provider.teamId !== params.teamId) {
-      throw new ByteSendApiError("UNAUTHORIZED", "Provider not found");
+      throw new ByteSendApiError({ code: "UNAUTHORIZED", message: "Provider not found" });
     }
 
     const updatedConfig = params.config
-      ? { ...provider.config, ...params.config }
+      ? { ...(provider.config as Record<string, unknown>), ...params.config }
       : undefined;
 
     if (updatedConfig) {
@@ -128,6 +157,7 @@ export class NotificationProviderService {
         updatedAt: new Date(),
       },
     });
+    await this.clearOptInCache(updated.teamId);
 
     logger.info({ providerId: params.id }, "Notification provider updated");
 
@@ -147,11 +177,11 @@ export class NotificationProviderService {
     });
 
     if (!provider) {
-      throw new ByteSendApiError("NOT_FOUND", "Provider not found");
+      throw new ByteSendApiError({ code: "NOT_FOUND", message: "Provider not found" });
     }
 
     if (provider.teamId !== teamId) {
-      throw new ByteSendApiError("UNAUTHORIZED", "Provider not found");
+      throw new ByteSendApiError({ code: "UNAUTHORIZED", message: "Provider not found" });
     }
 
     return provider;
@@ -163,16 +193,17 @@ export class NotificationProviderService {
     });
 
     if (!provider) {
-      throw new ByteSendApiError("NOT_FOUND", "Provider not found");
+      throw new ByteSendApiError({ code: "NOT_FOUND", message: "Provider not found" });
     }
 
     if (provider.teamId !== teamId) {
-      throw new ByteSendApiError("UNAUTHORIZED", "Provider not found");
+      throw new ByteSendApiError({ code: "UNAUTHORIZED", message: "Provider not found" });
     }
 
     await db.notificationProvider.delete({
       where: { id },
     });
+    await this.clearOptInCache(teamId);
 
     logger.info({ providerId: id }, "Notification provider deleted");
   }
@@ -188,14 +219,11 @@ export class NotificationProviderService {
     });
 
     if (!provider || provider.teamId !== teamId || !provider.isActive) {
-      throw new ByteSendApiError("NOT_FOUND", "Provider not found or inactive");
+      throw new ByteSendApiError({ code: "NOT_FOUND", message: "Provider not found or inactive" });
     }
 
-    if (provider.eventTypes.length > 0 && !provider.eventTypes.includes(eventType)) {
-      throw new ByteSendApiError(
-        "BAD_REQUEST",
-        "Provider does not handle this event type"
-      );
+    if (!providerReceives(provider.eventTypes, eventType)) {
+      throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Provider does not handle this event type" });
     }
 
     const notificationLog = await db.notificationLog.create({
@@ -203,7 +231,7 @@ export class NotificationProviderService {
         teamId,
         providerId,
         eventType,
-        payload: message,
+        payload: message as unknown as Prisma.InputJsonValue,
         status: "PENDING",
       },
     });
@@ -297,19 +325,59 @@ export class NotificationProviderService {
     logger.info({ providerId: id }, "Test notification sent");
   }
 
+  /** Whether any of the team's active providers selected this event; cached briefly per team. */
+  private static async teamOptedInTo(teamId: number, eventType: NotificationEventType) {
+    const redis = getRedis();
+    const key = optInCacheKey(teamId);
+    try {
+      const cached = await redis.get(key);
+      if (cached !== null) return (JSON.parse(cached) as string[]).includes(eventType);
+    } catch {
+      // Fall through to the database when Redis is unavailable.
+    }
+    const providers = await db.notificationProvider.findMany({
+      where: { teamId, isActive: true },
+      select: { eventTypes: true },
+    });
+    const optedIn = [...new Set(providers.flatMap((p) => p.eventTypes))];
+    await redis.set(key, JSON.stringify(optedIn), "EX", OPT_IN_CACHE_SECONDS).catch(() => void 0);
+    return optedIn.includes(eventType);
+  }
+
+  private static async withinRateLimit(providerId: string) {
+    try {
+      const key = redisKey(`notif:rate:${providerId}:${Math.floor(Date.now() / 60_000)}`);
+      const redis = getRedis();
+      const count = await redis.incr(key);
+      if (count === 1) await redis.expire(key, 120);
+      return count <= HIGH_VOLUME_PER_PROVIDER_PER_MINUTE;
+    } catch {
+      return true;
+    }
+  }
+
+  private static async clearOptInCache(teamId: number) {
+    await getRedis().del(optInCacheKey(teamId)).catch(() => void 0);
+  }
+
   public static async broadcastNotification(
     teamId: number,
     eventType: NotificationEventType,
     message: NotificationMessage
   ) {
+    const highVolume = HIGH_VOLUME_EVENTS.has(eventType);
+    // Most teams never opt in to per-email events, so skip the provider query for them.
+    if (highVolume && !(await this.teamOptedInTo(teamId, eventType))) {
+      return { sent: 0, failed: 0 };
+    }
+
     const providers = await db.notificationProvider.findMany({
       where: {
         teamId,
         isActive: true,
-        OR: [
-          { eventTypes: { isEmpty: true } },
-          { eventTypes: { has: eventType } },
-        ],
+        OR: highVolume
+          ? [{ eventTypes: { has: eventType } }]
+          : [{ eventTypes: { isEmpty: true } }, { eventTypes: { has: eventType } }],
       },
     });
 
@@ -317,6 +385,9 @@ export class NotificationProviderService {
     let failed = 0;
 
     for (const provider of providers) {
+      if (highVolume && !(await this.withinRateLimit(provider.id))) {
+        continue;
+      }
       try {
         await this.sendNotification(teamId, provider.id, message, eventType);
         sent++;
@@ -326,7 +397,7 @@ export class NotificationProviderService {
     }
 
     const adminUrl = env.ADMIN_DISCORD_WEBHOOK_URL;
-    if (adminUrl) {
+    if (adminUrl && !highVolume) {
       const alreadyCovered = providers.some((p) => {
         const cfg = p.config as Record<string, unknown>;
         return cfg?.webhookUrl === adminUrl || cfg?.url === adminUrl;
@@ -585,10 +656,7 @@ export class NotificationProviderService {
   private static assertNotAdminWebhook(webhookUrl: string) {
     const adminUrl = env.ADMIN_DISCORD_WEBHOOK_URL;
     if (adminUrl && webhookUrl === adminUrl) {
-      throw new ByteSendApiError(
-        "BAD_REQUEST",
-        "This webhook URL is reserved and cannot be used as a team notification provider."
-      );
+      throw new ByteSendApiError({ code: "BAD_REQUEST", message: "This webhook URL is reserved and cannot be used as a team notification provider." });
     }
   }
 
@@ -599,10 +667,7 @@ export class NotificationProviderService {
     switch (type) {
       case "DISCORD":
         if (!("webhookUrl" in config) || !config.webhookUrl) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Discord webhook URL is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Discord webhook URL is required" });
         }
         this.assertNotAdminWebhook(config.webhookUrl);
         this.assertAllowedWebhookUrl(config.webhookUrl, "Discord", [
@@ -613,10 +678,7 @@ export class NotificationProviderService {
 
       case "SLACK":
         if (!("webhookUrl" in config) || !config.webhookUrl) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Slack webhook URL is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Slack webhook URL is required" });
         }
         this.assertNotAdminWebhook(config.webhookUrl);
         this.assertAllowedWebhookUrl(config.webhookUrl, "Slack", [
@@ -626,10 +688,7 @@ export class NotificationProviderService {
 
       case "MICROSOFT_TEAMS":
         if (!("webhookUrl" in config) || !config.webhookUrl) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Microsoft Teams webhook URL is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Microsoft Teams webhook URL is required" });
         }
         this.assertAllowedWebhookUrl(config.webhookUrl, "Microsoft Teams", [
           "outlook.webhook.office.com",
@@ -640,25 +699,16 @@ export class NotificationProviderService {
 
       case "TELEGRAM":
         if (!("botToken" in config) || !config.botToken) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Telegram bot token is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Telegram bot token is required" });
         }
         if (!("chatId" in config) || !config.chatId) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Telegram chat ID is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Telegram chat ID is required" });
         }
         break;
 
       case "CUSTOM_WEBHOOK":
         if (!("url" in config) || !config.url) {
-          throw new ByteSendApiError(
-            "BAD_REQUEST",
-            "Webhook URL is required"
-          );
+          throw new ByteSendApiError({ code: "BAD_REQUEST", message: "Webhook URL is required" });
         }
         break;
     }
@@ -674,17 +724,11 @@ export class NotificationProviderService {
     try {
       parsedUrl = new URL(rawUrl);
     } catch {
-      throw new ByteSendApiError(
-        "BAD_REQUEST",
-        `${providerName} webhook URL is invalid`
-      );
+      throw new ByteSendApiError({ code: "BAD_REQUEST", message: `${providerName} webhook URL is invalid` });
     }
 
     if (parsedUrl.protocol !== "https:") {
-      throw new ByteSendApiError(
-        "BAD_REQUEST",
-        `${providerName} webhook URL must use HTTPS`
-      );
+      throw new ByteSendApiError({ code: "BAD_REQUEST", message: `${providerName} webhook URL must use HTTPS` });
     }
 
     const hostname = parsedUrl.hostname.toLowerCase();
@@ -697,10 +741,7 @@ export class NotificationProviderService {
     });
 
     if (!isAllowed) {
-      throw new ByteSendApiError(
-        "BAD_REQUEST",
-        `Invalid ${providerName} webhook URL`
-      );
+      throw new ByteSendApiError({ code: "BAD_REQUEST", message: `Invalid ${providerName} webhook URL` });
     }
   }
 }

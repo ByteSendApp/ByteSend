@@ -47,6 +47,7 @@ export class AdminDetailService {
         isBlocked: true,
         isActive: true,
         isVerified: true,
+        sendingApprovedAt: true,
         billingEmail: true,
         stripeCustomerId: true,
         createdAt: true,
@@ -68,6 +69,7 @@ export class AdminDetailService {
           select: {
             id: true,
             name: true,
+            registeredAt: true,
             status: true,
             region: true,
             createdAt: true,

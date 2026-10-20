@@ -11,6 +11,7 @@ import { LimitService } from "./limit-service";
 import { renderUsageLimitReachedEmail } from "../email-templates/UsageLimitReachedEmail";
 import { renderUsageWarningEmail } from "../email-templates/UsageWarningEmail";
 import { sendToDiscord } from "./notification-service";
+import { NotificationEmitter } from "./notification-emitter";
 
 const TEAM_CACHE_TTL_SECONDS = 120;
 
@@ -423,6 +424,14 @@ export class TeamService {
       } limit of ${limit.toLocaleString()} emails.\n\nSending is temporarily paused until your limit resets or ${isPaidPlan ? "your team is verified" : "your plan is upgraded"
       }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
 
+    NotificationEmitter.emitUsageAlert(teamId, {
+      title: subject.replace(/^ByteSend: /, ""),
+      description: `Sending is paused until the limit resets${isPaidPlan ? "" : " or you upgrade"}.`,
+      used: limit,
+      limit,
+      reached: true,
+    }).catch((err) => logger.warn({ err, teamId }, "[TeamService]: Usage alert broadcast failed"));
+
     const teamUsers = await TeamService.getTeamUsers(teamId);
     const recipients = teamUsers
       .map((tu) => tu.user?.email)
@@ -450,6 +459,50 @@ export class TeamService {
       );
       throw err;
     }
+  }
+
+  /**
+   * Tells paying teams when they've used 80% and 100% of the emails included in their plan, once
+   * per threshold per month. Sending continues past 100%; extra emails are billed as overage.
+   */
+  static async notifyIncludedUsage(teamId: number, used: number, included: number) {
+    if (included <= 0) return;
+    const threshold = used >= included ? 100 : used >= included * 0.8 ? 80 : null;
+    if (!threshold) return;
+
+    const month = new Date().toISOString().slice(0, 7);
+    const acquired = await getRedis().set(
+      redisKey(`usage:included:${teamId}:${month}:${threshold}`),
+      "1",
+      "EX",
+      35 * 24 * 60 * 60,
+      "NX",
+    );
+    if (!acquired) return;
+
+    const team = await TeamService.getTeamCached(teamId);
+    const subject =
+      threshold === 100
+        ? "ByteSend: You've used all the emails included in your plan"
+        : "ByteSend: You've used 80% of the emails included in your plan";
+    const description =
+      threshold === 100
+        ? "Sending continues. Emails beyond your plan's allowance are billed at its per-1,000 rate on your next invoice."
+        : "Emails beyond your plan's allowance are billed at its per-1,000 rate. Upgrade if you expect to go over regularly.";
+    const text = `Hi ${team.name} team,\n\nYou've sent ${used.toLocaleString("en-US")} of the ${included.toLocaleString("en-US")} emails included in your plan this month.\n\n${description}\n\nManage plan: ${env.NEXTAUTH_URL}/settings/billing`;
+    const html = `<p>Hi ${team.name} team,</p><p>You've sent <strong>${used.toLocaleString("en-US")}</strong> of the <strong>${included.toLocaleString("en-US")}</strong> emails included in your plan this month.</p><p>${description}</p><p><a href="${env.NEXTAUTH_URL}/settings/billing">Manage your plan</a></p>`;
+
+    const recipients = (await TeamService.getTeamUsers(teamId))
+      .map((tu) => tu.user?.email)
+      .filter((e): e is string => Boolean(e));
+    await Promise.allSettled(recipients.map((to) => sendMail(to, subject, text, html, "hey@bytesend.cloud")));
+    await NotificationEmitter.emitUsageAlert(teamId, {
+      title: subject.replace(/^ByteSend: /, ""),
+      description,
+      used,
+      limit: included,
+      reached: threshold === 100,
+    });
   }
 
   static async sendWarningEmail(
@@ -520,6 +573,14 @@ export class TeamService {
         ? "verifying your team by replying to this email"
         : "upgrading your plan"
       }.\n\nManage plan: ${env.NEXTAUTH_URL}/settings`;
+
+    NotificationEmitter.emitUsageAlert(teamId, {
+      title: subject.replace(/^ByteSend: /, ""),
+      description: `${Math.round((used / limit) * 100)}% of your ${period} limit is used.`,
+      used,
+      limit,
+      reached: false,
+    }).catch((err) => logger.warn({ err, teamId }, "[TeamService]: Usage alert broadcast failed"));
 
     const teamUsers = await TeamService.getTeamUsers(teamId);
     const recipients = teamUsers

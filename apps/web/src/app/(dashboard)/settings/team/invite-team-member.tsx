@@ -268,7 +268,7 @@ export default function InviteTeamMember() {
             )}
             {!isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
-                Need more seats? Purchase extra member slots for CA$2/mo each.
+                Need more seats? Purchase extra member slots for $2/mo each.
               </p>
             )}
             <Button
@@ -284,7 +284,7 @@ export default function InviteTeamMember() {
               className="w-full"
               variant="outline"
             >
-              {purchaseMemberAddonMutation.isPending ? "Opening checkout…" : "Buy 1 extra member slot (CA$2/mo)"}
+              {purchaseMemberAddonMutation.isPending ? "Opening checkout…" : "Buy 1 extra member slot ($2/mo)"}
             </Button>
           </div>
         </div>

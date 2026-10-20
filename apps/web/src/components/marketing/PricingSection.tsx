@@ -16,7 +16,7 @@ export function Pricing() {
                         Simple pricing that grows with you
                     </h2>
                     <p className="mt-4 text-muted-foreground">
-                        Start free with 12,500 transactional emails a month. Estimate a paid plan for your
+                        Start free with 5,000 emails a month. Estimate a paid plan for your
                         transactional and marketing volume below, then pick it in the dashboard when you're ready.
                     </p>
                 </div>

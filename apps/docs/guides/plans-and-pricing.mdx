@@ -1,206 +1,65 @@
 ---
 title: Plans & Pricing
-description: "Choose the right ByteSend plan for your email needs"
+description: "ByteSend Cloud plans, limits and how billing works"
 icon: credit-card
 ---
 
-## Overview
+ByteSend Cloud has a free plan and three paid plans. Prices are in US dollars, and Checkout shows set prices in pounds or euros if you're in the UK or Europe. The [pricing page](https://bytesend.cloud/#pricing) always has the current prices and lets you estimate your bill.
 
-ByteSend offers flexible pricing plans to accommodate teams of any size, from solopreneurs to enterprises. Choose the plan that best fits your email volume and team requirements.
+<Note>
+Self-hosted ByteSend has no plans or limits: you pay AWS directly for what you send.
+</Note>
 
-## Available Plans
+## Plan comparison
 
-### Free Plan
+| | Free | Starter | Pro | Scale |
+|---|---|---|---|---|
+| **Price** | Free | $5/mo (£4 / €5) | $20/mo (£16 / €19) | $90/mo (£72 / €85) |
+| **Emails included** | 5,000/mo | 25,000/mo | 100,000/mo | 500,000/mo |
+| **Daily limit** | 200/day | None | None | None |
+| **Extra emails** | Not available | $0.40 per 1,000 transactional, $0.70 per 1,000 marketing | $0.35 / $0.60 per 1,000 | $0.30 / $0.50 per 1,000 |
+| **Domains** | 2 | 4 | 12 | 30 |
+| **Team members** | 5 | 10 | 30 | 50 |
+| **Webhooks** | 3 | 5 | 25 | 50 |
+| **Contacts** | 100 | 200 | 1,000 | 10,000 |
+| **Contact books** | 5 | 10 | 50 | 200 |
+| **Campaigns** | 3 | 30 | 200 | 1,000 |
+| **Support** | Community | Community | Priority | Priority |
 
-Perfect for getting started with ByteSend.
+Every plan includes the REST API, SMTP relay, SDKs, templates, webhooks, analytics and both transactional and marketing email.
 
-**Monthly Cost**: Free
+Need more domains or seats without changing plan? Extra domains are $1/mo each and extra team members $2/mo each.
 
-**Limits**:
-- 100 emails/month
-- 1 domain
-- 1 team member
-- 1 webhook
-- 7-day message history
+## New accounts
 
-**Features**:
-- Full API access
-- Email templates
-- Basic analytics
-- SMTP support
-- Community support
+To keep ByteSend's shared sending reputation healthy, new **free** teams can send up to **50 emails a day** for their first 7 days. The limit lifts automatically after that, straight away if you upgrade to any paid plan, or sooner if you [contact support](https://discord.gg/C2Q4GHXKQA).
 
-**Best for**: Personal projects, testing, and development
+## What happens at your limit
 
-### BASIC Plan
+- **Free:** sending stops for the rest of the day or month once you reach the daily or monthly limit, and you're emailed when you get close.
+- **Starter, Pro and Scale:** emails beyond your plan's allowance keep sending and are added to your next invoice at the per-1,000 rates above.
 
-For growing teams sending regular emails.
+Sending also pauses for any plan whose 7-day hard-bounce rate goes above 2% or complaint rate above 0.1%. See [Deliverability](/guides/deliverability).
 
-**Monthly Cost**: CA$20/month (billed annually: CA$200/year)
+## Changing plans
 
-**Limits**:
-- 100,000 emails/month
-- 12 verified domains
-- 30 team members
-- Unlimited webhooks
-- 90-day message history
+Upgrade, downgrade or cancel at any time from **Settings → Billing** in the [dashboard](https://bytesend.cloud/settings/billing).
 
-**Features**:
-- Everything in Free plan
-- Advanced analytics
-- Priority email support
-- Custom templates
-- Webhook retry logic
-- Email scheduling
-- SMTP enhanced features
+- **Upgrades** take effect immediately.
+- **Downgrades and cancellations** take effect at the end of the current billing period. If you're over the new plan's limits (for example, more domains than it allows), remove the extras first.
 
-**Best for**: Small businesses, startups, and growing teams
+## Billing
 
-### LIFETIME Plan
+Payments are handled by Stripe, and invoices are available under **Settings → Billing**. VAT and sales tax are added at checkout based on your billing address. Businesses can enter a VAT number to have reverse charge applied where it's allowed.
 
-One-time payment for unlimited access. Ideal for long-term projects.
+For anything above 500,000 emails a month, or custom limits, ask on [Discord](https://discord.gg/C2Q4GHXKQA) about a custom plan.
 
-**One-Time Cost**: CA$199 (paid once, forever)
+## Legacy plans
 
-**Limits**:
-- 500,000 emails/month
-- 30 verified domains
-- 100 team members
-- Unlimited webhooks
-- Unlimited message history
+Lite and Lifetime are no longer sold. If you already have one, nothing changes: you keep its limits and price for as long as you stay on it. Teams that subscribed before October 2026 also keep the price they signed up at. If you move to a different plan, you can't switch back to a legacy one.
 
-**Features**:
-- Everything in BASIC plan
-- Advanced features and future updates
-- Priority support
-- No recurring billing
+## Next steps
 
-**Best for**: Agencies, established businesses, and cost-conscious teams
-
-## Plan Comparison
-
-| Feature | Free | BASIC | LIFETIME |
-|---------|------|-------|----------|
-| **Email Volume** | 100/mo | 100,000/mo | 500,000/mo |
-| **Domains** | 1 | 12 | 30 |
-| **Team Members** | 1 | 30 | 100 |
-| **Message History** | 7 days | 90 days | Unlimited |
-| **API Access** | ✓ | ✓ | ✓ |
-| **Analytics** | Basic | Advanced | Advanced |
-| **SMTP Support** | ✓ | ✓ | ✓ |
-| **Email Templates** | ✓ | ✓ | ✓ |
-| **Webhooks** | 1 | Unlimited | Unlimited |
-| **Support** | Community | Priority | Priority |
-| **Cost** | Free | CA$20/mo | CA$199 (one-time) |
-
-## Upgrading Your Plan
-
-### From Free to BASIC
-
-1. Log in to your [ByteSend Dashboard](https://bytesend.cloud)
-2. Navigate to **Settings** → **Billing** → **Plans**
-3. Click **Upgrade to BASIC**
-4. Enter your payment details
-5. Confirm the upgrade
-6. Your plan is active immediately
-
-### From Free/BASIC to LIFETIME
-
-1. Go to **Settings** → **Billing** → **Plans**
-2. Click **Upgrade to LIFETIME**
-3. Review the one-time cost
-4. Enter your payment details
-5. Complete the purchase
-6. Lifetime access is activated immediately
-
-### Prorated Pricing
-
-If you upgrade mid-month:
-- If on an annual BASIC plan: You'll receive a credit for your remaining months
-- If on a monthly BASIC plan: The upgrade to LIFETIME is a flat one-time fee
-- Free plan upgrades are charged the full plan amount
-
-## Downgrading Your Plan
-
-### From BASIC to Free
-
-1. Go to **Settings** → **Billing**
-2. Click **Downgrade to Free**
-3. Confirm the action
-4. Your plan downgrades at the end of your current billing cycle
-5. You'll lose access to BASIC features when downgraded
-
-<Warning>
-Downgrading may affect your account if you exceed free tier limits. For example:
-- Excess team members will be archived
-- Excess domains will be temporarily disabled
-- Webhooks beyond the limit will be disabled
-</Warning>
-
-## Frequently Asked Questions
-
-### What happens if I exceed my email limit?
-
-- Emails exceeding your monthly limit will be queued
-- You can send them immediately by upgrading your plan
-- You'll receive a notification when approaching your limit
-
-### Can I change my plan after purchase?
-
-Yes, you can upgrade or downgrade at any time from **Settings** → **Billing** → **Plans**.
-
-### Do you offer annual billing discounts?
-
-Yes! BASIC plan annual billing saves you 2 months:
-- Monthly: CA$20 × 12 = CA$240/year
-- Annual: CA$200/year (saves CA$40)
-
-### Is the LIFETIME plan really permanent?
-
-Yes! With the LIFETIME plan:
-- No recurring charges after the initial purchase
-- You keep your plan even if you stop using ByteSend
-- Future features and updates are included
-
-### Do you offer enterprise plans?
-
-Yes! For high-volume needs (1M+ emails/month), we offer custom enterprise pricing. [Contact sales](https://discord.gg/C2Q4GHXKQA) to discuss your requirements.
-
-### Can I cancel my subscription?
-
-You can cancel your BASIC plan at any time. Simply go to **Settings** → **Billing** and click **Cancel Plan**. You'll retain access until the end of your billing period.
-
-## Billing & Payments
-
-### Accepted Payment Methods
-
-- Credit/Debit cards (Visa, Mastercard, American Express)
-- PayPal
-- Wire transfer (for enterprise customers)
-
-### Invoices
-
-All invoices are available in your dashboard:
-
-1. Go to **Settings** → **Billing** → **Invoices**
-2. View, download, or email invoices
-3. Invoices are emailed automatically after each billing cycle
-
-### Tax Information
-
-- VAT/GST is calculated based on your billing location
-- Tax information can be added in **Settings** → **Billing** → **Tax**
-- All prices displayed are in CAD
-
-## Support
-
-For billing questions or concerns:
-
-- **Free Plan**: Community support via [Discord](https://discord.gg/C2Q4GHXKQA)
-- **BASIC/LIFETIME Plans**: Priority email and Discord support
-
-## Next Steps
-
-- [Upgrade your plan](https://bytesend.cloud/settings/billing)
-- [Manage your team members](/guides/plan-management)
-- [Explore billing operations](/guides/admin-operations)
+- [Manage your plan and team](/guides/plan-management)
+- [Rate limits](/guides/rate-limits)
+- [Deliverability](/guides/deliverability)

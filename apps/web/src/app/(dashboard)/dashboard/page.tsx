@@ -6,6 +6,7 @@ import { H1 } from "@bytesend/ui";
 import { useUrlState } from "~/hooks/useUrlState";
 import { ReputationMetrics } from "./reputation-metrics";
 import { useTeam } from "~/providers/team-context";
+import { DashboardOverview } from "./overview";
 
 export default function Dashboard() {
   const [days, setDays] = useUrlState("days", "30");
@@ -17,8 +18,17 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <H1>Analytics</H1>
-          <p className="text-sm text-muted-foreground mt-1">Monitor your email delivery and engagement</p>
+          <H1>Overview</H1>
+          <p className="text-sm text-muted-foreground mt-1">How your sending is doing, and anything that needs attention</p>
+        </div>
+      </div>
+
+      <DashboardOverview />
+
+      <div className="flex flex-col gap-4 border-t border-border/50 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Analytics</h2>
+          <p className="text-sm text-muted-foreground mt-1">Delivery and engagement over time</p>
         </div>
         <DashboardFilters
           days={days ?? "30"}

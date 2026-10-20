@@ -32,6 +32,15 @@ import { randomUUID } from "crypto";
 import { SuppressionService } from "./suppression-service";
 import { WebhookService } from "./webhook-service";
 import { NotificationProviderService } from "./notification-provider-service";
+import { NotificationEmitter } from "./notification-emitter";
+
+const PROVIDER_EMAIL_EVENTS: Partial<Record<EmailStatus, "delivered" | "bounced" | "complained" | "opened" | "clicked">> = {
+  DELIVERED: "delivered",
+  BOUNCED: "bounced",
+  COMPLAINED: "complained",
+  OPENED: "opened",
+  CLICKED: "clicked",
+};
 
 export async function parseSesHook(data: SesEvent) {
   const mailStatus = getEmailStatus(data);
@@ -111,6 +120,15 @@ export async function parseSesHook(data: SesEvent) {
     `;
 
   logger.info("Latest status updated");
+
+  const providerEvent = PROVIDER_EMAIL_EVENTS[mailStatus];
+  if (providerEvent) {
+    NotificationEmitter.emitEmailEvent(email.teamId, providerEvent, {
+      emailId: email.id,
+      to: email.to.join(", "),
+      subject: email.subject,
+    }).catch((error) => logger.warn({ err: error, emailId: email.id }, "Notification failed"));
+  }
 
   const today = new Date().toISOString().split("T")[0] as string;
 

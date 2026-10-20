@@ -51,6 +51,8 @@ export const UpgradeModal = () => {
                   "Email sending is paused because your bounce rate is too high.",
                 [LimitReason.COMPLAINT_RATE_EXCEEDED]:
                   "Email sending is paused because your complaint rate is too high.",
+                [LimitReason.NEW_TEAM_DAILY_LIMIT_REACHED]:
+                  "New accounts can send 50 emails a day during their first week.",
               };
               return reason
                 ? `${messages[reason] ?? ""} Upgrade to continue.`

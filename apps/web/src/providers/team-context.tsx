@@ -11,7 +11,7 @@ type Team = {
   image?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "LIFETIME";
+  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "SCALE" | "LIFETIME";
   stripeCustomerId?: string | null;
   billingEmail?: string | null;
   teamUsers: { role: "ADMIN" | "MEMBER" }[];

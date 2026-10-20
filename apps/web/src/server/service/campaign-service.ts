@@ -27,6 +27,15 @@ import {
   validateDomainFromEmail,
 } from "./domain-service";
 import { LimitService } from "./limit-service";
+import { NotificationEmitter } from "./notification-emitter";
+
+/** Tells the team's notification providers about a campaign starting or finishing. Never throws. */
+function notifyCampaign(campaign: { id: string; name: string; teamId: number }, event: "started" | "completed") {
+  NotificationEmitter.emitCampaignEvent(campaign.teamId, event, {
+    campaignId: campaign.id,
+    campaignName: campaign.name,
+  }).catch((error) => logger.warn({ err: error, campaignId: campaign.id }, "[CampaignService]: Notification failed"));
+}
 
 const CAMPAIGN_UNSUB_PLACEHOLDER_TOKENS = [
   "{{bytesend_unsubscribe_url}}",
@@ -673,6 +682,7 @@ export async function resumeCampaign({
       where: { id: campaignId },
       data: { status: "RUNNING" },
     });
+    notifyCampaign(campaign, "started");
   }
   await wakeCampaignScheduler();
 
@@ -1100,6 +1110,7 @@ export class CampaignBatchService {
           where: { id: campaignId },
           data: { status: "RUNNING" },
         });
+        notifyCampaign(campaign, "started");
       }
 
       if (isDirectBroadcast) {
@@ -1126,6 +1137,7 @@ export class CampaignBatchService {
             where: { id: campaign.id },
             data: { status: "SENT" },
           });
+          notifyCampaign(campaign, "completed");
           return;
         }
 
@@ -1236,6 +1248,7 @@ export class CampaignBatchService {
           where: { id: campaignId },
           data: { status: "SENT" },
         });
+        notifyCampaign(campaign, "completed");
         return;
       }
 

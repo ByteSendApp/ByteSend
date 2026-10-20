@@ -14,6 +14,7 @@ import { logger } from "../logger/log";
 import { sendDoubleOptInConfirmationEmail } from "./double-opt-in-service";
 import { LimitService } from "./limit-service";
 import { ByteSendApiError } from "../public-api/api-error";
+import { NotificationEmitter } from "./notification-emitter";
 
 export type ContactInput = {
   email: string;
@@ -417,6 +418,12 @@ async function emitContactEvent(
       type,
       buildContactPayload(contact),
     );
+
+    if (type === "contact.created" || type === "contact.deleted") {
+      NotificationEmitter.emitContactEvent(resolvedTeamId, type === "contact.created" ? "created" : "deleted", {
+        contactEmail: contact.email,
+      }).catch((error) => logger.warn({ err: error, contactId: contact.id }, "[ContactService]: Notification failed"));
+    }
   } catch (error) {
     logger.error(
       { error, contactId: contact.id, type },

@@ -33,14 +33,16 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 grid gap-4 rounded-2xl border-2 bg-popover p-6 shadow-lg",
+  "fixed z-50 grid gap-4 rounded-2xl border-2 bg-popover p-4 shadow-lg sm:p-6",
   {
     variants: {
       side: {
         top: "inset-x-0 top-0",
         bottom: "inset-x-0 bottom-0",
         left: "inset-y-0 left-0 h-full w-3/4 sm:max-w-sm",
-        right: "inset-y-0 right-[32px] h-[95%] my-auto w-3/4 sm:max-w-sm",
+        // Phones get the whole screen less a small margin; wider screens a floating panel on the right.
+        right:
+          "inset-2 sm:inset-x-auto sm:inset-y-0 sm:right-8 sm:my-auto sm:h-[95%] sm:w-3/4 sm:max-w-sm",
       },
     },
     defaultVariants: {

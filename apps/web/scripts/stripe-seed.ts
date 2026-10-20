@@ -21,6 +21,7 @@ import {
   syncPlansToStripe,
   generateDbConfig,
   DB_CONFIG_KEYS,
+  PRICING_VERSION,
 } from "../../../packages/lib/src/stripe/seed.ts";
 import { STRIPE_ADDON_PRODUCTS } from "../../../packages/lib/src/stripe/products.ts";
 
@@ -82,7 +83,7 @@ async function upsertAddonProductAndPrice(params: {
   }
 
   const existingPrices = await stripe.prices.search({
-    query: `product:'${product.id}' AND metadata['type']:'${priceMetadataType}'`,
+    query: `product:'${product.id}' AND active:'true' AND metadata['type']:'${priceMetadataType}' AND metadata['pricing']:'${PRICING_VERSION}'`,
     limit: 1,
   });
 
@@ -93,10 +94,16 @@ async function upsertAddonProductAndPrice(params: {
   } else {
     price = await stripe.prices.create({
       product: product.id,
-      currency: "cad",
+      currency: "usd",
       unit_amount: priceMonthly,
+      // Add-ons cost the same number in every currency ($1 / £1 / €1 per domain).
+      tax_behavior: "exclusive",
+      currency_options: {
+        gbp: { unit_amount: priceMonthly, tax_behavior: "exclusive" },
+        eur: { unit_amount: priceMonthly, tax_behavior: "exclusive" },
+      },
       recurring: { interval: "month", usage_type: "licensed" },
-      metadata: { type: priceMetadataType, environment },
+      metadata: { type: priceMetadataType, environment, pricing: PRICING_VERSION },
     });
     console.log(`  ✓ Created add-on price: ${price.id}`);
   }
@@ -199,6 +206,9 @@ async function main() {
   } else if (!appUrl) {
     console.warn("\n⚠️   Webhook: NEXTAUTH_URL / APP_URL not set — skipping endpoint registration.");
     console.warn("   Set NEXTAUTH_URL and re-run to auto-register the webhook.");
+  } else if (/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(appUrl)) {
+    console.warn(`\n⚠️   Webhook: ${appUrl} isn't publicly reachable, so Stripe can't send to it. Skipping registration.`);
+    console.warn("   Your existing endpoint and stored secret are unchanged.");
   } else {
     const webhookUrl = `${appUrl.replace(/\/$/, "")}/api/webhook/stripe`;
     console.log(`\n🔔  Registering webhook endpoint: ${webhookUrl}`);

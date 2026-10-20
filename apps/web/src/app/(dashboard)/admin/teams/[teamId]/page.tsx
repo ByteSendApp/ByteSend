@@ -29,6 +29,14 @@ import { AssignPlanCard } from "../_components/assign-plan-card";
 import { DeleteTeamCard } from "../_components/delete-team-card";
 import { DomainRegionControl } from "../_components/domain-region-control";
 import { TeamSettingsCard } from "../_components/team-settings-card";
+import { toast } from "@bytesend/ui/src/toaster";
+import {
+  domainAgeDays,
+  isInNewTeamRamp,
+  NEW_TEAM_DAILY_LIMIT,
+  newTeamRampEndsAt,
+  YOUNG_DOMAIN_DAYS,
+} from "~/lib/constants/trust";
 
 const DOMAIN_STATUS: Record<string, { label: string; tone: StatusTone }> = {
   SUCCESS: { label: "Verified", tone: "success" },
@@ -82,6 +90,14 @@ export default function AdminTeamDetailPage() {
     { enabled: Number.isInteger(teamId), retry: false },
   );
   const team = teamQuery.data;
+  const utils = api.useUtils();
+  const approveSending = api.admin.setTeamSendingApproved.useMutation({
+    onSuccess: async (updated) => {
+      toast.success(updated.sendingApprovedAt ? "Sending approved: the new-team limit is lifted" : "Approval revoked");
+      await Promise.all([utils.admin.getTeamDetail.invalidate({ teamId }), utils.admin.listAuditLog.invalidate()]);
+    },
+    onError: (error) => toast.error("Could not update approval", { description: error.message }),
+  });
 
   const usageSeries = useMemo(
     () => [
@@ -126,6 +142,12 @@ export default function AdminTeamDetailPage() {
               <StatusPill tone="muted">{team.plan}</StatusPill>
               {team.isBlocked ? <StatusPill tone="destructive">Blocked</StatusPill> : null}
               {!team.isActive ? <StatusPill tone="warning">Inactive</StatusPill> : null}
+              {isInNewTeamRamp(team) ? (
+                <span title={`Until ${format(newTeamRampEndsAt(team), "MMM d, HH:mm")} or until approved`}>
+                  <StatusPill tone="warning">New-team limit: {NEW_TEAM_DAILY_LIMIT}/day</StatusPill>
+                </span>
+              ) : null}
+              {team.sendingApprovedAt ? <StatusPill tone="success">Sending approved</StatusPill> : null}
             </div>
             <p className="text-xs text-muted-foreground">
               <span className="font-mono">#{team.id}</span> · created{" "}
@@ -145,6 +167,16 @@ export default function AdminTeamDetailPage() {
                 >
                   Stripe <ExternalLink className="ml-1.5 size-3.5" />
                 </a>
+              </Button>
+            ) : null}
+            {isInNewTeamRamp(team) || team.sendingApprovedAt ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={approveSending.isPending}
+                onClick={() => approveSending.mutate({ teamId: team.id, approved: !team.sendingApprovedAt })}
+              >
+                {team.sendingApprovedAt ? "Revoke approval" : "Approve sending"}
               </Button>
             ) : null}
             <Button
@@ -310,11 +342,15 @@ export default function AdminTeamDetailPage() {
                         <p className="truncate font-mono text-sm">{domain.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {domain.region} · added {formatDistanceToNow(domain.createdAt, { addSuffix: true })}
+                          {domain.registeredAt ? ` · registered ${formatDistanceToNow(domain.registeredAt, { addSuffix: true })}` : ""}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {domain.openTracking ? <StatusPill tone="muted">Open tracking</StatusPill> : null}
                         {domain.clickTracking ? <StatusPill tone="muted">Click tracking</StatusPill> : null}
+                        {domain.registeredAt && domainAgeDays(domain.registeredAt) < YOUNG_DOMAIN_DAYS ? (
+                          <StatusPill tone="warning">New domain</StatusPill>
+                        ) : null}
                         {!domain.dmarcAdded ? <StatusPill tone="warning">No DMARC</StatusPill> : null}
                         {domain.blacklistChecks.some((check) => check.status === "LISTED") ? (
                           <Link href="/admin/blacklists">

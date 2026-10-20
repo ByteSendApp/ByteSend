@@ -6,6 +6,8 @@ import { getRedis, redisKey } from "../redis";
 import { logger } from "../logger/log";
 import { BLACKLISTS, lookupDomain } from "./blacklist-service";
 import { isPrivateSuffixHostname, isSharedHostname } from "~/lib/constants/shared-domains";
+import { domainAgeDays, VERY_YOUNG_DOMAIN_DAYS, YOUNG_DOMAIN_DAYS } from "~/lib/constants/trust";
+import { DomainAgeService } from "./domain-age-service";
 import { AdminAuditService } from "./admin-audit-service";
 import { TeamService } from "./team-service";
 import {
@@ -25,6 +27,8 @@ export type SpamScanInput = {
   text?: string | null;
   attachmentNames?: string[];
   teamCreatedAt?: Date;
+  /** Filled in by SpamScanService.scan when not provided. */
+  senderDomainRegisteredAt?: Date | null;
 };
 
 const PHISHING_PATTERNS = [
@@ -277,6 +281,15 @@ export function scanContent(input: SpamScanInput): SpamHit[] {
     hits.push({ rule: "shared_namespace_sender", score: 2, detail: senderDomain });
   }
 
+  if (input.senderDomainRegisteredAt) {
+    const age = domainAgeDays(input.senderDomainRegisteredAt);
+    if (age < VERY_YOUNG_DOMAIN_DAYS) {
+      hits.push({ rule: "young_domain", score: 8, detail: `${senderDomain} registered ${age} day(s) ago` });
+    } else if (age < YOUNG_DOMAIN_DAYS) {
+      hits.push({ rule: "young_domain", score: 5, detail: `${senderDomain} registered ${age} days ago` });
+    }
+  }
+
   if (input.teamCreatedAt && Date.now() - input.teamCreatedAt.getTime() < 7 * 24 * 60 * 60 * 1000) {
     hits.push({ rule: "new_team", score: 2 });
   }
@@ -330,6 +343,14 @@ async function scanLinkReputation(html: string | null | undefined): Promise<Spam
 
 export class SpamScanService {
   static async scan(input: SpamScanInput): Promise<SpamResult> {
+    if (input.senderDomainRegisteredAt === undefined) {
+      try {
+        const senderDomain = parseFromHeader(input.from).domain;
+        input = { ...input, senderDomainRegisteredAt: senderDomain ? await DomainAgeService.forSender(senderDomain) : null };
+      } catch (error) {
+        logger.warn({ err: error }, "[SpamScanService]: Domain age lookup failed");
+      }
+    }
     let hits = scanContent(input);
     try {
       hits = [...hits, ...(await scanLinkReputation(input.html))];

@@ -13,11 +13,11 @@ export function getUsageRate(
 }
 
 export const USAGE_UNIT_PRICE: Record<EmailUsageType, number> = {
-  [EmailUsageType.MARKETING]: PLANS.LITE.usageMetering!.marketing,
-  [EmailUsageType.TRANSACTIONAL]: PLANS.LITE.usageMetering!.transactional,
+  [EmailUsageType.MARKETING]: PLANS.BASIC.usageMetering!.marketing,
+  [EmailUsageType.TRANSACTIONAL]: PLANS.BASIC.usageMetering!.transactional,
 };
 
-export const UNIT_PRICE = PLANS.LITE.usageMetering!.marketing;
+export const UNIT_PRICE = PLANS.BASIC.usageMetering!.marketing;
 
 export const TRANSACTIONAL_UNIT_CONVERSION =
   UNIT_PRICE / USAGE_UNIT_PRICE[EmailUsageType.TRANSACTIONAL];

@@ -15,15 +15,16 @@ import { api } from "~/trpc/react";
 
 const PLAN_OPTIONS: Array<{ value: Plan; label: string }> = [
   { value: "FREE", label: "Free" },
-  { value: "HOBBY", label: "Hobby (CA$5/mo)" },
-  { value: "LITE", label: "Lite (CA$10/mo)" },
-  { value: "BASIC", label: "Pro (CA$30/mo)" },
-  { value: "LIFETIME", label: "Lifetime (CA$199 one-time)" },
+  { value: "HOBBY", label: "Starter ($5/mo)" },
+  { value: "BASIC", label: "Pro ($20/mo)" },
+  { value: "SCALE", label: "Scale ($90/mo)" },
+  { value: "LITE", label: "Lite (legacy)" },
+  { value: "LIFETIME", label: "Lifetime (legacy)" },
 ];
 
 export function AssignPlanCard({ teamId, currentPlan }: { teamId: number; currentPlan: Plan }) {
   const utils = api.useUtils();
-  const [plan, setPlan] = useState<Plan>(currentPlan === "FREE" ? "LITE" : currentPlan);
+  const [plan, setPlan] = useState<Plan>(currentPlan === "FREE" ? "BASIC" : currentPlan);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const assignPlan = api.admin.adminAssignPlan.useMutation({

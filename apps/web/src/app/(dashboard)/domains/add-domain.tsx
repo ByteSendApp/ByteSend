@@ -237,7 +237,7 @@ export default function AddDomain() {
             )}
             {!isAtLimit && (
               <p className="text-sm text-muted-foreground mb-3">
-                Need more domains? Purchase extra slots for CA$1/mo each.
+                Need more domains? Purchase extra slots for $1/mo each.
               </p>
             )}
             <Button
@@ -253,7 +253,7 @@ export default function AddDomain() {
               className="w-full"
               variant="outline"
             >
-              {purchaseDomainsAddonMutation.isPending ? "Opening checkout…" : "Buy 1 extra domain slot (CA$1/mo)"}
+              {purchaseDomainsAddonMutation.isPending ? "Opening checkout…" : "Buy 1 extra domain slot ($1/mo)"}
             </Button>
           </div>
         </div>

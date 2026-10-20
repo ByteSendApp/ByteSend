@@ -14,6 +14,7 @@ export enum LimitReason {
   MARKETING_NOT_AVAILABLE = "MARKETING_NOT_AVAILABLE",
   BOUNCE_RATE_EXCEEDED = "BOUNCE_RATE_EXCEEDED",
   COMPLAINT_RATE_EXCEEDED = "COMPLAINT_RATE_EXCEEDED",
+  NEW_TEAM_DAILY_LIMIT_REACHED = "NEW_TEAM_DAILY_LIMIT_REACHED",
 }
 
 export const PLAN_LIMITS: Record<
@@ -73,6 +74,17 @@ export const PLAN_LIMITS: Record<
     teamMembers: -1,
     webhooks: PLANS.BASIC.limits.maxWebhooks,
     marketingEmailsIncluded: PLANS.BASIC.limits.marketingEmailsIncluded,
+  },
+  SCALE: {
+    emailsPerMonth: PLANS.SCALE.limits.monthlyEmailLimit,
+    emailsPerDay: -1,
+    domains: PLANS.SCALE.limits.maxDomains,
+    contactBooks: PLANS.SCALE.limits.maxContactBooks,
+    contacts: PLANS.SCALE.limits.contactsLimit,
+    campaigns: PLANS.SCALE.limits.campaignsLimit,
+    teamMembers: PLANS.SCALE.limits.maxTeamMembers,
+    webhooks: PLANS.SCALE.limits.maxWebhooks,
+    marketingEmailsIncluded: PLANS.SCALE.limits.marketingEmailsIncluded,
   },
   LIFETIME: {
     emailsPerMonth: -1,

@@ -7,6 +7,7 @@ vi.mock("~/env", () => ({ env: { SPAMHAUS_DQS_KEY: undefined } }));
 vi.mock("~/server/service/team-service", () => ({ TeamService: {} }));
 vi.mock("~/server/service/admin-audit-service", () => ({ AdminAuditService: {} }));
 vi.mock("~/server/service/blacklist-service", () => ({ BLACKLISTS: [], lookupDomain: vi.fn() }));
+vi.mock("~/server/service/domain-age-service", () => ({ DomainAgeService: { forSender: vi.fn().mockResolvedValue(null) } }));
 
 import { SpamScanService, extractLinks, scanContent, verdictFor } from "~/server/service/spam-scan-service";
 
@@ -107,6 +108,28 @@ describe("scanContent: phishing and abuse", () => {
   it("does not treat newsletters with common words in their name as impersonation", () => {
     const hits = scanContent({ from: "The Outlook Weekly <news@outlookweekly.example>", subject: "This week", html: "<p>Hi</p>" });
     expect(rules(hits)).not.toContain("brand_impersonation");
+  });
+
+  it("scores newly registered sending domains, more for very young ones", () => {
+    const base = { from: "Shop <hi@new-shop.example>", subject: "Hello", html: "<p>Hi</p>" };
+    const day = 24 * 60 * 60 * 1000;
+    const veryYoung = scanContent({ ...base, senderDomainRegisteredAt: new Date(Date.now() - 2 * day) });
+    const young = scanContent({ ...base, senderDomainRegisteredAt: new Date(Date.now() - 20 * day) });
+    const established = scanContent({ ...base, senderDomainRegisteredAt: new Date(Date.now() - 400 * day) });
+    expect(veryYoung.find((hit) => hit.rule === "young_domain")?.score).toBe(8);
+    expect(young.find((hit) => hit.rule === "young_domain")?.score).toBe(5);
+    expect(rules(established)).not.toContain("young_domain");
+  });
+
+  it("holds mail from a brand-new team on a days-old domain", async () => {
+    const result = await SpamScanService.scan({
+      from: "Shop <hi@new-shop.example>",
+      subject: "Hello",
+      html: "<p>Hi</p>",
+      teamCreatedAt: new Date(),
+      senderDomainRegisteredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    });
+    expect(result.verdict).toBe("HOLD");
   });
 
   it("flags executable attachments", () => {

@@ -10,6 +10,8 @@ import { DEFAULT_QUEUE_OPTIONS } from "../queue/queue-constants";
 import { logger } from "../logger/log";
 import { createWorkerHandler, TeamJob } from "../queue/bullmq-context";
 import { LimitService } from "./limit-service";
+import { LimitReason } from "~/lib/constants/plans";
+import { NotificationEmitter } from "./notification-emitter";
 import { sanitizeCustomHeaders } from "~/server/utils/email-headers";
 import { createOneClickUnsubUrl } from "./campaign-service";
 
@@ -429,7 +431,10 @@ async function executeEmail(job: QueueEmailJob) {
           emailId: email.id,
           status: "FAILED",
           data: {
-            error: "Email sending limit reached",
+            error:
+              limitCheck.reason === LimitReason.NEW_TEAM_DAILY_LIMIT_REACHED
+                ? `New accounts can send ${limitCheck.limit} emails a day during their first week. Upgrade or contact support to lift this sooner.`
+                : "Email sending limit reached",
             reason: limitCheck.reason,
             limit: limitCheck.limit,
           },
@@ -495,6 +500,11 @@ async function executeEmail(job: QueueEmailJob) {
         create: { ...usageKey, sent: 1 },
         update: { sent: { increment: 1 } },
       });
+      NotificationEmitter.emitEmailEvent(email.teamId, "sent", {
+        emailId: email.id,
+        to: email.to.join(", "),
+        subject: email.subject,
+      }).catch((error) => logger.warn({ err: error, emailId: email.id }, "[EmailQueueService]: Notification failed"));
     }
 
   } catch (error: any) {

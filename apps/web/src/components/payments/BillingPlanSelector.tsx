@@ -10,7 +10,7 @@ import { PLAN_PERKS } from "~/lib/constants/payments";
 import { api } from "~/trpc/react";
 import type { CheckoutPlan } from "~/components/payments/UpgradeButton";
 
-type PaidPlan = Extract<CheckoutPlan, "HOBBY" | "LITE" | "BASIC">;
+type PaidPlan = CheckoutPlan;
 
 type BillingPlanSelectorProps = {
     currentPlan: string;
@@ -18,7 +18,7 @@ type BillingPlanSelectorProps = {
     isManaging: boolean;
 };
 
-const PAID_PLAN_OPTIONS: PaidPlan[] = ["HOBBY", "LITE", "BASIC"];
+const PAID_PLAN_OPTIONS: PaidPlan[] = ["HOBBY", "BASIC", "SCALE"];
 
 function estimatePlanCost(plan: PaidPlan, marketing: number, transactional: number) {
     const planConfig = PLANS[plan];
@@ -67,7 +67,7 @@ export function BillingPlanSelector({
         );
     }, [estimates]);
 
-    const [selectedPlan, setSelectedPlan] = useState<PaidPlan>("LITE");
+    const [selectedPlan, setSelectedPlan] = useState<PaidPlan>("BASIC");
 
     const selectedEstimate =
         estimates.find((estimate) => estimate.plan === selectedPlan) ?? recommended;
@@ -159,7 +159,7 @@ export function BillingPlanSelector({
                                     ) : null}
                                 </div>
                                 <div className="mt-2 text-xl font-semibold tabular-nums">
-                                    CA${estimate.total.toFixed(2)}
+                                    ${estimate.total.toFixed(2)}
                                 </div>
                                 <div className="text-xs text-muted-foreground">monthly contract price</div>
                             </button>
@@ -179,7 +179,7 @@ export function BillingPlanSelector({
                         </div>
                         <div className="text-right">
                             <div className="text-xs text-muted-foreground">Monthly contract price</div>
-                            <div className="text-xl font-semibold tabular-nums text-primary">CA${selectedEstimate.total.toFixed(2)}</div>
+                            <div className="text-xl font-semibold tabular-nums text-primary">${selectedEstimate.total.toFixed(2)}</div>
                         </div>
                     </div>
 

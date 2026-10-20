@@ -15,13 +15,13 @@ export function Hero() {
 
             <div className="relative mx-auto max-w-4xl px-6 pt-28 pb-16 text-center sm:pt-40 sm:pb-24">
                 <Link
-                    href="/changelog"
+                    href="/changelog#v0.7.0"
                     className="group mb-8 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-4 py-1.5 text-xs text-muted-foreground transition-colors hover:border-brand-blue/40 hover:text-foreground"
                 >
                     <span className="rounded-full bg-brand-blue px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                         New
                     </span>
-                    Spam protection, region moves and a new look in v0.4
+                    A new dashboard, DNS monitoring and team alerts in v0.7
                     <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </Link>
 
@@ -50,7 +50,7 @@ export function Hero() {
                 </div>
 
                 <p className="mt-4 text-xs text-muted-foreground">
-                    No credit card · 12,500 emails a month free · Open source
+                    No credit card · 5,000 emails a month free · Open source
                 </p>
 
                 <div className="mx-auto mt-16 max-w-4xl sm:mt-20">

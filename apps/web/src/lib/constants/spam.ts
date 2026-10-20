@@ -21,4 +21,5 @@ export const SPAM_RULE_LABELS: Record<string, string> = {
   new_team: "Team created in the last 7 days",
   shared_hostname_sender: "Sender on a dynamic-DNS or free-hosting hostname",
   shared_namespace_sender: "Sender on a shared domain namespace",
+  young_domain: "Sending domain registered in the last 30 days",
 };

@@ -7,6 +7,7 @@ import { db } from "../db";
 import { logger } from "../logger/log";
 import { Plan, Team } from "@prisma/client";
 import { sendToDiscord } from "./notification-service";
+import { isInNewTeamRamp, NEW_TEAM_DAILY_LIMIT } from "~/lib/constants/trust";
 import {
   BOUNCE_RATE_HARD_LIMIT,
   BOUNCE_RATE_WARN_LIMIT,
@@ -21,11 +22,11 @@ function isLimitExceeded(current: number, limit: number): boolean {
   return current >= limit;
 }
 
-function getActivePlan(team: { plan: Plan; isActive: boolean }): Plan {
+export function getActivePlan(team: { plan: Plan; isActive: boolean }): Plan {
   return team.isActive ? team.plan : "FREE";
 }
 
-function hasCustomPlan(team: Team): boolean {
+export function hasCustomPlan(team: Team): boolean {
   return Boolean(
     team.customPlanEnabled &&
     team.customMarketingEmailLimit &&
@@ -33,14 +34,18 @@ function hasCustomPlan(team: Team): boolean {
   );
 }
 
-function getCustomMonthlyTotalLimit(team: Team): number | null {
+export function getCustomMonthlyTotalLimit(team: Team): number | null {
   if (!hasCustomPlan(team)) return null;
   return (team.customMarketingEmailLimit ?? 0) + (team.customTransactionalEmailLimit ?? 0);
 }
 
-function getEffectiveDailyEmailLimit(team: Team): number {
+export function getEffectiveDailyEmailLimit(team: Team): number {
   if (hasCustomPlan(team)) return -1;
-  return PLAN_LIMITS[getActivePlan(team)].emailsPerDay;
+  const planLimit = PLAN_LIMITS[getActivePlan(team)].emailsPerDay;
+  if (isInNewTeamRamp(team)) {
+    return planLimit === -1 ? NEW_TEAM_DAILY_LIMIT : Math.min(planLimit, NEW_TEAM_DAILY_LIMIT);
+  }
+  return planLimit;
 }
 
 function hasMarketingEnabled(team: Team): boolean {
@@ -366,6 +371,14 @@ export class LimitService {
     );
 
     if (isLimitExceeded(dailyUsage, dailyLimit)) {
+      if (isInNewTeamRamp(team)) {
+        return {
+          isLimitReached: true,
+          limit: dailyLimit,
+          reason: LimitReason.NEW_TEAM_DAILY_LIMIT_REACHED,
+          available: 0,
+        };
+      }
       try {
         await TeamService.maybeNotifyEmailLimitReached(
           teamId,
@@ -432,6 +445,13 @@ export class LimitService {
           };
         }
       }
+    }
+
+    if (activePlan !== "FREE" && activePlan !== "LIFETIME" && !hasCustomPlan(team)) {
+      const monthlyUsage = usage.month.reduce((acc, curr) => acc + curr.sent, 0);
+      TeamService.notifyIncludedUsage(teamId, monthlyUsage, PLAN_LIMITS[activePlan].emailsPerMonth).catch((e) =>
+        logger.warn({ err: e, teamId }, "[LimitService]: Included-usage notice failed"),
+      );
     }
 
     if (getActivePlan(team) === "FREE") {

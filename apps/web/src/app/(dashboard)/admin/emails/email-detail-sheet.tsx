@@ -51,7 +51,7 @@ export function EmailDetailSheet({ emailId, onClose }: { emailId: string | null;
         }
       }}
     >
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent className="overflow-y-auto sm:w-full sm:max-w-xl">
         <SheetHeader>
           <SheetTitle className="pr-6">{email?.subject || (emailQuery.isLoading ? "Loading…" : "(no subject)")}</SheetTitle>
           <SheetDescription className="font-mono text-xs">{emailId}</SheetDescription>

@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { env } from "~/env";
 import { TopNavClient } from "./TopNavClient";
+import { BrandMark } from "~/lib/brand";
 
 const isCloud = env.NEXT_PUBLIC_IS_CLOUD;
 
@@ -13,7 +13,7 @@ export function TopNav() {
       <div className="relative mx-auto max-w-5xl px-6 flex items-center justify-between gap-4 text-sm">
         {/* Logo: server-rendered, zero client JS */}
         <Link href="/" className="flex items-center gap-2 group">
-          <Image src="/logo-squircle.png" alt="ByteSend" width={28} height={28} />
+          <BrandMark size={17} />
           <span className="text-foreground font-semibold text-base group-hover:text-primary transition-colors">ByteSend</span>
         </Link>
 

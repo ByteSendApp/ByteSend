@@ -8,7 +8,7 @@ import { Button } from "@bytesend/ui/src/button";
 const COMPARISON_CHECKED = "October 2026";
 
 const comparisonRows: { feature: string; bs: string | boolean; resend: string | boolean; sendgrid: string | boolean; postmark: string | boolean; ses: string | boolean }[] = [
-    { feature: "Free tier", bs: "12,500/mo", resend: "3,000/mo (100/day)", sendgrid: "60-day trial", postmark: "100/mo", ses: "Pay-per-use" },
+    { feature: "Free tier", bs: "5,000/mo (200/day)", resend: "3,000/mo (100/day)", sendgrid: "60-day trial", postmark: "100/mo", ses: "Pay-per-use" },
     { feature: "Marketing campaigns", bs: true, resend: true, sendgrid: true, postmark: "Broadcast API", ses: false },
     { feature: "Visual email editor", bs: true, resend: true, sendgrid: true, postmark: false, ses: false },
     { feature: "Self-hostable", bs: true, resend: false, sendgrid: false, postmark: false, ses: false },

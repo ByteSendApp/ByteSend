@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
 import { SiBluesky } from "react-icons/si";
 import { env } from "~/env";
+import { BrandMark } from "~/lib/brand";
 
 const isCloud = env.NEXT_PUBLIC_IS_CLOUD;
 
@@ -14,7 +14,7 @@ export function SiteFooter() {
           {/* Left: brand + links */}
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             <Link href="/" className="flex items-center gap-2 group">
-              <Image src="/logo-squircle.png" alt="ByteSend" width={22} height={22} />
+              <BrandMark size={13} />
               <span className="text-foreground font-semibold text-sm group-hover:text-primary transition-colors">ByteSend</span>
             </Link>
             <nav className="flex items-center gap-4 text-[13px] text-muted-foreground">

@@ -58,6 +58,12 @@ function createDomain(overrides: Partial<Domain> = {}): Domain {
     regionMoveStartedAt: null,
     retiredRegion: null,
     retiredRegionAt: null,
+    registeredAt: null,
+    registrationCheckedAt: null,
+    dnsIssues: null,
+    dnsIssuesSince: null,
+    dnsIssuesNotifiedAt: null,
+    dnsCheckedAt: null,
     ...overrides,
   };
 }

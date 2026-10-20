@@ -3,7 +3,15 @@
  * Defines all payment-related types for ByteSend's Stripe integration
  */
 
-export type PlanType = "FREE" | "LITE" | "HOBBY" | "BASIC" | "LIFETIME";
+export type PlanType = "FREE" | "LITE" | "HOBBY" | "BASIC" | "SCALE" | "LIFETIME";
+
+/** Currencies prices are offered in. USD is the base; Stripe Checkout shows GBP or EUR by location. */
+export type Currency = "usd" | "gbp" | "eur";
+
+export type OverageRates = {
+  marketing: number; // per marketing email beyond the plan allowance
+  transactional: number; // per transactional email beyond the plan allowance
+};
 
 export interface PlanLimits {
   monthlyEmailLimit: number;
@@ -32,20 +40,25 @@ export interface PricingTier {
   displayName: string;
   description: string;
   limits: PlanLimits;
-  /** Monthly recurring price in cents. 0 for free or one-time plans. */
+  /** Monthly recurring price in USD cents. 0 for free or one-time plans. */
   monthlyPrice: number;
+  /** The same monthly price in other currencies, in their minor units. */
+  localMonthlyPrice?: Partial<Record<Exclude<Currency, "usd">, number>>;
+  /**
+   * No longer sold. Existing customers keep the plan, its limits and their Stripe price;
+   * it's hidden from pricing and checkout, and the seed script doesn't create new prices for it.
+   */
+  legacy?: boolean;
   annualPrice?: number;
   /** One-time purchase price in cents (e.g. LIFETIME plan). */
   oneTimePrice?: number;
   /**
-   * Per-email overage billing rates (CAD).
-   * Applies ONLY to emails sent BEYOND the plan's included monthlyEmailLimit.
-   * Plans without this field are either hard-capped (FREE) or unlimited (LIFETIME).
+   * Per-email overage rates in USD, charged only on emails BEYOND the plan's monthlyEmailLimit.
+   * Plans without this field are hard-capped (FREE) or don't bill overage (LIFETIME).
    */
-  usageMetering?: {
-    marketing: number; // CAD per marketing email (overage only)
-    transactional: number; // CAD per transactional email (overage only)
-  };
+  usageMetering?: OverageRates;
+  /** The same overage rates in other currencies. */
+  localUsageMetering?: Partial<Record<Exclude<Currency, "usd">, OverageRates>>;
   isLimited: boolean;
   order: number;
 }

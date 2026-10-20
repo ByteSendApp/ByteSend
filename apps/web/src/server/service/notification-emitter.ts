@@ -232,6 +232,39 @@ export class NotificationEmitter {
   /**
    * Error alert notification
    */
+  static async emitUsageAlert(
+    teamId: number,
+    data: { title: string; description: string; used: number; limit: number; reached: boolean },
+  ) {
+    await NotificationProviderService.broadcastNotification(teamId, "USAGE_ALERT", {
+      title: data.title,
+      description: data.description,
+      color: data.reached ? "#EF4444" : "#F59E0B",
+      fields: [
+        { name: "Used", value: data.used.toLocaleString("en-US"), inline: true },
+        { name: "Limit", value: data.limit.toLocaleString("en-US"), inline: true },
+      ],
+      timestamp: true,
+      data,
+    });
+  }
+
+  static async emitDomainHealth(
+    teamId: number,
+    data: { domainName: string; issues: string[]; resolved: boolean },
+  ) {
+    await NotificationProviderService.broadcastNotification(teamId, "DOMAIN_HEALTH", {
+      title: data.resolved ? `DNS fixed for ${data.domainName}` : `DNS problem on ${data.domainName}`,
+      description: data.resolved
+        ? "All required DNS records are back in place."
+        : "Some required DNS records are missing or wrong. Sending from this domain may start failing or landing in spam.",
+      color: data.resolved ? "#10B981" : "#EF4444",
+      fields: data.resolved ? [] : data.issues.map((issue) => ({ name: "Problem", value: issue, inline: false })),
+      timestamp: true,
+      data,
+    });
+  }
+
   static async emitErrorAlert(
     teamId: number,
     data: {

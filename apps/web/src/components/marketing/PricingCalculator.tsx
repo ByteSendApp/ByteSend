@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { PLANS } from "@bytesend/lib";
+import { PLANS, SOLD_PAID_PLANS, type SoldPaidPlan } from "@bytesend/lib";
 
 type SliderProps = {
   label: string;
@@ -81,10 +81,7 @@ function Slider({
 }
 
 export function PricingCalculator() {
-  type PaidPlanKey = "HOBBY" | "LITE" | "BASIC";
-
-  const planOptions: PaidPlanKey[] = ["HOBBY", "LITE", "BASIC"];
-  const [selectedPlan, setSelectedPlan] = React.useState<PaidPlanKey>("LITE");
+  const [selectedPlan, setSelectedPlan] = React.useState<SoldPaidPlan>("BASIC");
   const [marketing, setMarketing] = React.useState<number>(25000);
   const [transactional, setTransactional] = React.useState<number>(25000);
 
@@ -109,13 +106,13 @@ export function PricingCalculator() {
   const estimatedTotal = baseMonthly + marketingOverageCost + transactionalOverageCost;
 
   const formatRatePerThousand = (value: number) =>
-    `CA$${(value * 1000).toFixed(2)}/1,000`;
+    `$${(value * 1000).toFixed(2)}/1,000`;
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/40 p-1">
       <div className="rounded-[14px] border border-border/50 bg-background/95 p-5 pb-8 sm:p-6">
         <div className="mx-auto mb-5 grid w-full max-w-xl grid-cols-3 gap-2 rounded-xl border border-border/50 bg-muted/30 p-1">
-          {planOptions.map((planKey) => {
+          {SOLD_PAID_PLANS.map((planKey) => {
             const planLabel = PLANS[planKey].displayName;
             const isSelected = selectedPlan === planKey;
             return (
@@ -180,28 +177,28 @@ export function PricingCalculator() {
             <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-4 items-center">
               <div className="rounded-lg border border-border/60 p-4">
                 <div className="text-xs text-muted-foreground">Plan base</div>
-                <div className="text-lg font-medium">CA${baseMonthly.toFixed(2)}</div>
+                <div className="text-lg font-medium">${baseMonthly.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {plan.displayName} monthly
                 </div>
               </div>
               <div className="rounded-lg border border-border/60 p-4">
                 <div className="text-xs text-muted-foreground">Marketing overage</div>
-                <div className="text-lg font-medium">CA${marketingOverageCost.toFixed(2)}</div>
+                <div className="text-lg font-medium">${marketingOverageCost.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {Math.round(marketingOverage).toLocaleString()} estimated overage emails
                 </div>
               </div>
               <div className="rounded-lg border border-border/60 p-4">
                 <div className="text-xs text-muted-foreground">Transactional overage</div>
-                <div className="text-lg font-medium">CA${transactionalOverageCost.toFixed(2)}</div>
+                <div className="text-lg font-medium">${transactionalOverageCost.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {Math.round(transactionalOverage).toLocaleString()} estimated overage emails
                 </div>
               </div>
               <div className="rounded-lg border border-primary/30 p-4 bg-primary/10">
                 <div className="text-xs text-muted-foreground">Estimated Total</div>
-                <div className="text-3xl text-primary font-semibold">CA${estimatedTotal.toFixed(2)}</div>
+                <div className="text-3xl text-primary font-semibold">${estimatedTotal.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
                   {totalEmails <= included
                     ? "Within included monthly volume"

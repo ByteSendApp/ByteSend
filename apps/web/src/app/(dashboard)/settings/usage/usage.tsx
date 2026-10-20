@@ -41,7 +41,7 @@ function getUsageByType(
 }
 
 function getEffectiveEmailLimits(
-  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "LIFETIME",
+  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "SCALE" | "LIFETIME",
   customContract?: {
     customPlanEnabled: boolean;
     customMarketingEmailLimit: number | null;
@@ -172,7 +172,7 @@ function EmailLimitsBreakdown({
 }: {
   usage: { type: EmailUsageType; sent: number }[];
   dayUsage: { type: EmailUsageType; sent: number }[];
-  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "LIFETIME";
+  plan: "FREE" | "BASIC" | "HOBBY" | "LITE" | "SCALE" | "LIFETIME";
   customContract?: {
     customPlanEnabled: boolean;
     customMarketingEmailLimit: number | null;
@@ -277,7 +277,7 @@ function PaidPlanUsage({
             Amount due
           </p>
           <p className="mt-2 text-3xl font-bold font-mono">
-            {isUnlimited ? "CA$0.00" : `CA$${amountDue.toFixed(2)}`}
+            {isUnlimited ? "$0.00" : `$${amountDue.toFixed(2)}`}
           </p>
           {isUnlimited && (
             <p className="mt-1 text-xs text-muted-foreground">Included in plan</p>
@@ -292,7 +292,7 @@ function PaidPlanUsage({
             Credit remaining
           </p>
           <p className="mt-2 text-3xl font-bold font-mono">
-            {isUnlimited ? "∞" : `CA$${(creditRemaining ?? 0).toFixed(2)}`}
+            {isUnlimited ? "∞" : `$${(creditRemaining ?? 0).toFixed(2)}`}
           </p>
           {!isUnlimited && <Progress value={creditPct} className="mt-3 h-1.5" />}
         </CardContent>
@@ -327,11 +327,11 @@ function PaidPlanUsage({
                     {item.type.toLowerCase()}
                   </span>
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {item.sent.toLocaleString()} × CA${USAGE_UNIT_PRICE[item.type]}
+                    {item.sent.toLocaleString()} × ${USAGE_UNIT_PRICE[item.type]}
                   </span>
                 </div>
                 <span className="text-sm font-mono font-medium">
-                  CA${getCost(item.sent, item.type).toFixed(2)}
+                  ${getCost(item.sent, item.type).toFixed(2)}
                 </span>
               </div>
             ))}

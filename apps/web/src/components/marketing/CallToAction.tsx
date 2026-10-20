@@ -15,7 +15,7 @@ export function CallToAction() {
             <Reveal className="relative mx-auto max-w-4xl px-6 py-20 text-center sm:py-28">
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Start sending today.</h2>
                 <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    Create a free account in seconds and send 12,500 transactional emails a month, free, for as long as you like.
+                    Create a free account in seconds and send 5,000 emails a month, free, for as long as you like.
                 </p>
 
                 <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

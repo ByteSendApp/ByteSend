@@ -13,7 +13,6 @@ import {
   Volume2,
   BookOpenText,
   BookOpenIcon,
-  BarChart3,
   LogOutIcon,
   MoreVerticalIcon,
   UsersIcon,
@@ -26,6 +25,7 @@ import {
   PlusIcon,
   ScrollText,
   UserIcon,
+  ArrowLeft,
 } from "lucide-react";
 import { FaBook } from "react-icons/fa";
 import { SiDiscord } from "react-icons/si";
@@ -65,6 +65,8 @@ import {
 } from "@bytesend/ui/src/dropdown-menu";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { env } from "~/env";
+import { getAdminNavGroups, isActiveAdminPath } from "~/app/(dashboard)/admin/_components/admin-nav";
+import { BrandIcon } from "~/lib/brand";
 
 // General items
 const generalItems = [
@@ -74,9 +76,9 @@ const generalItems = [
     icon: Mail,
   },
   {
-    title: "Analytics",
+    title: "Overview",
     url: "/dashboard",
-    icon: BarChart3,
+    icon: HouseIcon,
   },
   {
     title: "Domains",
@@ -135,6 +137,8 @@ export function AppSidebar() {
   const { currentTeam, teams, setCurrentTeam } = useTeam();
 
   const pathname = usePathname();
+  const inAdmin = pathname?.startsWith("/admin") ?? false;
+  const adminGroups = inAdmin ? getAdminNavGroups(Boolean(session?.user?.isAdmin)) : [];
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -158,13 +162,7 @@ export function AppSidebar() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Image
-                        src="/logo-squircle.png"
-                        alt="ByteSend"
-                        width={22}
-                        height={22}
-                        className="rounded-sm"
-                      />
+                      <BrandIcon size={20} />
                     )}
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -199,13 +197,7 @@ export function AppSidebar() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <Image
-                          src="/logo-squircle.png"
-                          alt={team.name}
-                          width={14}
-                          height={14}
-                          className="rounded-sm"
-                        />
+                        <BrandIcon size={14} />
                       )}
                     </div>
                     <span className="flex-1 truncate">{team.name}</span>
@@ -227,6 +219,48 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        {inAdmin ? (
+          <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Back to dashboard">
+                      <Link href="/dashboard">
+                        <ArrowLeft />
+                        <span>Back to dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            {adminGroups.map((group, index) => (
+              <SidebarGroup key={group.label ?? `admin-${index}`} className="py-1">
+                {group.label ? (
+                  <SidebarGroupLabel>
+                    <span>{group.label}</span>
+                  </SidebarGroupLabel>
+                ) : null}
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild tooltip={item.label} isActive={isActiveAdminPath(pathname ?? "", item.href)}>
+                          <Link href={item.href}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </>
+        ) : (
+        <>
         <SidebarGroup>
           <SidebarGroupLabel>
             <span>General</span>
@@ -280,6 +314,8 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </>
+        )}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>

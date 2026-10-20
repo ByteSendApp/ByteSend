@@ -8,17 +8,8 @@ import { format } from "date-fns";
 import { useTeam } from "~/providers/team-context";
 import { api } from "~/trpc/react";
 import { PlanDetails } from "~/components/payments/PlanDetails";
-import {
-  UpgradeButton,
-} from "~/components/payments/UpgradeButton";
 import { PLANS } from "@bytesend/lib";
 import { BillingPlanSelector } from "~/components/payments/BillingPlanSelector";
-
-function formatPlanPrice(plan: (typeof PLANS)[keyof typeof PLANS]): string {
-  if (plan.oneTimePrice) return `CA$${plan.oneTimePrice / 100} one-time`;
-  if (plan.monthlyPrice === 0) return "Free";
-  return `CA$${plan.monthlyPrice / 100} / mo`;
-}
 
 export default function SettingsPage() {
   const { currentTeam, currentIsAdmin } = useTeam();
@@ -106,34 +97,15 @@ export default function SettingsPage() {
             isManaging={manageSessionUrl.isPending}
           />
 
-          <Card className="rounded-xl border border-border/70 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h4 className="text-sm font-semibold">Lifetime</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  One-time purchase with a high hard cap and no recurring monthly plan charge.
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                  {formatPlanPrice(PLANS.LIFETIME)}
-                </span>
-                {currentTeam.plan === "LIFETIME" ? (
-                  <Button disabled variant="outline">Current plan</Button>
-                ) : currentTeam.plan === "FREE" ? (
-                  <UpgradeButton plan="LIFETIME" label="Choose Lifetime" className="w-auto" />
-                ) : (
-                  <Button
-                    onClick={onManageClick}
-                    variant="outline"
-                    disabled={manageSessionUrl.isPending}
-                  >
-                    {manageSessionUrl.isPending ? <Spinner className="w-4 h-4" /> : "Change in billing portal"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
+          {currentTeam.plan === "LIFETIME" || currentTeam.plan === "LITE" ? (
+            <Card className="rounded-xl border border-border/70 p-4 sm:p-5">
+              <h4 className="text-sm font-semibold">You&apos;re on a legacy plan</h4>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {PLANS[currentTeam.plan].displayName} is no longer sold, but you keep it, its limits and your price for as
+                long as you stay on it.
+              </p>
+            </Card>
+          ) : null}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">

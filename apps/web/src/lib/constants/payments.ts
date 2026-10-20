@@ -7,7 +7,7 @@ function fmt(n: number): string {
 
 function formatOverageRate(rate: number): string {
   if (!isFinite(rate) || rate <= 0) return "N/A";
-  return `CA$${(rate * 1000).toFixed(2)}/1,000`;
+  return `$${(rate * 1000).toFixed(2)}/1,000`;
 }
 
 function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
@@ -52,7 +52,7 @@ function buildPerks(plan: (typeof PLANS)[keyof typeof PLANS]): string[] {
   } else {
     const memberAddonSuffix =
       l.extraMemberRateCents > 0
-        ? ` + CA$${(l.extraMemberRateCents / 100).toFixed(2)}/extra member`
+        ? ` + $${(l.extraMemberRateCents / 100).toFixed(2)}/extra member`
         : "";
     perks.push(`Up to ${l.maxTeamMembers} team members${memberAddonSuffix}`);
   }

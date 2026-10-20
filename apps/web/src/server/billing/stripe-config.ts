@@ -4,6 +4,7 @@ export const PRICE_KEYS = {
   hobby: { monthly: "stripe.price.hobby.monthly", marketingUsage: "stripe.price.hobby.marketing_usage", transactionalUsage: "stripe.price.hobby.transactional_usage" },
   lite: { monthly: "stripe.price.lite.monthly", marketingUsage: "stripe.price.lite.marketing_usage", transactionalUsage: "stripe.price.lite.transactional_usage" },
   basic: { monthly: "stripe.price.basic.monthly", marketingUsage: "stripe.price.basic.marketing_usage", transactionalUsage: "stripe.price.basic.transactional_usage" },
+  scale: { monthly: "stripe.price.scale.monthly", marketingUsage: "stripe.price.scale.marketing_usage", transactionalUsage: "stripe.price.scale.transactional_usage" },
   lifetime: { oneTime: "stripe.price.lifetime.one_time" },
   addon: {
     domainMonthly: "stripe.price.addon.domain_monthly",
@@ -33,7 +34,7 @@ export async function getStripeValue(key: string): Promise<string | undefined> {
   return config.get(key);
 }
 
-export async function getPlanPriceIds(plan: "HOBBY" | "LITE" | "BASIC" | "LIFETIME"): Promise<{
+export async function getPlanPriceIds(plan: "HOBBY" | "LITE" | "BASIC" | "SCALE" | "LIFETIME"): Promise<{
   monthly?: string;
   marketingUsage?: string;
   transactionalUsage?: string;
@@ -61,6 +62,12 @@ export async function getPlanPriceIds(plan: "HOBBY" | "LITE" | "BASIC" | "LIFETI
         marketingUsage: get(PRICE_KEYS.basic.marketingUsage),
         transactionalUsage: get(PRICE_KEYS.basic.transactionalUsage),
       };
+    case "SCALE":
+      return {
+        monthly: get(PRICE_KEYS.scale.monthly),
+        marketingUsage: get(PRICE_KEYS.scale.marketingUsage),
+        transactionalUsage: get(PRICE_KEYS.scale.transactionalUsage),
+      };
     case "LIFETIME":
       return {
         oneTime: get(PRICE_KEYS.lifetime.oneTime),
@@ -76,6 +83,7 @@ export async function buildPriceIdToPlanMap(): Promise<Map<string, string>> {
     [PRICE_KEYS.hobby.monthly, "HOBBY"],
     [PRICE_KEYS.lite.monthly, "LITE"],
     [PRICE_KEYS.basic.monthly, "BASIC"],
+    [PRICE_KEYS.scale.monthly, "SCALE"],
     [PRICE_KEYS.lifetime.oneTime, "LIFETIME"],
   ];
 

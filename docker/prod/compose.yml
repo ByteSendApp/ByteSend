@@ -43,7 +43,7 @@ services:
     command: -c 'mkdir -p /data/bytesend && minio server /data --console-address ":9001" --address ":9002"'
 
   web:
-    image: bytesend/web:latest
+    image: bytesend/bytesend:latest
     container_name: bytesend-web
     restart: always
     ports:
@@ -115,7 +115,7 @@ services:
         condition: service_started
 
   smtp:
-    image: bytesend/smtp:latest
+    image: bytesend/smtp-proxy:latest
     container_name: bytesend-smtp
     restart: always
     ports:

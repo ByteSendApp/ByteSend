@@ -25,8 +25,8 @@ To build both images:
 ```
 
 This builds:
-- `bytesend/web:latest` - The ByteSend web application
-- `bytesend/smtp:latest` - The SMTP server
+- `bytesend/bytesend:latest` - The ByteSend web application
+- `bytesend/smtp-proxy:latest` - The SMTP server
 
 ## Option 1: Development Setup with Docker Compose
 
@@ -93,7 +93,7 @@ This starts a production-ready setup with separate web and SMTP containers.
 To run just the web application:
 
 ```bash
-docker pull bytesend/web:latest
+docker pull bytesend/bytesend:latest
 
 docker run -d \
   -p 3000:3000 \
@@ -106,7 +106,7 @@ docker run -d \
   -e AWS_DEFAULT_REGION="us-east-1" \
   -e GITHUB_ID="your-github-id" \
   -e GITHUB_SECRET="your-github-secret" \
-  bytesend/web:latest
+  bytesend/bytesend:latest
 ```
 
 ## Option 4: Standalone SMTP Server
@@ -114,7 +114,7 @@ docker run -d \
 To run just the SMTP server:
 
 ```bash
-docker pull bytesend/smtp:latest
+docker pull bytesend/smtp-proxy:latest
 
 docker run -d \
   -p 25:25 \
@@ -124,7 +124,7 @@ docker run -d \
   -p 2587:2587 \
   -e BYTESEND_BASE_URL="http://your-web-server:3000" \
   -e SMTP_AUTH_USERNAME="bytesend" \
-  bytesend/smtp:latest
+  bytesend/smtp-proxy:latest
 ```
 
 ## SMTP Server Ports

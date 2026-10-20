@@ -257,6 +257,23 @@ export default function DomainItemPage({
             </div>
           )}
 
+          {Array.isArray(domain.dnsIssues) && domain.dnsIssues.length > 0 && domain.dnsIssuesNotifiedAt ? (
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-destructive">DNS records have changed since this domain was verified</p>
+                <ul className="list-disc space-y-0.5 pl-4 text-muted-foreground">
+                  {(domain.dnsIssues as string[]).map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+                <p className="text-muted-foreground">
+                  Email from this domain may fail or land in spam until the records below are restored.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
           {/* DNS status summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <SignalCard

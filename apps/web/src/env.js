@@ -60,6 +60,10 @@ export const env = createEnv({
     S3_COMPATIBLE_BUCKET: z.string().optional(),
     S3_COMPATIBLE_REGION: z.string().default("auto"),
     STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_AUTOMATIC_TAX: z
+      .string()
+      .optional()
+      .transform((str) => str === "true"),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     SMTP_HOST: z.string().default("smtp.bytesend.cloud"),
     SMTP_USER: z.string().default("bytesend"),
@@ -122,6 +126,7 @@ export const env = createEnv({
     S3_COMPATIBLE_BUCKET: process.env.S3_COMPATIBLE_BUCKET,
     S3_COMPATIBLE_REGION: process.env.S3_COMPATIBLE_REGION,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_AUTOMATIC_TAX: process.env.STRIPE_AUTOMATIC_TAX,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_USER: process.env.SMTP_USER,

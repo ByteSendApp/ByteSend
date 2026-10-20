@@ -22,7 +22,7 @@ import {
 import { db } from "~/server/db";
 import { TeamService } from "~/server/service/team-service";
 
-const checkoutPlanSchema = z.enum(["LITE", "HOBBY", "BASIC", "LIFETIME"]);
+const checkoutPlanSchema = z.enum(["HOBBY", "BASIC", "SCALE"]);
 
 export const billingRouter = createTRPCRouter({
   createCheckoutSession: teamAdminProcedure
@@ -44,7 +44,7 @@ export const billingRouter = createTRPCRouter({
   createCustomCheckoutSession: teamAdminProcedure
     .input(
       z.object({
-        plan: z.enum(["LITE", "HOBBY", "BASIC"]),
+        plan: z.enum(["HOBBY", "BASIC", "SCALE"]),
         marketingEmailLimit: z.number().int().min(1000).max(3000000),
         transactionalEmailLimit: z.number().int().min(1000).max(3000000),
         monthlyPriceCents: z.number().int().min(100).max(50000000),
@@ -61,7 +61,7 @@ export const billingRouter = createTRPCRouter({
     }),
 
   /**
-   * Purchase extra domain slots at CA$1/domain/month.
+   * Purchase extra domain slots at $1/domain/month.
    * Available on all plans including FREE.
    */
   purchaseAddonDomainSlots: teamAdminProcedure
@@ -72,7 +72,7 @@ export const billingRouter = createTRPCRouter({
     }),
 
   /**
-   * Purchase extra team member slots at CA$2/member/month.
+   * Purchase extra team member slots at $2/member/month.
    * Available on all plans including FREE.
    */
   purchaseAddonMemberSlots: teamAdminProcedure

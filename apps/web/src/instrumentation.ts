@@ -23,6 +23,9 @@ export async function register() {
 
       await import("~/server/jobs/webhook-cleanup-job");
 
+      const { initDomainHealthJob } = await import("~/server/jobs/domain-health-job");
+      await initDomainHealthJob();
+
       if (isCloud()) {
         const { initBlacklistCheckJob } = await import("~/server/jobs/blacklist-check-job");
         await initBlacklistCheckJob();

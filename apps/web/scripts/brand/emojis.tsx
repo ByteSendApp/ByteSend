@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from "react";
 import { ImageResponse } from "next/og";
 import { PNG } from "pngjs";
 import gifenc from "gifenc";
-import { BRAND_COLORS, BrandMark } from "../../src/lib/brand";
+import { BRAND_COLORS, BrandIcon, BrandMark } from "../../src/lib/brand";
 
 // gifenc is CommonJS, so its named exports are only reachable through the default import.
 const { GIFEncoder, applyPalette, quantize } = gifenc;
@@ -172,6 +172,7 @@ function FlyingMail({ offset }: { offset: number }) {
 async function main() {
   save("bs_logo.png", await renderPng(frame(<BrandMark size={SIZE / (120 / 72)} detail="full" />)));
   save("bs_send.png", await renderPng(frame(<BrandMark size={SIZE / (120 / 72)} detail="glyph" />)));
+  save("bs_icon.png", await renderPng(frame(<BrandIcon size={SIZE} detail="full" />)));
   save(
     "bs_api.png",
     await renderPng(

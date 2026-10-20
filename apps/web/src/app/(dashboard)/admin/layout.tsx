@@ -7,7 +7,6 @@ import { H1 } from "@bytesend/ui";
 import Spinner from "@bytesend/ui/src/spinner";
 import { isCloud, isSelfHosted } from "~/utils/common";
 import { AdminCommandSearch } from "./_components/admin-command-search";
-import { AdminNav } from "./_components/admin-nav";
 
 export default function AdminLayout({
   children,
@@ -44,12 +43,7 @@ export default function AdminLayout({
         </div>
         {isCloud() ? <AdminCommandSearch /> : null}
       </div>
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
-        <aside className="lg:w-52 lg:shrink-0">
-          <AdminNav isAdmin={isAdmin} />
-        </aside>
-        <div className="min-w-0 flex-1 space-y-6">{children}</div>
-      </div>
+      <div className="min-w-0 space-y-6">{children}</div>
     </div>
   );
 }

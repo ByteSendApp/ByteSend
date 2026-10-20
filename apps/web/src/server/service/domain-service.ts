@@ -3,6 +3,8 @@ import { BlocklistService } from "./blocklist-service";
 import { isPrivateSuffixHostname, isSharedHostname } from "~/lib/constants/shared-domains";
 import { isCloud } from "~/utils/common";
 import { sendToDiscord } from "./notification-service";
+import { DomainAgeService } from "./domain-age-service";
+import { NotificationEmitter } from "./notification-emitter";
 import util from "util";
 import * as tldts from "tldts";
 import * as ses from "~/server/aws/ses";
@@ -200,6 +202,31 @@ export async function checkMxDnsRecord(
   } catch {
     return "not_found";
   }
+}
+
+/**
+ * Re-checks the DNS records a verified domain needs and describes anything missing or wrong.
+ * Uses the same record names and checks as verification, so a domain that verified passes.
+ */
+export async function checkDomainDnsHealth(
+  domain: Pick<Domain, "name" | "subdomain" | "dkimSelector" | "publicKey" | "region">,
+): Promise<string[]> {
+  const subdomainSuffix = domain.subdomain ? `.${domain.subdomain}` : "";
+  const mailDomain = `mail${subdomainSuffix}.${domain.name}`;
+  const dkimSelector = domain.dkimSelector ?? "bytesend";
+
+  const [dkim, spf, mx] = await Promise.all([
+    checkDkimDnsRecord(dkimSelector, domain.name, domain.publicKey),
+    checkSpfDnsRecord(mailDomain),
+    checkMxDnsRecord(mailDomain, domain.region),
+  ]);
+
+  const issues: string[] = [];
+  if (dkim === "not_found") issues.push(`DKIM record ${dkimSelector}._domainkey.${domain.name} is missing`);
+  if (dkim === "wrong_key") issues.push(`DKIM record ${dkimSelector}._domainkey.${domain.name} has a different key than ByteSend expects`);
+  if (spf === "not_found") issues.push(`SPF record on ${mailDomain} no longer includes amazonses.com`);
+  if (mx === "not_found") issues.push(`MX record on ${mailDomain} doesn't point to feedback-smtp.${domain.region}.amazonses.com`);
+  return issues;
 }
 
 function getDomainVerificationKey(kind: string, domainId: number) {
@@ -598,6 +625,12 @@ export async function createDomain(
 
   await emitDomainEvent(domain, "domain.created");
 
+  if (isCloud()) {
+    void DomainAgeService.record(domain.id, name, teamId).catch((error) =>
+      logger.warn({ err: error, domainId: domain.id }, "[DomainService]: Domain age check failed"),
+    );
+  }
+
   // Shared namespaces the curated block list doesn't cover (some are legitimate paid ones, like
   // acme.uk.com), so they're allowed but put in front of an admin.
   if (isCloud() && isPrivateSuffixHostname(name)) {
@@ -789,6 +822,13 @@ export async function refreshDomainVerification(
         ? "domain.verified"
         : "domain.updated";
     await emitDomainEvent(domainWithDns, eventType);
+    if (domainWithDns.status === DomainStatus.SUCCESS || domainWithDns.status === DomainStatus.FAILED) {
+      NotificationEmitter.emitDomainEvent(domainWithDns.teamId, {
+        domainName: domainWithDns.name,
+        status: domainWithDns.status === DomainStatus.SUCCESS ? "verified" : "failed",
+        error: verificationError ?? undefined,
+      }).catch((error) => logger.warn({ err: error, domainId: domainWithDns.id }, "[DomainService]: Domain notification failed"));
+    }
   }
 
   return {

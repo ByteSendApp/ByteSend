@@ -23,10 +23,10 @@ export const PlanDetails = () => {
     ? [
       `${customContract?.customMarketingEmailLimit?.toLocaleString() ?? 0} marketing emails / month`,
       `${customContract?.customTransactionalEmailLimit?.toLocaleString() ?? 0} transactional emails / month`,
-      `CA$${((customContract?.customMonthlyPriceCents ?? 0) / 100).toFixed(2)} fixed monthly contract`,
+      `$${((customContract?.customMonthlyPriceCents ?? 0) / 100).toFixed(2)} fixed monthly contract`,
     ]
     : PLAN_PERKS[planKey] || [];
-  const displayName = PLANS[planKey]?.displayName ?? planKey;
+  const displayName = PLANS[currentTeam.plan]?.displayName ?? planKey;
 
   return (
     <div>

@@ -9,6 +9,8 @@ export const ADMIN_AUDIT_ACTIONS = {
   "user.ban": "Banned user",
   "user.unban": "Unbanned user",
   "blocklist.add": "Added to blocklist",
+  "team.sending.approve": "Approved new-team sending",
+  "team.sending.revoke": "Revoked new-team sending approval",
   "blocklist.remove": "Removed from blocklist",
   "team.settings.update": "Updated team settings",
   "team.plan.assign": "Assigned plan",

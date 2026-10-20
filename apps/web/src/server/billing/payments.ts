@@ -14,8 +14,9 @@ import {
   PRICE_KEYS,
 } from "./stripe-config";
 
-export type CheckoutPlan = Extract<Plan, "LITE" | "HOBBY" | "BASIC" | "LIFETIME">;
-export type CustomBasePlan = Extract<Plan, "LITE" | "HOBBY" | "BASIC">;
+/** Plans that can be bought. LITE and LIFETIME are legacy: kept for existing customers only. */
+export type CheckoutPlan = Extract<Plan, "HOBBY" | "BASIC" | "SCALE">;
+export type CustomBasePlan = Extract<Plan, "LITE" | "HOBBY" | "BASIC" | "SCALE">;
 
 export type CustomPlanContract = {
   basePlan: CustomBasePlan;
@@ -67,6 +68,21 @@ async function ensureTeamCustomerId(teamId: number, existingCustomerId?: string 
   return customerId;
 }
 
+/**
+ * With STRIPE_AUTOMATIC_TAX on, Checkout collects a billing address, lets businesses add a VAT
+ * or tax ID (so EU B2B sales are reverse-charged), and Stripe Tax adds the right VAT/sales tax.
+ * Stripe Tax must be activated, with registrations added, in the Stripe dashboard first.
+ */
+function taxOptions(): Partial<Stripe.Checkout.SessionCreateParams> {
+  if (!env.STRIPE_AUTOMATIC_TAX) return {};
+  return {
+    automatic_tax: { enabled: true },
+    tax_id_collection: { enabled: true },
+    billing_address_collection: "required",
+    customer_update: { address: "auto", name: "auto" },
+  };
+}
+
 export async function createCheckoutSessionForTeam(
   teamId: number,
   plan: CheckoutPlan = "BASIC",
@@ -79,21 +95,6 @@ export async function createCheckoutSessionForTeam(
   const customerId = await ensureTeamCustomerId(teamId, team.stripeCustomerId);
 
   const priceIds = await getPlanPriceIds(plan);
-
-  if (plan === "LIFETIME") {
-    if (!priceIds.oneTime) {
-      throw new Error("Stripe not seeded: run `pnpm stripe:seed` to create price IDs in DB");
-    }
-    return stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId,
-      line_items: [{ price: priceIds.oneTime, quantity: 1 }],
-      success_url: `${env.NEXTAUTH_URL}/payments?success=true&plan=LIFETIME&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${env.NEXTAUTH_URL}/settings/billing`,
-      metadata: { teamId: teamId.toString(), plan },
-      client_reference_id: teamId.toString(),
-    });
-  }
 
   if (!priceIds.monthly) {
     throw new Error(`Stripe not seeded: run \`pnpm stripe:seed\` to create ${plan} price IDs in DB`);
@@ -111,6 +112,7 @@ export async function createCheckoutSessionForTeam(
     cancel_url: `${env.NEXTAUTH_URL}/settings/billing`,
     metadata: { teamId: teamId.toString(), plan },
     client_reference_id: teamId.toString(),
+    ...taxOptions(),
   });
 }
 
@@ -140,7 +142,7 @@ export async function createCustomCheckoutSessionForTeam(
     line_items: [
       {
         price_data: {
-          currency: "cad",
+          currency: "usd",
           recurring: { interval: "month" },
           unit_amount: contract.monthlyPriceCents,
           product_data: {
@@ -158,6 +160,7 @@ export async function createCustomCheckoutSessionForTeam(
       metadata,
     },
     client_reference_id: teamId.toString(),
+    ...taxOptions(),
   });
 }
 
@@ -195,7 +198,25 @@ export async function createAddonCheckoutSession(
       quantity: quantity.toString(),
     },
     client_reference_id: teamId.toString(),
+    ...taxOptions(),
   });
+}
+
+const KNOWN_PLANS = new Set<string>(["FREE", "LITE", "HOBBY", "BASIC", "SCALE", "LIFETIME"]);
+
+/**
+ * Reads the plan the seed script stamps on every plan price (`metadata.plan`). Unlike matching
+ * against the configured price IDs, this keeps working for subscribers on older prices after a
+ * price change, so a re-seed never quietly downgrades them.
+ */
+export function planFromPriceMetadata(items: Array<{ price?: { metadata?: Record<string, string> | null } | null }>): Plan | null {
+  for (const item of items) {
+    const metadata = item.price?.metadata;
+    if (!metadata?.plan || !KNOWN_PLANS.has(metadata.plan)) continue;
+    if (metadata.type && metadata.type !== "monthly" && metadata.type !== "one-time") continue;
+    return metadata.plan as Plan;
+  }
+  return null;
 }
 
 async function getPlanFromPriceIds(priceIds: string[]): Promise<Plan> {
@@ -207,6 +228,58 @@ async function getPlanFromPriceIds(priceIds: string[]): Promise<Plan> {
   return "FREE";
 }
 
+const OVERAGE_ITEMS = [
+  { type: "marketing-usage", priceKey: "marketingUsage", meterKey: "stripe.meter.marketing" },
+  { type: "transactional-usage", priceKey: "transactionalUsage", meterKey: "stripe.meter.transactional" },
+] as const;
+
+/**
+ * The customer portal only swaps the monthly price on a plan change, which leaves the metered
+ * overage items on the old plan's rates. Re-points them at the new plan's overage prices.
+ * Subscriptions still on an older monthly price are grandfathered and left alone.
+ */
+export async function alignOverageItems(
+  stripe: Stripe,
+  subscription: Stripe.Subscription,
+  plan: Exclude<Plan, "FREE" | "LIFETIME">,
+) {
+  const target = await getPlanPriceIds(plan);
+  if (!target.monthly || !subscription.items.data.some((item) => item.price?.id === target.monthly)) return;
+
+  const meteredItems = subscription.items.data.filter((item) => item.price?.recurring?.usage_type === "metered");
+  const changes: Stripe.SubscriptionUpdateParams.Item[] = [];
+  const matched = new Set<string>();
+
+  for (const { type, priceKey, meterKey } of OVERAGE_ITEMS) {
+    const targetPriceId = target[priceKey];
+    const meterId = await getStripeValue(meterKey);
+    if (!targetPriceId) continue;
+
+    const items = meteredItems.filter(
+      (item) => item.price.metadata?.type === type || (meterId && item.price.recurring?.meter === meterId),
+    );
+    items.forEach((item) => matched.add(item.id));
+    if (items.length === 1 && items[0]!.price.id === targetPriceId) continue;
+
+    for (const item of items) changes.push({ id: item.id, deleted: true });
+    changes.push({ price: targetPriceId });
+  }
+
+  // An unrecognised metered item could share a meter with the new price and double-bill usage.
+  if (meteredItems.some((item) => !matched.has(item.id))) {
+    logger.warn({ subscriptionId: subscription.id, plan }, "[Billing]: unrecognised metered item, overage prices not aligned");
+    return;
+  }
+  if (changes.length === 0) return;
+
+  try {
+    await stripe.subscriptions.update(subscription.id, { items: changes, proration_behavior: "none" });
+    logger.info({ subscriptionId: subscription.id, plan }, "[Billing]: overage prices aligned with plan");
+  } catch (error) {
+    logger.error({ err: error, subscriptionId: subscription.id, plan }, "[Billing]: failed to align overage prices");
+  }
+}
+
 function parsePositiveInt(value: string | undefined): number | null {
   if (!value) return null;
   const parsed = Number.parseInt(value, 10);
@@ -215,7 +288,7 @@ function parsePositiveInt(value: string | undefined): number | null {
 }
 
 function parseCustomBasePlan(value: string | undefined): CustomBasePlan | null {
-  if (value === "HOBBY" || value === "LITE" || value === "BASIC") {
+  if (value === "HOBBY" || value === "LITE" || value === "BASIC" || value === "SCALE") {
     return value;
   }
   return null;
@@ -292,8 +365,17 @@ export async function syncStripeData(customerId: string) {
 
   const nextPlan = customPlanEnabled
     ? (customBasePlan ?? team.plan)
-    : await getPlanFromPriceIds(priceIds);
+    : (planFromPriceMetadata(subscription.items.data) ?? (await getPlanFromPriceIds(priceIds)));
   const isNowPaid = subscription.status === "active" && nextPlan !== "FREE";
+
+  if (
+    !customPlanEnabled &&
+    (subscription.status === "active" || subscription.status === "trialing") &&
+    nextPlan !== "FREE" &&
+    nextPlan !== "LIFETIME"
+  ) {
+    await alignOverageItems(stripe, subscription, nextPlan);
+  }
   const shouldSendSubscriptionConfirmation = !wasPaid && isNowPaid;
 
   const periodEnd = subscription.items.data[0]?.current_period_end;

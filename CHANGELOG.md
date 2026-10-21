@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Receive on the domain itself**: as well as a subdomain like `reply.acme.com`, a domain can now receive at `anything@acme.com`. Because that sends all of the domain's mail to ByteSend, setup shows where its mail goes today (Google Workspace, Microsoft 365 and so on) and asks you to confirm first
+
 ### Changed
 - **Homepage**: the full pricing section and comparison table are replaced by a short pricing summary linking to `/pricing`, and an Explore section linking to receiving, the SMTP relay, the free tools, open source, security and the comparison
 

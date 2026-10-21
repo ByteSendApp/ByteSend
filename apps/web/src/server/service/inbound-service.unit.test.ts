@@ -120,6 +120,22 @@ describe("resolveRecipient", () => {
     );
   });
 
+  it("matches a domain that receives on the domain itself", async () => {
+    mockDb.domain.findFirst.mockImplementation(async ({ where }: { where: { name: string; inboundSubdomain: string } }) =>
+      where.name === "acme.com" && where.inboundSubdomain === "@" ? { id: 4, teamId: 11 } : null,
+    );
+    await expect(resolveRecipient("Hey@Acme.com")).resolves.toEqual({ teamId: 11, domainId: 4, recipient: "hey@acme.com" });
+  });
+
+  it("prefers a receiving subdomain over a domain of the same name", async () => {
+    mockDb.domain.findFirst.mockImplementation(async ({ where }: { where: { name: string; inboundSubdomain: string } }) => {
+      if (where.name === "acme.com" && where.inboundSubdomain === "reply") return { id: 3, teamId: 9 };
+      if (where.name === "reply.acme.com" && where.inboundSubdomain === "@") return { id: 8, teamId: 12 };
+      return null;
+    });
+    await expect(resolveRecipient("support@reply.acme.com")).resolves.toMatchObject({ teamId: 9, domainId: 3 });
+  });
+
   it("ignores addresses nobody owns", async () => {
     await expect(resolveRecipient("someone@in.bytesend.test")).resolves.toBeNull();
     await expect(resolveRecipient("someone@acme.com")).resolves.toBeNull();

@@ -12,6 +12,7 @@ import {
 } from "~/server/service/inbound-service";
 import {
   checkReceiving,
+  currentMailHosts,
   disableReceiving,
   enableReceiving,
   receivingFqdn,
@@ -119,16 +120,20 @@ export const inboundRouter = createTRPCRouter({
     return { success: true };
   }),
 
+  mailHosts: teamProcedure
+    .input(z.object({ domainId: z.number().int() }))
+    .query(({ ctx, input }) => currentMailHosts(ctx.team.id, input.domainId)),
+
   domains: teamProcedure.query(async ({ ctx }) => {
     const domains = await ctx.db.domain.findMany({ where: { teamId: ctx.team.id }, select: RECEIVING_DOMAIN_SELECT, orderBy: { name: "asc" } });
     return domains.map((domain) => ({ ...domain, address: receivingFqdn(domain), records: receivingRecords(domain) }));
   }),
 
   enableDomain: teamAdminProcedure
-    .input(z.object({ domainId: z.number().int(), subdomain: z.string().min(1).max(63) }))
+    .input(z.object({ domainId: z.number().int(), subdomain: z.string().max(63), confirmRoot: z.boolean().default(false) }))
     .mutation(async ({ ctx, input }) => {
       assertEnabled();
-      const domain = await enableReceiving(ctx.team.id, input.domainId, input.subdomain);
+      const domain = await enableReceiving(ctx.team.id, input.domainId, input.subdomain, input.confirmRoot);
       return { ...domain, address: receivingFqdn(domain), records: receivingRecords(domain) };
     }),
 

@@ -32,29 +32,46 @@ export function receivesThroughKeptIdentity(domain: Pick<Domain, "region" | "inb
   return domain.inboundEnabled && !domain.inboundDkimSelector && domain.region !== env.INBOUND_REGION;
 }
 
+export const ROOT_RECEIVING = "@";
+
+export function isRootReceiving(domain: Pick<Domain, "inboundSubdomain">) {
+  return domain.inboundSubdomain === ROOT_RECEIVING;
+}
+
 export function receivingFqdn(domain: Pick<Domain, "name" | "inboundSubdomain">) {
-  return domain.inboundSubdomain ? `${domain.inboundSubdomain}.${domain.name}` : null;
+  if (!domain.inboundSubdomain) return null;
+  return isRootReceiving(domain) ? domain.name : `${domain.inboundSubdomain}.${domain.name}`;
 }
 
 export function receivingRecords(domain: ReceivingDomain) {
   if (!domain.inboundSubdomain) return [];
   const records: Array<{ type: "MX" | "TXT"; name: string; value: string; priority?: number }> = [
-    { type: "MX", name: domain.inboundSubdomain, value: inboundMxHost(), priority: 10 },
+    { type: "MX", name: isRootReceiving(domain) ? ROOT_RECEIVING : domain.inboundSubdomain, value: inboundMxHost(), priority: 10 },
   ];
   if (domain.inboundDkimSelector && domain.inboundPublicKey) {
     records.push({
       type: "TXT",
-      name: `${domain.inboundDkimSelector}._domainkey.${domain.inboundSubdomain}`,
+      name: isRootReceiving(domain)
+        ? `${domain.inboundDkimSelector}._domainkey`
+        : `${domain.inboundDkimSelector}._domainkey.${domain.inboundSubdomain}`,
       value: `p=${domain.inboundPublicKey}`,
     });
   }
   return records;
 }
 
-export async function enableReceiving(teamId: number, domainId: number, rawSubdomain: string) {
-  const subdomain = rawSubdomain.trim().toLowerCase();
-  if (!LABEL.test(subdomain)) {
+export async function enableReceiving(teamId: number, domainId: number, rawSubdomain: string, confirmRoot = false) {
+  const requested = rawSubdomain.trim().toLowerCase();
+  const root = requested === "" || requested === ROOT_RECEIVING;
+  const subdomain = root ? ROOT_RECEIVING : requested;
+  if (!root && !LABEL.test(subdomain)) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Use a single subdomain like \"reply\" or \"inbound\": letters, numbers and dashes." });
+  }
+  if (root && !confirmRoot) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Receiving on the domain itself sends all of its mail to ByteSend. Confirm that before turning it on.",
+    });
   }
   const domain = await db.domain.findFirst({ where: { id: domainId, teamId }, select: RECEIVING_DOMAIN_SELECT });
   if (!domain) throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
@@ -62,8 +79,9 @@ export async function enableReceiving(teamId: number, domainId: number, rawSubdo
     throw new TRPCError({ code: "BAD_REQUEST", message: "Verify the domain for sending first, then set up receiving." });
   }
 
-  const fqdn = `${subdomain}.${domain.name}`;
-  const needsIdentity = domain.region !== env.INBOUND_REGION;
+  const fqdn = root ? domain.name : `${subdomain}.${domain.name}`;
+  const alreadyVerified = root && domain.region !== env.INBOUND_REGION && (await isIdentityVerified(fqdn).catch(() => false));
+  const needsIdentity = domain.region !== env.INBOUND_REGION && !alreadyVerified;
   const identity = needsIdentity ? await createReceivingIdentity(fqdn, INBOUND_DKIM_SELECTOR) : null;
 
   return db.domain.update({
@@ -78,6 +96,28 @@ export async function enableReceiving(teamId: number, domainId: number, rawSubdo
     },
     select: RECEIVING_DOMAIN_SELECT,
   });
+}
+
+const MAIL_PROVIDERS: Array<[RegExp, string]> = [
+  [/(google|googlemail)\.com$/, "Google Workspace"],
+  [/mail\.protection\.outlook\.com$/, "Microsoft 365"],
+  [/zoho\.(com|eu|in)$/, "Zoho Mail"],
+  [/protonmail\.ch$/, "Proton Mail"],
+  [/messagingengine\.com$/, "Fastmail"],
+  [/icloud\.com$/, "iCloud Mail"],
+  [/mx\.cloudflare\.net$/, "Cloudflare Email Routing"],
+  [/amazonaws\.com$/, "Amazon SES"],
+];
+
+export async function currentMailHosts(teamId: number, domainId: number) {
+  const domain = await db.domain.findFirst({ where: { id: domainId, teamId }, select: { name: true } });
+  if (!domain) throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
+  const records = await dns.promises.resolveMx(domain.name).catch(() => []);
+  const hosts = records
+    .sort((a, b) => a.priority - b.priority)
+    .map((record) => ({ host: record.exchange.toLowerCase().replace(/\.$/, ""), priority: record.priority }));
+  const provider = hosts.map((h) => MAIL_PROVIDERS.find(([pattern]) => pattern.test(h.host))?.[1]).find(Boolean) ?? null;
+  return { domain: domain.name, hosts, provider, alreadyByteSend: hosts.some((h) => h.host === inboundMxHost()) };
 }
 
 async function mxPointsAtSes(fqdn: string) {

@@ -12,6 +12,7 @@ import {
 } from "~/server/service/dmarc-service";
 import { ensureInboundSlug } from "~/server/service/inbound-service";
 import { isInboundEnabled } from "~/server/service/inbound-storage";
+import { receivingFqdn } from "~/server/service/inbound-domain-service";
 
 const PAGE_SIZE = 25;
 const DAYS = z.union([z.literal(7), z.literal(30), z.literal(90)]);
@@ -25,7 +26,7 @@ async function reportAddresses(teamId: number) {
   return {
     hosted: hostedDmarcAddress(slug),
     byOrgDomain: new Map(
-      receiving.map((d) => [tldts.getDomain(d.name) ?? d.name, `${DMARC_TAG}@${d.inboundSubdomain}.${d.name}`] as const),
+      receiving.map((d) => [tldts.getDomain(d.name) ?? d.name, `${DMARC_TAG}@${receivingFqdn(d)}`] as const),
     ),
   };
 }

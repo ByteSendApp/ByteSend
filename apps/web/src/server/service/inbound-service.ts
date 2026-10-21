@@ -12,6 +12,7 @@ import { WebhookService } from "./webhook-service";
 import { sendEmail } from "./email-service";
 import { ingestDmarcMessage, isDmarcRecipient } from "./dmarc-service";
 import { INBOUND_CANARY_SLUG, isInboundCanary, recordInboundCanary } from "./inbound-canary";
+import { ROOT_RECEIVING } from "./inbound-domain-service";
 
 export const INBOUND_RETENTION_DAYS = 30;
 const ATTACHMENT_LINK_TTL_SECONDS = 60 * 60;
@@ -65,11 +66,19 @@ export async function resolveRecipient(address: string): Promise<RecipientMatch 
   }
 
   const [subdomain, ...rest] = rawDomain.split(".");
-  if (!subdomain || rest.length < 2) return null;
-  const domain = await db.domain.findFirst({
-    where: { name: rest.join("."), inboundEnabled: true, inboundSubdomain: subdomain },
-    select: { id: true, teamId: true },
-  });
+  const onSubdomain =
+    subdomain && rest.length >= 2
+      ? await db.domain.findFirst({
+          where: { name: rest.join("."), inboundEnabled: true, inboundSubdomain: subdomain },
+          select: { id: true, teamId: true },
+        })
+      : null;
+  const domain =
+    onSubdomain ??
+    (await db.domain.findFirst({
+      where: { name: rawDomain, inboundEnabled: true, inboundSubdomain: ROOT_RECEIVING },
+      select: { id: true, teamId: true },
+    }));
   return domain ? { teamId: domain.teamId, domainId: domain.id, recipient: lower(address) } : null;
 }
 

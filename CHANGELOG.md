@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Batch sends now respect an API key's domain restriction
+- Installing the repo with pnpm 9 no longer fails on Prisma Studio's pnpm 8 requirement, so the web tests run in CI again
 
 ---
 

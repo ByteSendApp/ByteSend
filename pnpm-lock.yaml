@@ -11,6 +11,8 @@ overrides:
 
 packageExtensionsChecksum: 503f90f9af8a58e678c773f61bc277f8
 
+pnpmfileChecksum: 3pnttueptyn7eevkj2yxdd6tti
+
 importers:
 
   .:
@@ -3039,7 +3041,7 @@ packages:
 
   '@prisma/studio-core@0.27.3':
     resolution: {integrity: sha512-AADjNFPdsrglxHQVTmHFqv6DuKQZ5WY4p5/gVFY017twvNrSwpLJ9lqUbYYxEu2W7nbvVxTZA8deJ8LseNALsw==}
-    engines: {node: ^20.19 || ^22.12 || >=24.0, pnpm: '8'}
+    engines: {node: ^20.19 || ^22.12 || >=24.0}
     peerDependencies:
       '@types/react': 19.1.2
       react: ^18.0.0 || ^19.0.0
@@ -13963,13 +13965,13 @@ snapshots:
       '@adobe/css-tools': 4.4.4
       hast-util-select: 6.0.4
       hast-util-to-string: 3.0.1
-      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.15.2)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.19.17)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       unist-util-remove: 4.0.0
       unist-util-visit: 5.0.0
 
   '@jsx-email/plugin-minify@1.0.2(jsx-email@2.7.1)':
     dependencies:
-      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.15.2)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.19.17)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       rehype-minify-attribute-whitespace: 4.0.1
       rehype-minify-css-style: 4.0.1
       rehype-minify-enumerated-attribute: 5.0.2
@@ -13991,7 +13993,7 @@ snapshots:
 
   '@jsx-email/plugin-pretty@1.0.0(jsx-email@2.7.1)':
     dependencies:
-      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.15.2)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+      jsx-email: 2.7.1(@jsx-email/plugin-inline@1.0.1)(@jsx-email/plugin-minify@1.0.2)(@jsx-email/plugin-pretty@1.0.0)(@types/node@22.19.17)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(lightningcss@1.31.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       pretty: 2.0.0
 
   '@kurkle/color@0.3.4': {}

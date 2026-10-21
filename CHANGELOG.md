@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.9.3] - 2026-10-21
 
 ### Added
 - **Receive on the domain itself**: as well as a subdomain like `reply.acme.com`, a domain can now receive at `anything@acme.com`. Because that sends all of the domain's mail to ByteSend, setup shows where its mail goes today (Google Workspace, Microsoft 365 and so on) and asks you to confirm first

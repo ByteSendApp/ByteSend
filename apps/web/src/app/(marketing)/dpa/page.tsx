@@ -171,8 +171,9 @@ export default function DpaPage() {
                 <tbody className="divide-y divide-border/70">
                   {[
                     { name: "NodeByte Hosting", role: "Application hosting and infrastructure", loc: "United Kingdom" },
-                    { name: "Amazon Web Services (SES)", role: "Email delivery infrastructure", loc: "EU / US" },
-                    { name: "Upstash (Redis)", role: "Queue processing and caching", loc: "EU" },
+                    { name: "Amazon Web Services (SES, S3)", role: "Sending and receiving email, and storing received email", loc: "EU / US" },
+                    { name: "Simple Analytics", role: "Privacy-friendly aggregate website analytics", loc: "Netherlands" },
+                    { name: "Stripe", role: "Payment processing and billing", loc: "United States" },
                   ].map(({ name, role, loc }) => (
                     <tr key={name}>
                       <td className="px-4 py-3 font-medium">{name}</td>

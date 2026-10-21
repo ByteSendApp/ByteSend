@@ -1,6 +1,8 @@
 export { ByteSend } from "./src/bytesend";
 export { Campaigns } from "./src/campaign";
 export { ContactBooks } from "./src/contactBook";
+export { Inbound } from "./src/inbound";
+export type { InboundAttachment, InboundEmail, InboundEmailSummary } from "./src/inbound";
 export {
   Webhooks,
   WebhookVerificationError,

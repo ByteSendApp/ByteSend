@@ -14,7 +14,7 @@ export function Hero() {
       <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           <Link
-            href="/changelog"
+            href="/receiving"
             className="group mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground shadow-xs transition-colors hover:border-primary/40 hover:text-foreground"
           >
             <span className="rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-primary">New</span>

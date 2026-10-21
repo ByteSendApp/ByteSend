@@ -138,7 +138,7 @@ export default function PricingPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Pricing showDetailsLink={false} />
+      <Pricing />
 
       <Section tinted>
         <SectionHeader eyebrow="Compare plans" title="Every limit, side by side" />

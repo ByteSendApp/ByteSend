@@ -1,11 +1,8 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Check, Minus } from "lucide-react";
-import { Button } from "@bytesend/ui/src/button";
 import { Reveal } from "./Reveal";
-import { Section, SectionHeader } from "./Section";
 
 // Competitor details as published on their pricing and docs pages; re-check before changing claims.
 export const COMPARISON_CHECKED = "October 2026";
@@ -24,33 +21,6 @@ export const comparisonRows: { feature: string; bs: string | boolean; resend: st
     { feature: "Analytics dashboard", bs: true, resend: true, sendgrid: true, postmark: true, ses: "Basic" },
     { feature: "Open source", bs: true, resend: false, sendgrid: false, postmark: false, ses: false },
 ];
-
-const APP_URL = "/signup";
-
-export function ComparisonTable() {
-    return (
-        <Section>
-            <SectionHeader
-                eyebrow="Compare"
-                title="Why teams choose ByteSend"
-                description="How we stack up against Resend, SendGrid, Postmark and sending through AWS SES directly."
-            />
-
-            <ComparisonGrid />
-
-            <div className="mt-8 text-center">
-                <Button className="h-10 px-5" asChild>
-                    <Link href={APP_URL}>Switch in minutes</Link>
-                </Button>
-                <p className="mt-3 text-sm">
-                    <Link href="/compare" className="text-primary hover:underline">
-                        See the full comparison
-                    </Link>
-                </p>
-            </div>
-        </Section>
-    );
-}
 
 export function ComparisonGrid() {
     const cols = ["ByteSend", "Resend", "SendGrid", "Postmark", "AWS SES"] as const;
@@ -104,4 +74,4 @@ function CompCell({ val }: { val: string | boolean }) {
     return <span>{val}</span>;
 }
 
-export default ComparisonTable;
+export default ComparisonGrid;

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Homepage**: the full pricing section and comparison table are replaced by a short pricing summary linking to `/pricing`, and an Explore section linking to receiving, the SMTP relay, the free tools, open source, security and the comparison
+
 ---
 
 ## [0.9.2] - 2026-10-21

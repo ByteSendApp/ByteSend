@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { CallToAction } from "~/components/marketing/CallToAction";
-import { ComparisonTable } from "~/components/marketing/Comparison";
+import { ExploreSection } from "~/components/marketing/ExploreSection";
 import { TrustStrip } from "~/components/marketing/TrustStrip";
-import { Pricing } from "~/components/marketing/PricingSection";
+import { PricingTeaser } from "~/components/marketing/PricingTeaser";
 import { DevSection } from "~/components/marketing/DevSection";
 import { Features } from "~/components/marketing/Features";
 import { Hero } from "~/components/marketing/Hero";
@@ -22,8 +22,8 @@ export default function Page() {
       <DevSection />
       <Features />
       <HowItWorks />
-      <Pricing />
-      <ComparisonTable />
+      <PricingTeaser />
+      <ExploreSection />
       <CallToAction />
     </main>
   );

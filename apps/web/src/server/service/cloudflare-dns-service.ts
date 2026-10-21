@@ -2,7 +2,7 @@ import * as tldts from "tldts";
 import type { Domain } from "@prisma/client";
 import { logger } from "../logger/log";
 import { buildDnsRecords } from "./domain-service";
-import { receivingRecords } from "./inbound-domain-service";
+import { ROOT_RECEIVING, receivingRecords } from "./inbound-domain-service";
 
 const API = "https://api.cloudflare.com/client/v4";
 const TXT_CHUNK = 255;
@@ -61,7 +61,7 @@ export function desiredRecords(domain: Domain): DesiredRecord[] {
   const receiving = domain.inboundEnabled
     ? receivingRecords(domain).map((record): DesiredRecord => ({
         type: record.type,
-        name: `${record.name}.${domain.name}`,
+        name: record.name === ROOT_RECEIVING ? domain.name : `${record.name}.${domain.name}`,
         content: record.value,
         priority: record.priority,
         kind: record.type === "MX" ? "mx" : "dkim",

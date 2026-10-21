@@ -47,6 +47,18 @@ You receive on a **subdomain** of a domain you already send from, such as `reply
   </Step>
 </Steps>
 
+### Receiving on the domain itself
+
+You can also receive at the domain itself, like `hey@acme.com`. Choose **The domain itself** instead of a subdomain, then point the domain's MX record at the value shown:
+
+| Type | Name | Value | Priority |
+| --- | --- | --- | --- |
+| MX | `@` | `inbound-smtp.us-east-1.amazonaws.com` | 10 |
+
+<Warning>
+  A domain has one set of MX records, so this sends **all** mail for the domain to ByteSend. If you use Google Workspace, Microsoft 365 or another mailbox on the domain, those mailboxes stop getting new mail. ByteSend shows where the domain's mail goes today and asks you to confirm before switching. To keep your mailboxes, use a subdomain instead, or add [forwarding rules](#forwarding) for the addresses that should still reach a person.
+</Warning>
+
 ## The `email.received` webhook
 
 Add a webhook and choose the **email.received** event (under *Inbound events*). Each message is posted as JSON:

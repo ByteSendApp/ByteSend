@@ -9,7 +9,7 @@ import util from "util";
 import * as tldts from "tldts";
 import * as ses from "~/server/aws/ses";
 import { deleteReceivingIdentity } from "../aws/ses-receiving";
-import { receivesThroughKeptIdentity } from "./inbound-domain-service";
+import { receivesThroughKeptIdentity, receivingFqdn } from "./inbound-domain-service";
 import { db } from "~/server/db";
 import { env } from "~/env";
 import { renderDomainVerificationStatusEmail } from "~/server/email-templates";
@@ -957,9 +957,10 @@ export async function deleteDomain(id: number) {
     }
   }
 
-  if (domain.inboundEnabled && domain.inboundSubdomain && domain.inboundDkimSelector) {
+  const receivingHost = receivingFqdn(domain);
+  if (domain.inboundEnabled && receivingHost && domain.inboundDkimSelector) {
     try {
-      await deleteReceivingIdentity(`${domain.inboundSubdomain}.${domain.name}`);
+      await deleteReceivingIdentity(receivingHost);
     } catch (error) {
       logger.error({ err: error, domainId: id }, "[DomainService]: Failed to delete receiving identity");
     }

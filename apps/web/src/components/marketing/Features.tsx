@@ -92,7 +92,7 @@ const features: Feature[] = [
     {
         icon: Inbox,
         title: "Inbound email",
-        description: "Receive mail on your own domain or a hosted address. Get it by webhook or API, read it in the inbox, or forward it on.",
+        description: "Receive mail on a hosted address, a subdomain like reply.yourapp.com, or your domain itself. Get it by webhook or API, read it in the inbox, or forward it on.",
         tone: "teal",
     },
     {

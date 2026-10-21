@@ -27,7 +27,7 @@ Anything after a `+` still reaches you, so you can tell senders apart: `acme+ord
 
 ## Receiving on your own domain
 
-You receive on a **subdomain** of a domain you already send from, such as `reply.acme.com`. Only that subdomain's mail comes to ByteSend: your normal mailboxes on `acme.com` (Google Workspace, Microsoft 365 and so on) keep working.
+Most teams receive on a **subdomain** of a domain they already send from, such as `reply.acme.com`. Only that subdomain's mail comes to ByteSend, so your normal mailboxes on `acme.com` (Google Workspace, Microsoft 365 and so on) keep working. You can also [receive on the domain itself](#receiving-on-the-domain-itself).
 
 <Steps>
   <Step title="Pick a subdomain">
@@ -168,6 +168,16 @@ Under **Inbox → Forwarding**, forward mail to another address. A rule matches:
 - everything (`*`).
 
 Forwarded mail is sent from `forwarding@` your verified domain, with the original sender as the reply-to address, so replying from your mailbox goes to the right person. Forwarded mail counts toward your sending.
+
+### Reply as your address from Gmail or Outlook
+
+Forward an address like `hey@acme.com` to your own mailbox, then reply *as* that address through ByteSend's SMTP relay, signed with your domain's DKIM:
+
+1. Add a forwarding rule from `hey` to your Gmail or Outlook address.
+2. In Gmail, open **Settings → Accounts → Send mail as → Add another email address**. In Outlook, add it as a send-from address.
+3. Enter `hey@acme.com`, then the SMTP server `smtp.bytesend.cloud`, port `587` with TLS, your SMTP username from **Settings → SMTP**, and an API key as the password.
+
+This suits a few personal addresses. ByteSend doesn't host mailboxes, so there's no IMAP access, and received mail is kept for 30 days.
 
 ## Limits
 

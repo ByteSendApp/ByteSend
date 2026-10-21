@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- The receiving health check's test email is sent every 10 minutes again. Before, it only went out once after each restart, so the check reported receiving as degraded when it was working
+
+---
+
 ## [0.9.3] - 2026-10-21
 
 ### Added

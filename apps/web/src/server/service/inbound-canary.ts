@@ -38,6 +38,11 @@ export async function sendInboundCanary() {
   logger.info({ address }, "[InboundCanary]: Sent");
 }
 
+export async function sendInboundCanaryIfDue() {
+  const claimed = await getRedis().set(redisKey("inbound:canary:lock"), String(Date.now()), "PX", INBOUND_CANARY_INTERVAL_MS - 30_000, "NX");
+  if (claimed) await sendInboundCanary();
+}
+
 export async function getInboundCanaryTimes() {
   const [first, sent, seen] = await getRedis().mget(redisKey(FIRST_SENT_KEY), redisKey(LAST_SENT_KEY), redisKey(LAST_SEEN_KEY));
   return {

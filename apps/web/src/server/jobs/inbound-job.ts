@@ -4,7 +4,7 @@ import { DEFAULT_QUEUE_OPTIONS, INBOUND_CLEANUP_QUEUE, INBOUND_QUEUE } from "../
 import { logger } from "../logger/log";
 import { deleteExpiredInbound, processInbound, type SesInboundNotification } from "../service/inbound-service";
 import { deleteExpiredDmarcReports } from "../service/dmarc-service";
-import { INBOUND_CANARY_INTERVAL_MS, inboundCanaryAddress, sendInboundCanary } from "../service/inbound-canary";
+import { inboundCanaryAddress, sendInboundCanaryIfDue } from "../service/inbound-canary";
 
 let inboundQueue: Queue<SesInboundNotification> | null = null;
 let initialized = false;
@@ -49,11 +49,7 @@ export async function initInboundJobs() {
   const cleanupQueue = new Queue(INBOUND_CLEANUP_QUEUE, { connection, prefix: BULL_PREFIX, skipVersionCheck: true });
   const cleanupWorker = new Worker(
     INBOUND_CLEANUP_QUEUE,
-    async (job) => {
-      if (job.name === "canary") {
-        await sendInboundCanary();
-        return;
-      }
+    async () => {
       const deleted = await deleteExpiredInbound();
       const reports = await deleteExpiredDmarcReports();
       logger.info({ deleted, reports }, "[InboundJob]: Removed expired received mail and DMARC reports");
@@ -62,14 +58,11 @@ export async function initInboundJobs() {
   );
   cleanupWorker.on("failed", (job, err) => logger.error({ err, jobId: job?.id }, "[InboundJob]: Cleanup failed"));
   await cleanupQueue.upsertJobScheduler("inbound-cleanup-daily", { pattern: "40 3 * * *", tz: "UTC" }, { opts: { ...DEFAULT_QUEUE_OPTIONS } });
+  await cleanupQueue.removeJobScheduler("inbound-canary");
   if (inboundCanaryAddress()) {
-    await cleanupQueue.upsertJobScheduler(
-      "inbound-canary",
-      { every: INBOUND_CANARY_INTERVAL_MS },
-      { name: "canary", opts: { ...DEFAULT_QUEUE_OPTIONS } },
-    );
-  } else {
-    await cleanupQueue.removeJobScheduler("inbound-canary");
+    const tick = () => sendInboundCanaryIfDue().catch((error) => logger.error({ err: error }, "[InboundJob]: Canary failed"));
+    void tick();
+    setInterval(tick, 60_000).unref();
   }
 
   initialized = true;

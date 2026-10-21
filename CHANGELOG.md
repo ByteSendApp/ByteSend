@@ -1089,7 +1089,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.3...HEAD
+[0.9.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.8.0...v0.9.0

@@ -43,7 +43,7 @@ function highlights(plan: PlanType) {
   return items;
 }
 
-export function Pricing() {
+export function Pricing({ showDetailsLink = true }: { showDetailsLink?: boolean } = {}) {
   const [currency, setCurrency] = React.useState<Currency>("usd");
 
   return (
@@ -125,6 +125,13 @@ export function Pricing() {
         Prices exclude VAT and sales tax, which are added at checkout where they apply. Every plan includes the API, SMTP relay, SDKs,
         webhooks, templates and marketing email.
       </p>
+      {showDetailsLink ? (
+        <p className="mt-2 text-center text-sm">
+          <Link href="/pricing" className="text-primary hover:underline">
+            Compare every plan limit and read the pricing FAQ
+          </Link>
+        </p>
+      ) : null}
 
       <div className="mt-14">
         <div className="mx-auto mb-6 max-w-xl text-center">

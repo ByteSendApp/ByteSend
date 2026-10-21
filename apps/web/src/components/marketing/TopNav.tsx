@@ -7,7 +7,8 @@ const isCloud = env.NEXT_PUBLIC_IS_CLOUD;
 
 export const NAV_LINKS = [
   { href: "/#features", label: "Features", cloudOnly: true },
-  { href: "/#pricing", label: "Pricing", cloudOnly: true },
+  { href: "/receiving", label: "Receiving", cloudOnly: true },
+  { href: "/pricing", label: "Pricing", cloudOnly: true },
   { href: "/changelog", label: "Changelog", cloudOnly: true },
   { href: "/stats", label: "Stats", cloudOnly: true },
   { href: "https://docs.bytesend.cloud", label: "Docs", cloudOnly: false },

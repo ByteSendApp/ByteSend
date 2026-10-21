@@ -1,6 +1,6 @@
 {
   "name": "bytesend-js",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Official JavaScript SDK for ByteSend, the email sending service built for developers.",
   "license": "AGPL-3.0-only",
   "repository": {

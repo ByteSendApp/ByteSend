@@ -2060,6 +2060,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/inbound/emails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                    recipient?: string;
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Received emails, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                recipient: string;
+                                from: string;
+                                fromName: string | null;
+                                subject: string;
+                                attachmentCount: number;
+                                inReplyToEmailId: string | null;
+                                receivedAt: string;
+                            }[];
+                            hasMore: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/inbound/emails/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A received email, with signed links to its attachments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            recipient: string;
+                            from: string;
+                            fromName?: string | null;
+                            to: string[];
+                            cc: string[];
+                            replyTo: string[];
+                            subject: string;
+                            text?: string | null;
+                            html?: string | null;
+                            messageId?: string | null;
+                            inReplyTo?: string | null;
+                            inReplyToEmailId?: string | null;
+                            attachments: {
+                                id: string;
+                                filename: string;
+                                contentType: string;
+                                size: number;
+                                /** @description Signed download link, valid for one hour */
+                                url?: string;
+                            }[];
+                            authentication: {
+                                spf?: string | null;
+                                dkim?: string | null;
+                                dmarc?: string | null;
+                                spam?: string | null;
+                                virus?: string | null;
+                            };
+                            domainId?: number | null;
+                            receivedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {

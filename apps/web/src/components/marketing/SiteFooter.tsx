@@ -13,31 +13,58 @@ const COLUMNS: Array<{ title: string; links: FooterLink[] }> = [
     title: "Product",
     links: [
       { label: "Features", href: "/#features", cloudOnly: true },
-      { label: "Pricing", href: "/#pricing", cloudOnly: true },
+      { label: "Pricing", href: "/pricing", cloudOnly: true },
+      { label: "Compare", href: "/compare", cloudOnly: true },
       { label: "Changelog", href: "/changelog", cloudOnly: true },
-      { label: "Live stats", href: "/stats", cloudOnly: true },
-      { label: "Status", href: "https://status.bytesend.cloud", cloudOnly: true },
+      { label: "Open source", href: "/open-source", cloudOnly: true },
     ],
   },
   {
-    title: "Developers",
+    title: "Features",
+    links: [
+      { label: "SMTP relay", href: "/smtp", cloudOnly: true },
+      { label: "Receiving", href: "/receiving", cloudOnly: true },
+      { label: "DMARC reports", href: "https://docs.bytesend.cloud/guides/dmarc-reports" },
+      { label: "Test mode", href: "https://docs.bytesend.cloud/guides/test-mode" },
+      { label: "Webhooks", href: "https://docs.bytesend.cloud/guides/webhooks" },
+    ],
+  },
+  {
+    title: "Free tools",
+    links: [
+      { label: "DMARC checker", href: "/tools/dmarc", cloudOnly: true },
+      { label: "SPF checker", href: "/tools/spf", cloudOnly: true },
+      { label: "DKIM checker", href: "/tools/dkim", cloudOnly: true },
+      { label: "All tools", href: "/tools", cloudOnly: true },
+    ],
+  },
+  {
+    title: "Resources",
     links: [
       { label: "Documentation", href: "https://docs.bytesend.cloud" },
       { label: "API reference", href: "https://docs.bytesend.cloud/api-reference/introduction" },
       { label: "Self-hosting", href: "https://docs.bytesend.cloud/self-hosting/overview" },
-      { label: "GitHub", href: "https://github.com/ByteSendApp/ByteSend" },
+      { label: "Live stats", href: "/stats", cloudOnly: true },
+      { label: "Status", href: "https://status.bytesend.cloud", cloudOnly: true },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "Discord", href: "https://discord.gg/C2Q4GHXKQA" },
+      { label: "Security", href: "/security", cloudOnly: true },
       { label: "Legal", href: "/legal", cloudOnly: true },
       { label: "Privacy", href: "/privacy", cloudOnly: true },
       { label: "Terms", href: "/terms", cloudOnly: true },
+      { label: "DPA", href: "/dpa", cloudOnly: true },
     ],
   },
 ];
+
+const VISIBLE_COLUMNS = COLUMNS.map((column) => ({
+  ...column,
+  links: column.links.filter((link) => isCloud || !link.cloudOnly),
+})).filter((column) => column.links.length > 0);
 
 const SOCIALS = [
   { label: "GitHub", href: "https://github.com/ByteSendApp/ByteSend", Icon: FaGithub },
@@ -63,7 +90,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,3fr)]">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,4fr)]">
           <div className="space-y-3">
             <Link href="/" className="inline-flex items-center gap-2">
               <BrandMark size={15} />
@@ -85,18 +112,16 @@ export function SiteFooter() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 sm:gap-8">
-            {COLUMNS.map((column) => (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-5">
+            {VISIBLE_COLUMNS.map((column) => (
               <div key={column.title} className="min-w-0">
                 <p className="mb-3 text-xs font-medium text-foreground">{column.title}</p>
                 <ul className="space-y-2">
-                  {column.links
-                    .filter((link) => isCloud || !link.cloudOnly)
-                    .map((link) => (
-                      <li key={link.label}>
-                        <FooterAnchor link={link} />
-                      </li>
-                    ))}
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      <FooterAnchor link={link} />
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}

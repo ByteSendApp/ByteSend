@@ -165,7 +165,7 @@ export default function PrivacyPage() {
                 <tbody className="divide-y divide-border/70">
                   {[
                     { p: "NodeByte Hosting", purpose: "Application hosting, networking, security", loc: "United Kingdom" },
-                    { p: "Amazon Web Services (SES)", purpose: "Transactional email delivery", loc: "EU / US" },
+                    { p: "Amazon Web Services (SES, S3)", purpose: "Sending and receiving email, and storing received email", loc: "EU / US" },
                     { p: "Simple Analytics", purpose: "Privacy-friendly aggregate analytics", loc: "Netherlands" },
                     { p: "Stripe", purpose: "Payment processing and billing", loc: "United States" },
                   ].map(({ p, purpose, loc }) => (

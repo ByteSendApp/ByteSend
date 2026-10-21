@@ -8,9 +8,9 @@ import { Reveal } from "./Reveal";
 import { Section, SectionHeader } from "./Section";
 
 // Competitor details as published on their pricing and docs pages; re-check before changing claims.
-const COMPARISON_CHECKED = "October 2026";
+export const COMPARISON_CHECKED = "October 2026";
 
-const comparisonRows: { feature: string; bs: string | boolean; resend: string | boolean; sendgrid: string | boolean; postmark: string | boolean; ses: string | boolean }[] = [
+export const comparisonRows: { feature: string; bs: string | boolean; resend: string | boolean; sendgrid: string | boolean; postmark: string | boolean; ses: string | boolean }[] = [
     { feature: "Free tier", bs: "5,000/mo (200/day)", resend: "3,000/mo (100/day)", sendgrid: "60-day trial", postmark: "100/mo", ses: "Pay-per-use" },
     { feature: "Marketing campaigns", bs: true, resend: true, sendgrid: true, postmark: "Broadcast API", ses: false },
     { feature: "Visual email editor", bs: true, resend: true, sendgrid: true, postmark: false, ses: false },
@@ -28,10 +28,6 @@ const comparisonRows: { feature: string; bs: string | boolean; resend: string | 
 const APP_URL = "/signup";
 
 export function ComparisonTable() {
-
-    const cols = ["ByteSend", "Resend", "SendGrid", "Postmark", "AWS SES"] as const;
-    const vals = (row: (typeof comparisonRows)[0]) => [row.bs, row.resend, row.sendgrid, row.postmark, row.ses] as (string | boolean)[];
-
     return (
         <Section>
             <SectionHeader
@@ -40,6 +36,28 @@ export function ComparisonTable() {
                 description="How we stack up against Resend, SendGrid, Postmark and sending through AWS SES directly."
             />
 
+            <ComparisonGrid />
+
+            <div className="mt-8 text-center">
+                <Button className="h-10 px-5" asChild>
+                    <Link href={APP_URL}>Switch in minutes</Link>
+                </Button>
+                <p className="mt-3 text-sm">
+                    <Link href="/compare" className="text-primary hover:underline">
+                        See the full comparison
+                    </Link>
+                </p>
+            </div>
+        </Section>
+    );
+}
+
+export function ComparisonGrid() {
+    const cols = ["ByteSend", "Resend", "SendGrid", "Postmark", "AWS SES"] as const;
+    const vals = (row: (typeof comparisonRows)[0]) => [row.bs, row.resend, row.sendgrid, row.postmark, row.ses] as (string | boolean)[];
+
+    return (
+        <>
             <Reveal className="overflow-x-auto rounded-lg border border-border bg-card">
                 <table className="w-full border-collapse text-[13px]">
                     <thead>
@@ -76,13 +94,7 @@ export function ComparisonTable() {
             <p className="mt-3 text-center text-xs text-muted-foreground">
                 Based on each provider&apos;s published plans, checked {COMPARISON_CHECKED}.
             </p>
-
-            <div className="mt-8 text-center">
-                <Button className="h-10 px-5" asChild>
-                    <Link href={APP_URL}>Switch in minutes</Link>
-                </Button>
-            </div>
-        </Section>
+        </>
     );
 }
 

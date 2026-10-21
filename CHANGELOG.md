@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.2] - 2026-10-21
+
+### Added
+- **Pricing page** at `/pricing`: the plan cards and calculator, plus every plan limit side by side, what's included on every plan, and a pricing FAQ
+- **Compare page** at `/compare`: the full feature comparison with Resend, SendGrid, Postmark and Amazon SES, when each is the better fit, and how to switch
+- **Receiving page** at `/receiving`: how receiving works, what people build with it (reply by email, invoice parsing, support inboxes, polling the API) and each plan's allowance
+- **Free DMARC checker** at `/tools/dmarc`: check any domain's DMARC record, see what's wrong in plain language, and get a record to publish
+- **Free SPF and DKIM checkers** at `/tools/spf` and `/tools/dkim`, with a `/tools` page listing all three. SPF counts DNS lookups through every include against the limit of 10; DKIM finds keys under common selectors and checks their strength
+- **SMTP relay page** at `/smtp`: connection settings and ready-to-paste setup for Node, Laravel, Django, Rails and WordPress
+- **Open source page** at `/open-source`: what the AGPL means for you, how to run ByteSend yourself, and how cloud and self-hosted compare
+- **Security page** at `/security`: how your account, email and data are protected, who processes your data, and how to report a vulnerability
+- **Receiving in the TypeScript SDK** (`bytesend-js` 0.2.0): `bytesend.inbound.list()`, `get()` and `downloadAttachment()`, with `email.received` webhooks verified and typed through `bytesend.webhooks()`
+
+### Changed
+- The website footer is grouped into Product, Features, Free tools, Resources and Company
+
+### Fixed
+- The DPA and privacy policy list the same sub-processors: NodeByte Hosting, Amazon Web Services (now including S3 for received email), Stripe and Simple Analytics
+
+---
+
 ## [0.9.1] - 2026-10-21
 
 ### Added
@@ -1055,7 +1076,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.7.0...v0.8.0

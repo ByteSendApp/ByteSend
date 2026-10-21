@@ -116,6 +116,44 @@ await bytesend.campaigns.pause(campaign.data.id);
 await bytesend.campaigns.resume(campaign.data.id);
 ```
 
+## Receiving email
+
+Mail sent to your [receiving addresses](https://docs.bytesend.cloud/guides/inbound-email) arrives as an `email.received` webhook:
+
+```ts
+import { ByteSend } from "bytesend-js";
+
+const bytesend = new ByteSend("bs_12345");
+const webhooks = bytesend.webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
+
+export async function POST(request: Request) {
+  const event = webhooks.constructEvent(await request.text(), { headers: request.headers });
+
+  if (event.type === "email.received") {
+    const { from, subject, text, inReplyToEmailId, attachments } = event.data;
+    console.log(`${from} wrote "${subject}"`, { text, inReplyToEmailId, attachments: attachments.length });
+  }
+
+  return new Response("ok");
+}
+```
+
+`inReplyToEmailId` is set when the message replies to an email you sent through ByteSend.
+
+You can also fetch received mail from the API:
+
+```ts
+const { data } = await bytesend.inbound.list({ recipient: "support@reply.acme.com", limit: 20 });
+
+const { data: email } = await bytesend.inbound.get(data!.data[0]!.id);
+
+for (const attachment of email!.attachments) {
+  const file = await bytesend.inbound.downloadAttachment(attachment);
+}
+```
+
+`list()` also takes `page` and `since` (an ISO 8601 date). Attachment links are signed and expire after an hour; if one has expired, call `inbound.get()` again for a fresh link.
+
 ## Webhooks
 
 Verify webhook signatures and get typed events:

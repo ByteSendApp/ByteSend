@@ -93,19 +93,57 @@ Add a webhook and choose the **email.received** event (under *Inbound events*). 
 - **Authentication:** `spf`, `dkim` and `dmarc` say whether the sender is who they claim to be. Be careful acting on mail where these are `fail`. Messages with a virus are kept but never forwarded.
 - Verify the webhook's signature as described in [Webhooks](/guides/webhooks#signature-verification).
 
+With the TypeScript SDK (`bytesend-js` 0.2 or later), the event is verified and typed for you:
+
+```ts
+import { ByteSend } from "bytesend-js";
+
+const webhooks = new ByteSend("bs_...").webhooks(process.env.BYTESEND_WEBHOOK_SECRET!);
+
+export async function POST(request: Request) {
+  const event = webhooks.constructEvent(await request.text(), { headers: request.headers });
+
+  if (event.type === "email.received" && event.data.inReplyToEmailId) {
+    await comments.create({ thread: event.data.inReplyToEmailId, body: event.data.text });
+  }
+
+  return new Response("ok");
+}
+```
+
 ## Fetching received mail from the API
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+const { data } = await bytesend.inbound.list({ limit: 20 });
+```
+
+```bash cURL
 curl https://bytesend.cloud/api/v1/inbound/emails?limit=20 \
   -H "Authorization: Bearer bs_..."
 ```
 
+</CodeGroup>
+
 Filter with `recipient`, `since` (an ISO 8601 time) and `page`. Get one message, including its text, HTML and attachment links:
 
-```bash
+<CodeGroup>
+
+```ts Node.js
+const { data: email } = await bytesend.inbound.get("inb_4f1c2a9e8d7b6a5c4f3e2d1c");
+
+for (const attachment of email!.attachments) {
+  const file = await bytesend.inbound.downloadAttachment(attachment);
+}
+```
+
+```bash cURL
 curl https://bytesend.cloud/api/v1/inbound/emails/inb_4f1c2a9e8d7b6a5c4f3e2d1c \
   -H "Authorization: Bearer bs_..."
 ```
+
+</CodeGroup>
 
 API keys limited to one domain only see mail received on that domain.
 

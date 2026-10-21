@@ -129,7 +129,7 @@ export function Features() {
                         <h3 className="mb-1.5 text-[15px] font-semibold text-foreground">{feature.title}</h3>
                         <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
                         {feature.points ? (
-                            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                            <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 {feature.points.map((point) => (
                                     <li key={point} className="flex items-start gap-2 text-sm text-muted-foreground">
                                         <MailCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />

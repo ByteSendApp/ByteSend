@@ -89,7 +89,7 @@ export default function AdminOverviewPage() {
 
       {!overview || !current || !previous ? (
         <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }, (_, i) => (
               <StatCardSkeleton key={i} />
             ))}
@@ -98,7 +98,7 @@ export default function AdminOverviewPage() {
         </div>
       ) : (
         <div className={cn("space-y-6 transition-opacity", overviewQuery.isFetching && "opacity-70")}>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Emails sent"
               value={formatCompact(current.sent)}
@@ -167,7 +167,7 @@ export default function AdminOverviewPage() {
             height={280}
           />
 
-          <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <DailyBarChart
               title="Signups"
               description="New users and teams per day"
@@ -179,7 +179,7 @@ export default function AdminOverviewPage() {
             <SesQuotaCard />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <AttentionCard attention={overview.attention} />
             <RecentActivityCard />
           </div>

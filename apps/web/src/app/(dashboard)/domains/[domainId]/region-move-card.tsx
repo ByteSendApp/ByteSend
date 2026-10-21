@@ -221,7 +221,7 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
               </p>
               <DnsStatusBadge status={dkimRecord.status} />
             </div>
-            <div className="grid gap-2 text-xs sm:grid-cols-[6rem_1fr]">
+            <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-[6rem_minmax(0,1fr)]">
               <span className="text-muted-foreground">Name</span>
               <CopyField value={dkimRecord.name} />
               <span className="text-muted-foreground">Value</span>
@@ -238,7 +238,7 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
               </p>
               <DnsStatusBadge status={mxRecord.status} />
             </div>
-            <div className="grid gap-2 text-xs sm:grid-cols-[6rem_1fr]">
+            <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-[6rem_minmax(0,1fr)]">
               <span className="text-muted-foreground">Value</span>
               <CopyField value={mxRecord.value} />
               <span className="text-muted-foreground">Priority</span>

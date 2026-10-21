@@ -253,7 +253,7 @@ export default function DomainItemPage({
         </Callout>
       ) : null}
 
-      <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
         <SignalCard label="DKIM" description="Proves the mail came from you" status={dkimStatus} dnsCheck={dnsPrecheck?.dkim} />
         <SignalCard label="SPF" description="Allows SES to send for you" status={spfStatus} dnsCheck={dnsPrecheck?.spf} />
         <SignalCard label="DMARC" description="Tells inboxes what to do with fakes" status={dmarcStatus} dnsCheck={dnsPrecheck?.mx} />

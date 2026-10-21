@@ -77,7 +77,7 @@ export default function AdminBlacklistsPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryTile label="Verified domains" value={overview?.verifiedCount ?? 0} />
         <SummaryTile label="Listed" value={listedDomains} tone="destructive" />
         <SummaryTile label="Unknown" value={unknownDomains} tone="muted" />

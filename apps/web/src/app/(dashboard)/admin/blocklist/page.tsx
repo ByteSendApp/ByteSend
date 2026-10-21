@@ -71,7 +71,7 @@ export default function AdminBlocklistPage() {
       />
 
       <form
-        className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[180px_1fr_1fr_auto]"
+        className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_auto]"
         onSubmit={(event) => {
           event.preventDefault();
           add.mutate({ type: newType, value: newValue, reason: newReason || undefined });

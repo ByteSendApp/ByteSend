@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Batch sends now respect an API key's domain restriction
+- Pages no longer run off the right edge on phones: cards and sections fit the screen, and long IDs and file names wrap or are shortened
 - Moving a domain that receives email to another sending region keeps receiving working: the identity it receives through is kept, and removed when receiving is turned off or the domain is deleted
 - Deleting a domain works again when its Amazon SES identity is already gone, shows an error if it fails, and accepts the name typed in any case (phone keyboards capitalise it)
 - **Verify again** on a verified domain now re-checks its DNS straight away, updates the problem banner, and says what it found. Record rows show a problem the DNS monitor found instead of an old "Verified"

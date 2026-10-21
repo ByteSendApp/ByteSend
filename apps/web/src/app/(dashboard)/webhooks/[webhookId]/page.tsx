@@ -256,7 +256,7 @@ export default function WebhookDetailPage({
 
       <WebhookInfo webhook={webhook} />
 
-      <div className="grid gap-4 lg:h-[calc(100vh-320px)] lg:min-h-[560px] lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-320px)] lg:min-h-[560px] lg:grid-cols-2">
         <div className="flex min-h-0 flex-col">
           <WebhookCallsTable webhookId={webhookId} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} />
         </div>

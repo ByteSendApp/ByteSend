@@ -187,7 +187,7 @@ export function NotificationProviderManager() {
       </div>
 
       {/* Providers Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {providers?.map((provider) => (
           <Card key={provider.id} className="flex flex-col">
             <CardHeader className="pb-3">

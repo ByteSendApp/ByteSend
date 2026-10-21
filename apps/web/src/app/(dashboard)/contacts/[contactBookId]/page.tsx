@@ -212,7 +212,7 @@ export default function ContactsPage({
         <Stat label="Double opt-in" value={book?.doubleOptInEnabled ? "On" : "Off"} hint={book?.doubleOptInEnabled ? "New contacts confirm first" : "Added straight away"} />
       </StatGroup>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Panel flush title="Details">
           <KeyValueList
             items={[

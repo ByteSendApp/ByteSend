@@ -63,7 +63,7 @@ export function AttentionCard({ attention }: { attention: Attention }) {
         emptyLabel="No team is over a warning threshold"
       >
         {attention.atRiskTeams.map((team) => (
-          <li key={team.teamId} className="grid gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-4">
+          <li key={team.teamId} className="grid grid-cols-1 gap-2 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate text-sm font-medium text-foreground">{team.name}</span>
               <span className="font-mono text-xs text-muted-foreground">#{team.teamId}</span>

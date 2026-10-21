@@ -65,7 +65,7 @@ export function SmtpSettingsClient({ smtpHost, smtpPort, smtpDefaultUsername, cu
       <Panel flush title="Connection details" description="Paste these into your app's SMTP settings.">
         <div className="divide-y divide-border/70">
           {connection.map((row) => (
-            <div key={row.label} className="grid gap-1.5 px-4 py-3 sm:grid-cols-[8rem_1fr] sm:items-center sm:gap-4">
+            <div key={row.label} className="grid grid-cols-1 gap-1.5 px-4 py-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center sm:gap-4">
               <div>
                 <p className="text-[13px] font-medium text-foreground">{row.label}</p>
                 {row.hint ? <p className="text-xs text-muted-foreground sm:hidden">{row.hint}</p> : null}

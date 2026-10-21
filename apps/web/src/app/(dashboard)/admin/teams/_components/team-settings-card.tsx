@@ -107,7 +107,7 @@ export function TeamSettingsCard({ team }: { team: TeamSettingsValues }) {
           onSubmit={form.handleSubmit((values) =>
             updateTeam.mutate({ teamId: team.id, plan: team.plan, isBlocked: team.isBlocked, ...values }),
           )}
-          className="grid gap-5 md:grid-cols-2"
+          className="grid grid-cols-1 gap-5 md:grid-cols-2"
           noValidate
         >
           <FormField

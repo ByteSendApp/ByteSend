@@ -81,7 +81,7 @@ export default function AdminDeliverabilityPage() {
         description={`Hard-bounce and complaint rates per team over the last ${DELIVERABILITY_WINDOW_DAYS} days. Limits are enforced automatically once a team has ${BOUNCE_RATE_MIN_VOLUME}+ deliveries.`}
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryTile label="Over limit" value={counts.overLimit} tone="destructive" />
         <SummaryTile label="Warning" value={counts.warning} tone="warning" />
         <SummaryTile label="Blocked" value={counts.blocked} tone="muted" />

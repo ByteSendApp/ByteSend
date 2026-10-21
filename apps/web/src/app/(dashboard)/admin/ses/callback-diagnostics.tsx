@@ -72,7 +72,7 @@ export default function CallbackDiagnostics() {
       ) : diagnosticsQuery.error ? (
         <p className="rounded-lg border p-4 text-sm text-destructive">{diagnosticsQuery.error.message}</p>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {data?.regions.map((region) => {
             const subscription = SUBSCRIPTION_TONE[region.subscription.state]!;
             const healthy = region.problems.length === 0;

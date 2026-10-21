@@ -158,7 +158,7 @@ export default function AdminUserDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel title="Access">
           <div className="divide-y divide-border/60">
             <FlagRow

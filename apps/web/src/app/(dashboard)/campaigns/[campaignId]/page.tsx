@@ -117,7 +117,7 @@ export default function CampaignDetailsPage({
         <Stat label="Unsubscribed" value={(campaign.unsubscribed ?? 0).toLocaleString()} hint={pct(campaign.unsubscribed ?? 0)} />
       </StatGroup>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Panel flush title="Email">
           <KeyValueList
             items={[

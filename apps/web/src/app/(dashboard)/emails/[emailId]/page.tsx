@@ -113,7 +113,7 @@ export default function EmailPage() {
         </Callout>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <ContentPreview html={email.html ?? ""} text={email.text ?? ""} />
 
         <div className="space-y-5">

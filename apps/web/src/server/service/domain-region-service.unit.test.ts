@@ -11,6 +11,7 @@ const { mockSes, mockDb, mockGetSetting, mockEmitDomainEvent, mockCheckDkim, moc
 }));
 
 vi.mock("~/server/aws/ses", () => mockSes);
+vi.mock("~/env", () => ({ env: { INBOUND_REGION: "us-east-1" } }));
 vi.mock("~/server/db", () => ({ db: mockDb }));
 vi.mock("~/server/logger/log", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("~/server/service/ses-settings-service", () => ({ SesSettingsService: { getSetting: mockGetSetting } }));
@@ -146,6 +147,25 @@ describe("DomainRegionService.refresh", () => {
     expect(mockEmitDomainEvent).not.toHaveBeenCalled();
   });
 
+  it("keeps waiting while the MX still points at the old region, even if SES reports MAIL FROM verified", async () => {
+    mockSes.getDomainIdentity.mockResolvedValue({
+      VerificationStatus: "SUCCESS",
+      DkimAttributes: { Status: "SUCCESS" },
+      MailFromAttributes: { MailFromDomainStatus: "SUCCESS" },
+    });
+    mockCheckMx.mockResolvedValue("not_found");
+
+    const result = await DomainRegionService.refresh(moving);
+
+    expect(result.switched).toBe(false);
+    expect(mockCheckMx).toHaveBeenCalledWith(expect.any(String), "eu-west-2");
+    expect(mockDb.domain.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { pendingDkimStatus: "SUCCESS", pendingMailFromStatus: "PENDING" },
+    });
+    expect(mockEmitDomainEvent).not.toHaveBeenCalled();
+  });
+
   it("switches region, selector and key once the new identity is fully verified", async () => {
     mockSes.getDomainIdentity.mockResolvedValue({
       VerificationStatus: "SUCCESS",
@@ -179,6 +199,21 @@ describe("DomainRegionService.retireOldRegionIfDue", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.domain.update.mockResolvedValue(retired);
+  });
+
+  it("keeps the old identity when the domain receives mail through it", async () => {
+    const receiving = { ...retired, inboundEnabled: true, inboundSubdomain: "reply", inboundDkimSelector: null };
+    const done = await DomainRegionService.retireOldRegionIfDue(receiving, switchedAt.getTime() + RETIRE_OLD_REGION_AFTER_MS + 1);
+    expect(done).toBe(true);
+    expect(mockSes.deleteDomain).not.toHaveBeenCalled();
+    expect(mockDb.domain.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { retiredRegion: null, retiredRegionAt: null } });
+  });
+
+  it("still retires the old identity when receiving has its own", async () => {
+    mockSes.deleteDomain.mockResolvedValue(true);
+    const receiving = { ...retired, inboundEnabled: true, inboundSubdomain: "reply", inboundDkimSelector: "bytesend-inbound" };
+    await DomainRegionService.retireOldRegionIfDue(receiving, switchedAt.getTime() + RETIRE_OLD_REGION_AFTER_MS + 1);
+    expect(mockSes.deleteDomain).toHaveBeenCalledWith("example.com", "us-east-1", undefined);
   });
 
   it("waits out the grace period before deleting the old identity", async () => {

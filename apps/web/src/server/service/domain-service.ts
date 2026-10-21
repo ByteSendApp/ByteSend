@@ -8,6 +8,8 @@ import { NotificationEmitter } from "./notification-emitter";
 import util from "util";
 import * as tldts from "tldts";
 import * as ses from "~/server/aws/ses";
+import { deleteReceivingIdentity } from "../aws/ses-receiving";
+import { receivesThroughKeptIdentity } from "./inbound-domain-service";
 import { db } from "~/server/db";
 import { env } from "~/env";
 import { renderDomainVerificationStatusEmail } from "~/server/email-templates";
@@ -16,7 +18,7 @@ import { sendMail } from "~/server/mailer";
 import { getRedis, redisKey } from "~/server/redis";
 import { SesSettingsService } from "./ses-settings-service";
 import { ByteSendApiError } from "../public-api/api-error";
-import { ApiKey, DomainStatus, type Domain } from "@prisma/client";
+import { ApiKey, DomainStatus, Prisma, type Domain } from "@prisma/client";
 import {
   type DomainPayload,
   type DomainWebhookEventType,
@@ -73,8 +75,12 @@ export function buildDnsRecords(domain: Domain): DomainDnsRecord[] {
   const mailDomain = `mail${subdomainSuffix}`;
   const dkimSelector = domain.dkimSelector ?? "bytesend";
 
+  const dnsIssues = Array.isArray(domain.dnsIssues) ? (domain.dnsIssues as string[]) : [];
+  const brokenNow = (record: "MX" | "DKIM" | "SPF") => dnsIssues.some((issue) => issue.startsWith(record));
   const spfStatus = parseDomainStatus(domain.spfDetails);
-  const dkimStatus = parseDomainStatus(domain.dkimStatus);
+  const dkimStatus = brokenNow("DKIM") ? DomainStatus.FAILED : parseDomainStatus(domain.dkimStatus);
+  const mxStatus = brokenNow("MX") ? DomainStatus.FAILED : spfStatus;
+  const spfTxtStatus = brokenNow("SPF") ? DomainStatus.FAILED : spfStatus;
   const dmarcStatus = domain.dmarcAdded
     ? DomainStatus.SUCCESS
     : DomainStatus.NOT_STARTED;
@@ -86,7 +92,7 @@ export function buildDnsRecords(domain: Domain): DomainDnsRecord[] {
       value: `feedback-smtp.${domain.region}.amazonses.com`,
       ttl: "Auto",
       priority: "10",
-      status: spfStatus,
+      status: mxStatus,
     },
     {
       type: "TXT",
@@ -100,7 +106,7 @@ export function buildDnsRecords(domain: Domain): DomainDnsRecord[] {
       name: mailDomain,
       value: "v=spf1 include:amazonses.com ~all",
       ttl: "Auto",
-      status: spfStatus,
+      status: spfTxtStatus,
     },
     {
       type: "TXT",
@@ -208,6 +214,17 @@ export async function checkMxDnsRecord(
  * Re-checks the DNS records a verified domain needs and describes anything missing or wrong.
  * Uses the same record names and checks as verification, so a domain that verified passes.
  */
+async function recheckDnsHealth(domain: Domain) {
+  const issues = await checkDomainDnsHealth(domain);
+  const now = new Date();
+  const dnsIssuesSince = issues.length ? (domain.dnsIssuesSince ?? now) : null;
+  await db.domain.update({
+    where: { id: domain.id },
+    data: { dnsIssues: issues.length ? issues : Prisma.DbNull, dnsIssuesSince, dnsCheckedAt: now },
+  });
+  return { dnsIssues: issues.length ? issues : null, dnsIssuesSince, dnsCheckedAt: now };
+}
+
 export async function checkDomainDnsHealth(
   domain: Pick<Domain, "name" | "subdomain" | "dkimSelector" | "publicKey" | "region">,
 ): Promise<string[]> {
@@ -805,8 +822,11 @@ export async function refreshDomainVerification(
     }
   }
 
+  const dnsHealth = updatedDomain.status === DomainStatus.SUCCESS ? await recheckDnsHealth(updatedDomain) : null;
+
   const normalizedDomain = {
     ...updatedDomain,
+    ...dnsHealth,
     dkimStatus: dkimStatus ?? null,
     spfDetails: spfDetails ?? null,
     dmarcAdded: Boolean(dmarcRecord),
@@ -920,7 +940,12 @@ export async function deleteDomain(id: number) {
     throw new Error("Error in deleting domain");
   }
 
-  for (const extraRegion of [domain.pendingRegion, domain.retiredRegion]) {
+  const extraRegions = new Set([
+    domain.pendingRegion,
+    domain.retiredRegion,
+    receivesThroughKeptIdentity(domain) ? env.INBOUND_REGION : null,
+  ]);
+  for (const extraRegion of extraRegions) {
     if (!extraRegion || extraRegion === domain.region) continue;
     try {
       await ses.deleteDomain(domain.name, extraRegion, domain.sesTenantId ?? undefined);
@@ -929,6 +954,14 @@ export async function deleteDomain(id: number) {
         { err: error, domainId: id, region: extraRegion },
         "[DomainService]: Failed to delete secondary-region identity",
       );
+    }
+  }
+
+  if (domain.inboundEnabled && domain.inboundSubdomain && domain.inboundDkimSelector) {
+    try {
+      await deleteReceivingIdentity(`${domain.inboundSubdomain}.${domain.name}`);
+    } catch (error) {
+      logger.error({ err: error, domainId: id }, "[DomainService]: Failed to delete receiving identity");
     }
   }
 

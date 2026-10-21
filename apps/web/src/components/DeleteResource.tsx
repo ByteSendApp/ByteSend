@@ -163,7 +163,14 @@ export const DeleteResource = <
                   <FormItem>
                     <FormControl>
                       <div className="relative">
-                        <Input placeholder={`${resourceName}`} {...field} />
+                        <Input
+                          placeholder={`${resourceName}`}
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          autoComplete="off"
+                          spellCheck={false}
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     {formState.errors.confirmation ? (

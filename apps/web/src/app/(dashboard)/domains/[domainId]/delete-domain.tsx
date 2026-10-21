@@ -17,7 +17,7 @@ export const DeleteDomain: React.FC<{ domain: Domain }> = ({ domain }) => {
     .object({
       confirmation: z.string().min(1, "Please type the domain name to confirm"),
     })
-    .refine((data) => data.confirmation === domain.name, {
+    .refine((data) => data.confirmation.trim().toLowerCase() === domain.name.toLowerCase(), {
       message: "Domain name does not match",
       path: ["confirmation"],
     });
@@ -32,6 +32,9 @@ export const DeleteDomain: React.FC<{ domain: Domain }> = ({ domain }) => {
           utils.domain.domains.invalidate();
           toast.success(`Domain ${domain.name} deleted`);
           router.replace("/domains");
+        },
+        onError: (error) => {
+          toast.error(error.message || "Couldn't delete this domain. Try again.");
         },
       },
     );

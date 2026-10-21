@@ -27,6 +27,8 @@ import {
   UserIcon,
   ArrowLeft,
   LifeBuoy,
+  Inbox as InboxIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { FaBook } from "react-icons/fa";
 import { SiDiscord } from "react-icons/si";
@@ -77,6 +79,7 @@ const NAV_GROUPS: Array<{ label: string | null; items: NavItem[] }> = [
     items: [
       { title: "Overview", url: "/dashboard", icon: HouseIcon },
       { title: "Emails", url: "/emails", icon: Mail },
+      { title: "Inbox", url: "/inbox", icon: InboxIcon },
     ],
   },
   {
@@ -85,6 +88,7 @@ const NAV_GROUPS: Array<{ label: string | null; items: NavItem[] }> = [
       { title: "Domains", url: "/domains", icon: Globe },
       { title: "Templates", url: "/templates", icon: LayoutTemplate },
       { title: "Suppressions", url: "/suppressions", icon: UserRoundX },
+      { title: "DMARC", url: "/dmarc", icon: ShieldCheck },
       { title: "Webhooks", url: "/webhooks", icon: Webhook },
     ],
   },

@@ -68,6 +68,12 @@ Webhooks allow you to receive HTTP POST requests to your server when events occu
 | `domain.updated`  | Domain settings were updated  |
 | `domain.deleted`  | Domain was deleted            |
 
+### Inbound events
+
+| Event            | Description                                                         |
+| ---------------- | ------------------------------------------------------------------- |
+| `email.received` | An email arrived at one of your [receiving addresses](/guides/inbound-email) |
+
 ## Webhook payload
 
 Each webhook request includes a JSON payload with the following structure. See [Event data details](#event-data-details) for details on the `data` field for each event type.

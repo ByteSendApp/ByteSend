@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import {
     BarChart3,
+    FlaskConical,
     Globe2,
+    Inbox,
     MailCheck,
     PenTool,
     Server,
@@ -87,6 +89,24 @@ const features: Feature[] = [
         description: "Pick the AWS region each domain sends from, and move it later with zero downtime.",
         tone: "sky",
     },
+    {
+        icon: Inbox,
+        title: "Inbound email",
+        description: "Receive mail on your own domain or a hosted address. Get it by webhook or API, read it in the inbox, or forward it on.",
+        tone: "teal",
+    },
+    {
+        icon: MailCheck,
+        title: "DMARC reports",
+        description: "See every server sending as your domain and whether it passes, before you tighten your policy to reject.",
+        tone: "blue",
+    },
+    {
+        icon: FlaskConical,
+        title: "Test mode",
+        description: "Test API keys simulate deliveries, bounces and complaints, with real webhooks and nothing sent.",
+        tone: "sky",
+    },
 ];
 
 export function Features() {
@@ -94,8 +114,8 @@ export function Features() {
         <Section id="features">
             <SectionHeader
                 eyebrow="Features"
-                title="Everything you need to send email"
-                description="Receipts, password resets, newsletters and everything in between, on one platform with one bill."
+                title="Everything you need to send and receive email"
+                description="Receipts, password resets, newsletters, replies and everything in between, on one platform with one bill."
             />
 
             <HairlineGrid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

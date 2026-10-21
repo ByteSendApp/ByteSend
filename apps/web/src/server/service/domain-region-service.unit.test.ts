@@ -64,6 +64,12 @@ function createDomain(overrides: Partial<Domain> = {}): Domain {
     dnsIssuesSince: null,
     dnsIssuesNotifiedAt: null,
     dnsCheckedAt: null,
+    inboundEnabled: false,
+    inboundSubdomain: null,
+    inboundStatus: null,
+    inboundCheckedAt: null,
+    inboundDkimSelector: null,
+    inboundPublicKey: null,
     ...overrides,
   };
 }

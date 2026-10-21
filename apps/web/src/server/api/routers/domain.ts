@@ -22,6 +22,7 @@ import { SesSettingsService } from "~/server/service/ses-settings-service";
 import { env } from "~/env";
 import { LimitService } from "~/server/service/limit-service";
 import { TRPCError } from "@trpc/server";
+import { CloudflareError, setUpDomainOnCloudflare } from "~/server/service/cloudflare-dns-service";
 
 function assertTeamAdmin(role: string) {
   if (role !== "ADMIN") {
@@ -68,6 +69,25 @@ export const domainRouter = createTRPCRouter({
       data: { isVerifying: true },
     });
   }),
+
+  setUpCloudflare: domainProcedure
+    .input(z.object({ token: z.string().trim().min(20).max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.teamUser.role !== "ADMIN") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only team admins can change a domain's DNS" });
+      }
+      try {
+        const outcomes = await setUpDomainOnCloudflare(ctx.domain, input.token);
+        if (outcomes.some((o) => o.status === "created" || o.status === "updated")) {
+          await clearDkimReregisteredFlag(ctx.domain.id);
+          await ctx.db.domain.update({ where: { id: ctx.domain.id }, data: { isVerifying: true } });
+        }
+        return outcomes;
+      } catch (error) {
+        if (error instanceof CloudflareError) throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+        throw error;
+      }
+    }),
 
   domains: teamProcedure.query(async ({ ctx }) => {
     return getDomains(ctx.team.id);

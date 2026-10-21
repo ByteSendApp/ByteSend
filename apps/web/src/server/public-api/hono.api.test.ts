@@ -38,7 +38,7 @@ describe("public API Hono middleware", () => {
       id: 1,
       apiRateLimit: 2,
       apiKeyId: 11,
-      apiKey: { domainId: null },
+      apiKey: { domainId: null, isTest: false },
     });
     mockRedis.incr.mockResolvedValue(1);
     mockRedis.expire.mockResolvedValue(1);
@@ -63,7 +63,7 @@ describe("public API Hono middleware", () => {
       id: 1,
       apiRateLimit: 2,
       apiKeyId: 11,
-      apiKey: { domainId: null },
+      apiKey: { domainId: null, isTest: false },
     });
     mockRedis.incr.mockResolvedValue(3);
     mockRedis.ttl.mockResolvedValue(1);

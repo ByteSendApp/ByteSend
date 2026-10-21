@@ -20,6 +20,8 @@ const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Overview",
   logs: "Audit log",
   emails: "Emails",
+  inbox: "Inbox",
+  dmarc: "DMARC",
   templates: "Templates",
   suppressions: "Suppressions",
   contacts: "Contacts",
@@ -53,7 +55,6 @@ const ROUTE_LABELS: Record<string, string> = {
   "double-opt-in": "Double opt-in",
 };
 
-// Leaf segments that are IDs only get a label once the page names them.
 const ID_SEGMENT = /^(\d+|c[a-z0-9]{20,}|[0-9a-f-]{20,})$/i;
 
 function useCrumbs(pathname: string) {
@@ -74,7 +75,7 @@ function HeaderBar() {
   const inAdmin = pathname.startsWith("/admin");
 
   return (
-    <header className="z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-xl md:px-4">
+    <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-xl md:px-4">
       <SidebarTrigger className="size-7 shrink-0 text-muted-foreground transition-colors hover:text-foreground" />
       <div className="h-4 w-px shrink-0 bg-border" />
       <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
@@ -117,17 +118,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="h-dvh overflow-hidden bg-background">
+    <div className="min-h-dvh bg-background md:h-dvh md:overflow-hidden">
       <BreadcrumbProvider>
-        <SidebarProvider className="h-full">
+        <SidebarProvider className="overflow-x-clip md:h-full">
           <AppSidebar />
           <SidebarInset className="min-w-0">
             <HeaderBar />
             <main
               ref={mainRef}
-              className={`flex-1 overflow-y-auto overflow-x-hidden ${isEditor ? "" : "px-4 py-5 md:px-8 md:py-7"}`}
+              className={`flex-1 overflow-x-clip md:overflow-y-auto md:overflow-x-hidden ${isEditor ? "" : "px-4 py-5 md:px-8 md:py-7"}`}
             >
-              <div className={isEditor ? "h-full w-full" : "mx-auto w-full max-w-[1200px]"}>{children}</div>
+              <div className={isEditor ? "h-full w-full" : "mx-auto w-full max-w-300"}>{children}</div>
             </main>
           </SidebarInset>
         </SidebarProvider>

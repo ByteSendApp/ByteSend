@@ -33,6 +33,16 @@ section[id] {
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+@keyframes hero-send {
+  0% {
+    stroke-dashoffset: 90;
+  }
+  60%,
+  100% {
+    stroke-dashoffset: -1000;
+  }
+}
+
 [data-reveal="visible"] {
   opacity: 1;
   transform: none;

@@ -8,6 +8,8 @@ export const WEBHOOK_DISPATCH_QUEUE = "webhook-dispatch";
 export const WEBHOOK_CLEANUP_QUEUE = "webhook-cleanup";
 export const BLACKLIST_CHECK_QUEUE = "blacklist-check";
 export const DOMAIN_HEALTH_QUEUE = "domain-health";
+export const INBOUND_QUEUE = "inbound-email";
+export const INBOUND_CLEANUP_QUEUE = "inbound-cleanup";
 
 export const DEFAULT_QUEUE_OPTIONS = {
   removeOnComplete: true,

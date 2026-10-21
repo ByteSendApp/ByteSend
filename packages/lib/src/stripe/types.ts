@@ -33,6 +33,7 @@ export interface PlanLimits {
   extraMemberRateCents: number;
   /** Rate in cents to order an additional domain. 0 = not applicable. */
   additionalDomainRateCents: number;
+  inboundEmailsPerMonth: number;
 }
 
 export interface PricingTier {

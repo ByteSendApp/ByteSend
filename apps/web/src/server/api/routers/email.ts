@@ -101,7 +101,8 @@ export const emailRouter = createTRPCRouter({
           "latestStatus",
           subject,
           "to",
-          "scheduledAt"
+          "scheduledAt",
+          "isTest"
         FROM "Email"
         WHERE "teamId" = ${ctx.team.id}
         ${input.status ? Prisma.sql`AND "latestStatus"::text = ${input.status}` : Prisma.sql``}
@@ -222,6 +223,54 @@ export const emailRouter = createTRPCRouter({
       });
     }),
 
+  detail: emailProcedure.query(async ({ ctx }) => {
+    const { email, team } = ctx;
+    const [events, domain, apiKey, campaign, inReplyTo, replies] = await Promise.all([
+      db.emailEvent.findMany({
+        where: { emailId: email.id },
+        select: { status: true, data: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      email.domainId ? db.domain.findUnique({ where: { id: email.domainId }, select: { id: true, name: true } }) : null,
+      email.apiId ? db.apiKey.findUnique({ where: { id: email.apiId }, select: { name: true, isTest: true } }) : null,
+      email.campaignId
+        ? db.campaign.findFirst({ where: { id: email.campaignId, teamId: team.id }, select: { id: true, name: true } })
+        : null,
+      email.inReplyToId
+        ? db.email.findFirst({ where: { id: email.inReplyToId, teamId: team.id }, select: { id: true, subject: true } })
+        : null,
+      db.inboundEmail.findMany({
+        where: { teamId: team.id, inReplyToEmailId: email.id },
+        select: { id: true, from: true, fromName: true, subject: true, receivedAt: true },
+        orderBy: { receivedAt: "asc" },
+        take: 50,
+      }),
+    ]);
+
+    return {
+      id: email.id,
+      subject: email.subject,
+      from: email.from,
+      to: email.to,
+      cc: email.cc,
+      bcc: email.bcc,
+      replyTo: email.replyTo,
+      html: email.html,
+      text: email.text,
+      latestStatus: email.latestStatus,
+      isTest: email.isTest,
+      sesEmailId: email.sesEmailId,
+      createdAt: email.createdAt,
+      scheduledAt: email.scheduledAt,
+      events,
+      domain,
+      apiKey,
+      campaign,
+      inReplyTo,
+      replies,
+    };
+  }),
+
   getEmail: emailProcedure.query(async ({ input }) => {
     const email = await db.email.findUnique({
       where: {
@@ -236,6 +285,7 @@ export const emailRouter = createTRPCRouter({
         id: true,
         createdAt: true,
         latestStatus: true,
+        isTest: true,
         subject: true,
         to: true,
         from: true,

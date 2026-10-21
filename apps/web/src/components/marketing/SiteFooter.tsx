@@ -86,25 +86,25 @@ export function SiteFooter() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 sm:gap-8">
-          {COLUMNS.map((column) => (
-            <div key={column.title} className="min-w-0">
-              <p className="mb-3 text-xs font-medium text-foreground">{column.title}</p>
-              <ul className="space-y-2">
-                {column.links
-                  .filter((link) => isCloud || !link.cloudOnly)
-                  .map((link) => (
-                    <li key={link.label}>
-                      <FooterAnchor link={link} />
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
+            {COLUMNS.map((column) => (
+              <div key={column.title} className="min-w-0">
+                <p className="mb-3 text-xs font-medium text-foreground">{column.title}</p>
+                <ul className="space-y-2">
+                  {column.links
+                    .filter((link) => isCloud || !link.cloudOnly)
+                    .map((link) => (
+                      <li key={link.label}>
+                        <FooterAnchor link={link} />
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
         <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} NodeByte LTD · Registered in England and Wales</span>
-          <span>Made in the UK</span>
+          <span>Made in the UK & Canada</span>
         </div>
       </div>
     </footer>

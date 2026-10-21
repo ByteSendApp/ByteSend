@@ -12,6 +12,7 @@ import { SuppressionService } from "./suppression-service";
 import { sanitizeCustomHeaders } from "~/server/utils/email-headers";
 import { Prisma } from "@prisma/client";
 import { SpamScanService, type SpamResult } from "./spam-scan-service";
+import { assertTestAllowance } from "./test-mode-service";
 
 async function checkIfValidEmail(emailId: string) {
   const email = await db.email.findUnique({
@@ -115,6 +116,7 @@ export async function sendEmail(
   let html = htmlFromApiCall;
 
   let domain: Awaited<ReturnType<typeof validateDomainFromEmail>>;
+  let isTest = false;
 
   if (apiKeyId) {
     const apiKey = await db.apiKey.findUnique({
@@ -130,6 +132,8 @@ export async function sendEmail(
     }
 
     domain = await validateApiKeyDomainAccess(from, teamId, apiKey);
+    isTest = apiKey.isTest;
+    if (isTest) await assertTestAllowance(teamId);
   } else {
     domain = await validateDomainFromEmail(from, teamId);
   }
@@ -175,6 +179,7 @@ export async function sendEmail(
         domainId: domain.id,
         latestStatus: "SUPPRESSED",
         apiId: apiKeyId,
+        isTest,
         text,
         html,
         cc: ccEmails.length > 0 ? ccEmails : undefined,
@@ -277,14 +282,16 @@ export async function sendEmail(
     ? Math.max(0, scheduledAtDate.getTime() - Date.now())
     : undefined;
 
-  const spamResult = await scanForSpam({
-    teamId,
-    from,
-    subject: subject ?? "",
-    html,
-    text,
-    attachmentNames: attachments?.map((attachment) => attachment.filename),
-  });
+  const spamResult = isTest
+    ? null
+    : await scanForSpam({
+        teamId,
+        from,
+        subject: subject ?? "",
+        html,
+        text,
+        attachmentNames: attachments?.map((attachment) => attachment.filename),
+      });
   const isHeld = spamResult?.verdict === "HOLD";
 
   const email = await db.email.create({
@@ -307,6 +314,7 @@ export async function sendEmail(
       scheduledAt: scheduledAtDate,
       latestStatus: isHeld ? "HELD" : scheduledAtDate ? "SCHEDULED" : "QUEUED",
       apiId: apiKeyId,
+      isTest,
       inReplyToId,
       headers: headers ? JSON.stringify(headers) : undefined,
     },
@@ -429,6 +437,15 @@ export async function sendBulkEmails(
     });
   }
 
+  const bulkApiKeyId = emailContents[0]?.apiKeyId;
+  const bulkApiKey = bulkApiKeyId
+    ? await db.apiKey.findUnique({ where: { id: bulkApiKeyId }, include: { domain: true } })
+    : null;
+  const isTest = bulkApiKey?.isTest ?? false;
+  if (isTest) await assertTestAllowance(emailContents[0]!.teamId, emailContents.length);
+  const validateFrom = (from: string, teamId: number) =>
+    bulkApiKey ? validateApiKeyDomainAccess(from, teamId, bulkApiKey) : validateDomainFromEmail(from, teamId);
+
   const emailChecks = await Promise.all(
     emailContents.map(async (content, index) => {
       const toEmails = Array.isArray(content.to) ? content.to : [content.to];
@@ -528,7 +545,7 @@ export async function sendBulkEmails(
     let subject = subjectFromApiCall;
     let html = htmlFromApiCall;
 
-    const domain = await validateDomainFromEmail(from, teamId);
+    const domain = await validateFrom(from, teamId);
 
     if (templateId) {
       const template = await db.template.findUnique({
@@ -593,6 +610,7 @@ export async function sendBulkEmails(
         scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
         latestStatus: "SUPPRESSED",
         apiId: apiKeyId,
+        isTest,
         inReplyToId,
         headers: originalContent.headers
           ? JSON.stringify(originalContent.headers)
@@ -632,7 +650,7 @@ export async function sendBulkEmails(
   for (const content of filteredEmailContents) {
     const { from } = content;
     if (!emailsByDomain.has(from)) {
-      const domain = await validateDomainFromEmail(from, content.teamId);
+      const domain = await validateFrom(from, content.teamId);
       emailsByDomain.set(from, { domain, emails: [] });
     }
     emailsByDomain.get(from)?.emails.push(content);
@@ -725,14 +743,16 @@ export async function sendBulkEmails(
         ? Math.max(0, scheduledAtDate.getTime() - Date.now())
         : undefined;
 
-      const spamResult = await scanForSpam({
-        teamId,
-        from,
-        subject: subject ?? "",
-        html,
-        text,
-        attachmentNames: attachments?.map((attachment) => attachment.filename),
-      });
+      const spamResult = isTest
+        ? null
+        : await scanForSpam({
+            teamId,
+            from,
+            subject: subject ?? "",
+            html,
+            text,
+            attachmentNames: attachments?.map((attachment) => attachment.filename),
+          });
       const isHeld = spamResult?.verdict === "HOLD";
 
       try {
@@ -756,6 +776,7 @@ export async function sendBulkEmails(
             scheduledAt: scheduledAtDate,
             latestStatus: isHeld ? "HELD" : scheduledAtDate ? "SCHEDULED" : "QUEUED",
             apiId: apiKeyId,
+            isTest,
             headers: headers ? JSON.stringify(headers) : undefined,
           },
         });

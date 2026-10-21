@@ -82,7 +82,7 @@ describe("POST /v1/contactBooks", () => {
       id: 1,
       apiRateLimit: 20,
       apiKeyId: 11,
-      apiKey: { domainId: null },
+      apiKey: { domainId: null, isTest: false },
     });
 
     mockRedis.incr.mockResolvedValue(1);

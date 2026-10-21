@@ -26,7 +26,7 @@ export function useUrlState(key: string, defaultValue: string | null = null) {
       const newUrl = qs.stringifyUrl({
         url: window.location.href,
         query: newQuery,
-      });
+      }, { skipNull: true });
       window.history.replaceState({}, "", newUrl);
     },
     [key]

@@ -40,7 +40,13 @@ const apiKeySchema = z.object({
     message: "Name is required",
   }),
   domainId: z.string().optional(),
+  mode: z.enum(["live", "test"]),
 });
+
+const MODES = [
+  { value: "live", label: "Live", description: "Sends real email." },
+  { value: "test", label: "Test", description: "Nothing is delivered. Events and webhooks are simulated." },
+] as const;
 
 export default function AddApiKey() {
   const [open, setOpen] = useState(false);
@@ -58,6 +64,7 @@ export default function AddApiKey() {
     defaultValues: {
       name: "",
       domainId: "all",
+      mode: "live",
     },
   });
 
@@ -68,6 +75,7 @@ export default function AddApiKey() {
         permission: "FULL",
         domainId:
           values.domainId === "all" ? undefined : Number(values.domainId),
+        isTest: values.mode === "test",
       },
       {
         onSuccess: (data) => {
@@ -190,6 +198,35 @@ export default function AddApiKey() {
                           Use a name to easily identify this API key.
                         </FormDescription>
                       )}
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={apiKeyForm.control}
+                  name="mode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mode</FormLabel>
+                      <div role="radiogroup" aria-label="Mode" className="grid grid-cols-2 gap-2">
+                        {MODES.map((mode) => (
+                          <button
+                            key={mode.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={field.value === mode.value}
+                            onClick={() => field.onChange(mode.value)}
+                            className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                              field.value === mode.value ? "border-primary bg-primary/[0.06]" : "border-border hover:bg-muted/50"
+                            }`}
+                          >
+                            <span className="block text-sm font-medium text-foreground">{mode.label}</span>
+                            <span className="block text-xs text-muted-foreground">{mode.description}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <FormDescription>
+                        Test keys start with <code className="font-mono">bs_test_</code> and work before your domain is verified.
+                      </FormDescription>
                     </FormItem>
                   )}
                 />

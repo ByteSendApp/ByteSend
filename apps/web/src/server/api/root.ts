@@ -17,6 +17,8 @@ import { webhookRouter } from "./routers/webhook";
 import { userRouter } from "./routers/user";
 import { notificationProviderRouter } from "./routers/notification-provider";
 import { logsRouter } from "./routers/logs";
+import { inboundRouter } from "./routers/inbound";
+import { dmarcRouter } from "./routers/dmarc";
 
 export const appRouter = createTRPCRouter({
   domain: domainRouter,
@@ -37,6 +39,8 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   notificationProvider: notificationProviderRouter,
   logs: logsRouter,
+  inbound: inboundRouter,
+  dmarc: dmarcRouter,
 });
 
 export type AppRouter = typeof appRouter;

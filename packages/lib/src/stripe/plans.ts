@@ -16,7 +16,6 @@ export const PLANS: Record<PlanType, PricingTier> = {
     order: 1,
     isLimited: true,
     monthlyPrice: 0,
-    // No usageMetering: the free plan is a hard cap.
     limits: {
       monthlyEmailLimit: 5_000,
       dailyEmailLimit: 200,
@@ -34,6 +33,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200, // $2/member/month add-on
       additionalDomainRateCents: 100, // $1/domain/month add-on
+      inboundEmailsPerMonth: 1_000,
     },
   },
 
@@ -67,6 +67,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200,
       additionalDomainRateCents: 100,
+      inboundEmailsPerMonth: 10_000,
     },
   },
 
@@ -96,6 +97,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200,
       additionalDomainRateCents: 100,
+      inboundEmailsPerMonth: 20_000,
     },
   },
 
@@ -129,6 +131,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200,
       additionalDomainRateCents: 100,
+      inboundEmailsPerMonth: 50_000,
     },
   },
 
@@ -162,6 +165,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200,
       additionalDomainRateCents: 100,
+      inboundEmailsPerMonth: 250_000,
     },
   },
 
@@ -192,6 +196,7 @@ export const PLANS: Record<PlanType, PricingTier> = {
       marketingEmailsIncluded: true,
       extraMemberRateCents: 200,
       additionalDomainRateCents: 100,
+      inboundEmailsPerMonth: 250_000,
     },
   },
 };

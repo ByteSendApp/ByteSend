@@ -33,6 +33,10 @@ export const EmailEvents = [
 
 export type EmailWebhookEventType = (typeof EmailEvents)[number];
 
+export const InboundEvents = ["email.received"] as const;
+
+export type InboundWebhookEventType = (typeof InboundEvents)[number];
+
 export const WebhookTestEvents = ["webhook.test"] as const;
 
 export type WebhookTestEventType = (typeof WebhookTestEvents)[number];
@@ -41,6 +45,7 @@ export const WebhookEvents = [
   ...ContactEvents,
   ...DomainEvents,
   ...EmailEvents,
+  ...InboundEvents,
   ...WebhookTestEvents,
 ] as const;
 
@@ -75,6 +80,7 @@ export type EmailBasePayload = {
   subject?: string;
   templateId?: string;
   metadata?: Record<string, unknown>;
+  test?: boolean;
 };
 
 export type ContactPayload = {
@@ -154,6 +160,34 @@ export type EmailClickedPayload = EmailBasePayload & {
   };
 };
 
+export type InboundAttachmentPayload = {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  url?: string;
+};
+
+export type EmailReceivedPayload = {
+  id: string;
+  recipient: string;
+  from: string;
+  fromName?: string | null;
+  to: string[];
+  cc: string[];
+  replyTo: string[];
+  subject: string;
+  text?: string | null;
+  html?: string | null;
+  messageId?: string | null;
+  inReplyTo?: string | null;
+  inReplyToEmailId?: string | null;
+  attachments: InboundAttachmentPayload[];
+  authentication: { spf?: string | null; dkim?: string | null; dmarc?: string | null; spam?: string | null; virus?: string | null };
+  domainId?: number | null;
+  receivedAt: string;
+};
+
 export type WebhookTestPayload = {
   test: boolean;
   webhookId: string;
@@ -189,6 +223,10 @@ export type ContactEventPayloadMap = {
   "contact.deleted": ContactPayload;
 };
 
+export type InboundEventPayloadMap = {
+  "email.received": EmailReceivedPayload;
+};
+
 export type WebhookTestEventPayloadMap = {
   "webhook.test": WebhookTestPayload;
 };
@@ -196,6 +234,7 @@ export type WebhookTestEventPayloadMap = {
 export type WebhookEventPayloadMap = EmailEventPayloadMap &
   DomainEventPayloadMap &
   ContactEventPayloadMap &
+  InboundEventPayloadMap &
   WebhookTestEventPayloadMap;
 
 export type WebhookPayloadData<TType extends WebhookEventType> =

@@ -61,7 +61,14 @@ export default function ApiList() {
           {keys.map((apiKey) => (
             <TableRow key={apiKey.id}>
               <TableCell className="max-w-0">
-                <p className="truncate font-medium text-foreground">{apiKey.name}</p>
+                <p className="flex items-center gap-1.5 truncate font-medium text-foreground">
+                  <span className="truncate">{apiKey.name}</span>
+                  {apiKey.isTest ? (
+                    <Badge variant="warning" className="shrink-0">
+                      Test
+                    </Badge>
+                  ) : null}
+                </p>
                 <p className="truncate text-xs text-muted-foreground">
                   Created {formatDistanceToNow(apiKey.createdAt, { addSuffix: true })}
                 </p>

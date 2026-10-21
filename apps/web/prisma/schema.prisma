@@ -196,6 +196,7 @@ model Team {
   customTransactionalEmailLimit Int?
   customMonthlyPriceCents       Int?
   smtpUsername                  String?
+  inboundSlug                   String?                @unique
   teamUsers                     TeamUser[]
   domains                       Domain[]
   apiKeys                       ApiKey[]
@@ -212,6 +213,9 @@ model Team {
   notificationProviders         NotificationProvider[]
   notificationLogs              NotificationLog[]
   spamScans                     SpamScan[]
+  inboundEmails                 InboundEmail[]
+  inboundForwardRules           InboundForwardRule[]
+  dmarcReports                  DmarcReport[]
 }
 
 model TeamInvite {
@@ -299,11 +303,19 @@ model Domain {
   regionMoveStartedAt   DateTime?
   retiredRegion         String?
   retiredRegionAt       DateTime?
+  inboundEnabled        Boolean                @default(false)
+  inboundSubdomain      String?
+  inboundStatus         String?
+  inboundCheckedAt      DateTime?
+  inboundDkimSelector   String?
+  inboundPublicKey      String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   team                  Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   apiKeys               ApiKey[]
   blacklistChecks       DomainBlacklistCheck[]
+  inboundEmails         InboundEmail[]
+  dmarcReports          DmarcReport[]
 }
 
 enum ApiPermission {
@@ -318,6 +330,7 @@ model ApiKey {
   partialToken String
   name         String
   permission   ApiPermission @default(SENDING)
+  isTest       Boolean       @default(false)
   domainId     Int?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -357,6 +370,7 @@ model Email {
   text         String?
   html         String?
   latestStatus EmailStatus  @default(QUEUED)
+  isTest       Boolean      @default(false)
   teamId       Int
   domainId     Int?
   apiId        Int?
@@ -373,6 +387,7 @@ model Email {
 
   @@index([campaignId, contactId])
   @@index([createdAt(sort: Desc)])
+  @@index([teamId, isTest, createdAt])
 }
 
 model CampaignEmail {
@@ -776,4 +791,105 @@ model BlocklistEntry {
 
   @@unique([type, value])
   @@index([sourceUserId])
+}
+
+enum InboundEmailStatus {
+  PROCESSED
+  FORWARDED
+  FAILED
+}
+
+model InboundEmail {
+  id               String             @id @default(cuid())
+  teamId           Int
+  domainId         Int?
+  sesMessageId     String             @unique
+  recipient        String
+  from             String
+  fromName         String?
+  to               String[]
+  cc               String[]
+  replyTo          String[]
+  subject          String
+  text             String?
+  html             String?
+  headers          Json
+  messageId        String?
+  inReplyTo        String?
+  references       String[]
+  inReplyToEmailId String?
+  attachments      Json
+  size             Int
+  rawKey           String?
+  spamVerdict      String?
+  virusVerdict     String?
+  spfVerdict       String?
+  dkimVerdict      String?
+  dmarcVerdict     String?
+  status           InboundEmailStatus @default(PROCESSED)
+  forwardedTo      String[]
+  error            String?
+  receivedAt       DateTime           @default(now())
+  expiresAt        DateTime
+  team             Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  domain           Domain?            @relation(fields: [domainId], references: [id], onDelete: SetNull)
+
+  @@index([teamId, receivedAt(sort: Desc)])
+  @@index([expiresAt])
+}
+
+model InboundForwardRule {
+  id        String   @id @default(cuid())
+  teamId    Int
+  match     String
+  forwardTo String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}
+
+model DmarcReport {
+  id            String        @id @default(cuid())
+  teamId        Int
+  domainId      Int?
+  domain        String
+  orgName       String
+  reporterEmail String?
+  reportId      String
+  beginAt       DateTime
+  endAt         DateTime
+  policy        Json
+  messageCount  Int
+  passCount     Int
+  createdAt     DateTime      @default(now())
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  domainRef     Domain?       @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  records       DmarcRecord[]
+
+  @@unique([teamId, orgName, reportId])
+  @@index([teamId, endAt(sort: Desc)])
+  @@index([domainId, endAt(sort: Desc)])
+  @@index([endAt])
+}
+
+model DmarcRecord {
+  id           String      @id @default(cuid())
+  reportId     String
+  sourceIp     String
+  sourceHost   String?
+  count        Int
+  disposition  String
+  dkim         String
+  spf          String
+  headerFrom   String
+  envelopeFrom String?
+  dkimResults  Json
+  spfResults   Json
+  viaByteSend  Boolean     @default(false)
+  report       DmarcReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
 }

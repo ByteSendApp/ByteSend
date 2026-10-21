@@ -24,6 +24,8 @@ import {
   Bell,
   BookOpenText,
   UserIcon,
+  Inbox,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Command,
@@ -39,7 +41,9 @@ import { api } from "~/trpc/react";
 const PAGES = [
   { label: "Overview", href: "/dashboard", icon: HouseIcon },
   { label: "Emails", href: "/emails", icon: Mail },
+  { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Domains", href: "/domains", icon: Globe },
+  { label: "DMARC reports", href: "/dmarc", icon: ShieldCheck },
   { label: "Webhooks", href: "/webhooks", icon: Webhook },
   { label: "Templates", href: "/templates", icon: LayoutTemplate },
   { label: "Suppressions", href: "/suppressions", icon: UserRoundX },

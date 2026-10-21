@@ -34,6 +34,7 @@ function highlights(plan: PlanType) {
   const items = [
     `${number.format(l.monthlyEmailLimit)} emails a month`,
     Number.isFinite(l.dailyEmailLimit) ? `Up to ${number.format(l.dailyEmailLimit)} a day` : "No daily cap",
+    `${number.format(l.inboundEmailsPerMonth)} received emails a month`,
     `${l.maxDomains} domains · ${l.maxTeamMembers} team members`,
     `${number.format(l.contactsLimit)} marketing contacts`,
   ];

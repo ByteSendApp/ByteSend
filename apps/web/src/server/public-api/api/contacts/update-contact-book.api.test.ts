@@ -71,7 +71,7 @@ describe("PATCH /v1/contactBooks/{contactBookId}", () => {
       id: 1,
       apiRateLimit: 20,
       apiKeyId: 11,
-      apiKey: { domainId: null },
+      apiKey: { domainId: null, isTest: false },
     });
 
     mockRedis.incr.mockResolvedValue(1);

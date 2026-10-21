@@ -11,6 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] - 2026-10-20
+
+### Added
+- **Receiving email**:
+  - Every team gets a hosted address that works without DNS changes, with `+tags` to tell senders apart
+  - Receive on a subdomain of your own domain (for example `reply.acme.com`) by adding one MX record
+  - New **Inbox** page with the message, attachments, headers and SPF, DKIM, DMARC, spam and virus results
+  - New `email.received` webhook event, with signed attachment links that last an hour
+  - `GET /v1/inbound/emails` and `GET /v1/inbound/emails/{id}` in the API
+  - Replies to email you sent are linked to the original through `inReplyToEmailId`
+  - Forwarding rules for an address, a local part or everything
+  - Monthly allowances on every plan (from 1,000 on Free to 250,000 on Scale); mail is kept for 30 days
+  - The local SES emulator can deliver test mail to ByteSend
+- **DMARC reports**:
+  - Every team gets a report address; add it to your domain's DMARC record and providers' daily reports are read automatically
+  - New **DMARC** page: pass rate over time, every server sending as your domains (ByteSend's own traffic marked), and each report in full
+  - The setup tab shows your current DMARC record and the exact record to publish, keeping your existing policy
+  - Reports don't count toward your receiving allowance and are kept for 90 days
+- **Test mode**:
+  - Create test API keys (`bs_test_...`) that never send: emails appear in the dashboard marked Test
+  - Deliveries, bounces and complaints are simulated with real webhooks (flagged `"test": true`), chosen by the recipient address
+  - Works before your domain is verified, and doesn't touch usage, bounce rates or suppressions
+- **Email page**: every email has its own page at `/emails/<id>` with a larger preview (desktop and mobile widths), all recipients, the domain, campaign and API key it came from, its events, and any replies received in your inbox
+- **Set up DNS on Cloudflare**: paste a Cloudflare API token on a domain's page and ByteSend adds the records for you. Existing MX, SPF and DMARC records are never overwritten, and the token isn't stored
+- **Website**: the pricing, features and comparison sections now cover receiving, DMARC reports and test mode, and the homepage has a new backdrop drawn from the ByteSend mark
+
+### Fixed
+- Batch sends now respect an API key's domain restriction
+- Installing the repo with pnpm 9 no longer fails on Prisma Studio's pnpm 8 requirement, so the web tests run in CI again
+
+---
+
 ## [0.8.0] - 2026-10-19
 
 ### Changed
@@ -1007,7 +1039,9 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.4.4...v0.5.0

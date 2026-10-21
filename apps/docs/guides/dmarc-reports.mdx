@@ -1,0 +1,56 @@
+---
+title: DMARC reports
+description: "See every server sending email as your domain, and whether it passes SPF and DKIM"
+icon: shield-check
+---
+
+Mailbox providers like Google, Microsoft and Yahoo send a daily report to each domain that asks for one. It lists every server that sent mail using your domain, how many messages, and whether they passed SPF, DKIM and DMARC.
+
+ByteSend reads those reports for you and shows:
+
+- your DMARC **pass rate** over time,
+- every **sending source**, with ByteSend's own traffic marked, so anything you don't recognise stands out,
+- each **report** in full, as the provider sent it.
+
+You need this before moving your DMARC policy from `p=none` to `quarantine` or `reject`: it tells you which legitimate services would start failing.
+
+## Set it up
+
+<Steps>
+  <Step title="Open the setup tab">
+    Go to **DMARC → Setup**. Every verified domain is listed with its current DMARC record and your report address.
+  </Step>
+  <Step title="Publish the record">
+    Copy the suggested record into a TXT record at `_dmarc.<your domain>`. If you already have a DMARC record, the suggestion keeps your policy and other report addresses, and only adds ours to `rua`. For example:
+
+    ```
+    _dmarc.acme.com  TXT  "v=DMARC1; p=none; rua=mailto:acme+dmarc@in.bytesend.cloud"
+    ```
+  </Step>
+  <Step title="Wait a day">
+    Providers send reports about once every 24 hours. Once the setup tab shows **Reporting to ByteSend**, the first reports arrive within a day or two.
+  </Step>
+</Steps>
+
+<Note>
+  Your report address is your team's hosted address with `+dmarc`. If you [receive on a subdomain](/guides/inbound-email#receiving-on-your-own-domain) of the same domain, `dmarc@<that subdomain>` is used instead.
+</Note>
+
+## Reading the results
+
+- **DMARC pass rate**: a message passes when SPF or DKIM passes *and* matches the domain in the From address. Aim for close to 100%.
+- **Sending sources**: each server, by hostname where it has one. Sources marked **ByteSend** are your mail sent through us. For anything else:
+  - if it's a service you use (your mailbox provider, a CRM, a helpdesk), set up SPF or DKIM for it with that provider;
+  - if you don't recognise it and it fails, someone may be sending as your domain. A stricter policy (`p=quarantine`, then `p=reject`) tells providers to stop delivering it.
+- **Reports**: open one to see each source with its DKIM signatures and SPF checks, and what the provider did with failing mail.
+
+## Good to know
+
+- Reports don't count toward your receiving allowance and don't appear in your inbox.
+- Reports are kept for **90 days**.
+- Only reports about your own domains are kept, and only from senders that pass SPF or DKIM, so nobody can fill your dashboard with fake data.
+- Reports cover messages, not content: they never include subjects, recipients or bodies.
+
+## Testing locally
+
+With `pnpm dx:up` and `pnpm dev:local` running, open the emulator at `http://localhost:5350`, choose **Send a sample DMARC report**, and enter your report address and one of your domains.

@@ -19,6 +19,7 @@ export const apiRouter = createTRPCRouter({
         name: z.string(),
         permission: z.nativeEnum(ApiPermission),
         domainId: z.number().int().positive().optional(),
+        isTest: z.boolean().default(false),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -27,6 +28,7 @@ export const apiRouter = createTRPCRouter({
         permission: input.permission,
         teamId: ctx.team.id,
         domainId: input.domainId,
+        isTest: input.isTest,
       });
     }),
 
@@ -40,6 +42,7 @@ export const apiRouter = createTRPCRouter({
         name: true,
         permission: true,
         partialToken: true,
+        isTest: true,
         lastUsed: true,
         createdAt: true,
         domainId: true,

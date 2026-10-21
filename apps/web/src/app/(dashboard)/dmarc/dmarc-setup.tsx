@@ -71,7 +71,7 @@ export function DmarcSetup({ setup, isLoading }: { setup?: Setup; isLoading: boo
             {!domain.reportsToUs && domain.suggested ? (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">{domain.record ? "Replace it with" : "Add this TXT record"}</p>
-                <div className="grid gap-2 sm:grid-cols-[10rem_1fr]">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[10rem_minmax(0,1fr)]">
                   <CopyField value={`_dmarc.${domain.orgDomain}`} display="_dmarc" />
                   <CopyField value={domain.suggested} />
                 </div>

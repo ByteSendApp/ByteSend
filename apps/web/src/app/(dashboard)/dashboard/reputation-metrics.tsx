@@ -90,7 +90,7 @@ export function ReputationMetrics({ days, domain }: ReputationMetricsProps) {
 
   return (
     <TooltipProvider>
-      <div className="grid w-full gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 w-full gap-4 sm:grid-cols-2">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex justify-between">
             <div className=" flex items-center gap-2">

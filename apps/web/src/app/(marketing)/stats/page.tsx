@@ -166,7 +166,7 @@ export default async function StatsPage() {
           </div>
         </Reveal>
 
-        <div className="grid gap-12 lg:grid-cols-[3fr_2fr]">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <Reveal>
             <h2 className="text-lg font-semibold tracking-tight">Deliverability health</h2>
             <p className="mt-1 text-sm text-muted-foreground">

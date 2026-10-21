@@ -146,7 +146,7 @@ puts res.body`;
     return (
         <section id="developers" className="scroll-mt-16 border-t border-border bg-muted/30 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-12 items-start">
                     {/* Left: text */}
                     <div className="lg:pt-4">
                         <p className="mb-3 font-mono text-xs font-medium uppercase tracking-[0.14em] text-primary">Developer-first</p>

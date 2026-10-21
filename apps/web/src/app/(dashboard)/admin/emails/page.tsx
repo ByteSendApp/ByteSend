@@ -99,7 +99,7 @@ function AdminEmailsExplorer() {
         }
       />
 
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
         <Select
           value={timeWindow}
           onValueChange={(value) => {

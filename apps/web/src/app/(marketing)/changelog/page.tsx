@@ -189,7 +189,7 @@ function ReleaseBody({ body }: { body: string }) {
             style={{ paddingLeft: item.indent > 0 ? `${item.indent * 16}px` : undefined }}
           >
             <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-border shrink-0" />
-            <span>{parseInline(item.text)}</span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">{parseInline(item.text)}</span>
           </li>
         ))}
       </ul>,
@@ -230,7 +230,7 @@ function ReleaseBody({ body }: { body: string }) {
     } else {
       flushList();
       nodes.push(
-        <p key={key++} className="text-sm text-muted-foreground leading-relaxed mb-2">
+        <p key={key++} className="mb-2 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
           {parseInline(trimmed)}
         </p>,
       );
@@ -272,7 +272,7 @@ export default async function ChangelogPage() {
         ) : (
           <div className="divide-y divide-border">
             {releases.map((release, idx) => (
-              <article key={release.tag} id={release.tag} className="grid scroll-mt-20 gap-4 py-10 first:pt-0 md:grid-cols-[11rem_1fr] md:gap-10">
+              <article key={release.tag} id={release.tag} className="grid grid-cols-1 scroll-mt-20 gap-4 py-10 first:pt-0 md:grid-cols-[11rem_minmax(0,1fr)] md:gap-10">
                 <header className="md:sticky md:top-20 md:self-start">
                   <a href={`#${release.tag}`} className="group inline-flex items-center gap-2">
                     <h2 className="font-mono text-lg font-semibold tracking-tight transition-colors group-hover:text-primary">{release.name}</h2>

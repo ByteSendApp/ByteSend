@@ -100,7 +100,7 @@ function FreePlanUsage({
   const dailyPct = Math.min((dailyUsage / FREE_PLAN_DAILY_LIMIT) * 100, 100);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {/* Monthly gauge */}
       <Card>
         <CardContent className="pt-6">
@@ -270,7 +270,7 @@ function PaidPlanUsage({
       : 0;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {/* Amount due */}
       <Card>
         <CardContent className="pt-6">

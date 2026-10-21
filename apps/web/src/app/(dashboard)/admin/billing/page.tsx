@@ -70,7 +70,7 @@ export default function AdminBillingPage() {
         className="sm:max-w-md"
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Paid teams" value={summary.paid} />
         <SummaryCard label="Free teams" value={summary.free} />
         <SummaryCard label="Cancelling" value={summary.cancelling} />

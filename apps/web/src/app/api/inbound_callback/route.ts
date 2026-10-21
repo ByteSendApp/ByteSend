@@ -31,6 +31,7 @@ export async function POST(req: Request) {
   if (notification.notificationType !== "Received") return Response.json({ data: "Ignored" });
 
   await enqueueInbound(notification);
+  logger.info({ sesId: notification.mail?.messageId, recipients: notification.receipt?.recipients }, "[InboundCallback]: Queued received mail");
   return Response.json({ data: "Queued" });
 }
 
@@ -42,7 +43,8 @@ async function confirmSubscription(topicArn: string, token?: string) {
   url.searchParams.set("TopicArn", topicArn);
   url.searchParams.set("Token", token);
   try {
-    await fetch(url, { method: "GET" });
+    const response = await fetch(url, { method: "GET" });
+    logger.info({ topicArn, status: response.status }, "[InboundCallback]: Confirmed the SNS subscription");
   } catch (error) {
     logger.warn({ err: error }, "[InboundCallback]: Couldn't confirm the SNS subscription");
   }

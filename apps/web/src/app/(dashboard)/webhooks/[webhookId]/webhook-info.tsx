@@ -66,7 +66,7 @@ export function WebhookInfo({ webhook }: { webhook: Webhook }) {
     );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <StatGroup className="md:grid-flow-row md:grid-cols-3">
         <Stat label="Delivered · 7d" value={deliveredCount.toLocaleString()} />
         <Stat label="Failed · 7d" value={failedCount.toLocaleString()} tone={failedCount > 0 ? "danger" : "default"} />

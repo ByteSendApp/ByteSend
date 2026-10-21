@@ -101,7 +101,7 @@ function DomainReceiving({ domain, canEdit }: { domain: ReceivingDomain; canEdit
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Add these records at your DNS provider for {domain.name}:</p>
           {domain.records.map((record) => (
-            <div key={`${record.type}-${record.name}`} className="grid gap-1.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1.6fr)] sm:items-center">
+            <div key={`${record.type}-${record.name}`} className="grid grid-cols-1 gap-1.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1.6fr)] sm:items-center">
               <span className="font-mono text-[11px] text-muted-foreground">
                 {record.type}
                 {record.priority ? ` ${record.priority}` : ""}

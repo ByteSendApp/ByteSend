@@ -67,7 +67,7 @@ function TeamDetailSkeleton() {
     <div className="space-y-6">
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-8 w-64" />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-28 rounded-lg" />
         ))}
@@ -203,7 +203,7 @@ export default function AdminTeamDetailPage() {
         </div>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Sent (30d)"
               value={formatCompact(totals.sent)}
@@ -252,7 +252,7 @@ export default function AdminTeamDetailPage() {
             </Link>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: "Contact books", value: team._count.contactBooks },
               { label: "Campaigns", value: team._count.campaigns },
@@ -271,7 +271,7 @@ export default function AdminTeamDetailPage() {
 
           <Panel title="Subscription">
             {subscription ? (
-              <dl className="grid gap-4 p-4 text-sm sm:grid-cols-4">
+              <dl className="grid grid-cols-1 gap-4 p-4 text-sm sm:grid-cols-4">
                 <div>
                   <dt className="text-xs text-muted-foreground">Status</dt>
                   <dd className="mt-0.5 capitalize">{subscription.status.replace(/_/g, " ")}</dd>

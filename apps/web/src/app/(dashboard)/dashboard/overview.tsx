@@ -203,7 +203,7 @@ export function SetupProgress() {
       <div className="mb-3 h-1 overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(done / SETUP_STEPS.length) * 100}%` }} />
       </div>
-      <ol className="grid gap-x-4 gap-y-1.5 text-[13px] sm:grid-cols-2 lg:grid-cols-5">
+      <ol className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-[13px] sm:grid-cols-2 lg:grid-cols-5">
         {SETUP_STEPS.map((step) => {
           const complete = data.onboarding[step.key];
           const isNext = step.key === next.key;
@@ -368,7 +368,7 @@ export function OverviewPanels() {
 
   if (query.isLoading) {
     return (
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className="h-40 rounded-lg" />
         ))}
@@ -380,7 +380,7 @@ export function OverviewPanels() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <UsagePanel usage={data.usage} />
         <DeliverabilityPanel d={data.deliverability} />
         <DomainsPanel domains={data.domains} />

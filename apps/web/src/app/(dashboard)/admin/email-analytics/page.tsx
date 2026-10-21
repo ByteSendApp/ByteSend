@@ -92,7 +92,7 @@ export default function AdminEmailAnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Sent" value={totals.sent} />
         <SummaryCard label="Delivered" value={totals.delivered} />
         <SummaryCard label="Opened" value={totals.opened} />

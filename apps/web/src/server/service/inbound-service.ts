@@ -11,6 +11,7 @@ import { getInboundStore } from "./inbound-storage";
 import { WebhookService } from "./webhook-service";
 import { sendEmail } from "./email-service";
 import { ingestDmarcMessage, isDmarcRecipient } from "./dmarc-service";
+import { INBOUND_CANARY_SLUG, isInboundCanary, recordInboundCanary } from "./inbound-canary";
 
 export const INBOUND_RETENTION_DAYS = 30;
 const ATTACHMENT_LINK_TTL_SECONDS = 60 * 60;
@@ -220,13 +221,23 @@ async function loadRaw(notification: SesInboundNotification) {
 export async function processInbound(notification: SesInboundNotification) {
   const sesId = notification.mail.messageId;
 
+  const recipients = notification.receipt.recipients.filter((address) => !isInboundCanary(address));
+  if (recipients.length < notification.receipt.recipients.length) {
+    await recordInboundCanary();
+    if (recipients.length === 0) {
+      const { objectKey } = notification.receipt.action;
+      if (objectKey) await getInboundStore().remove([objectKey]);
+      return { stored: 0, reports: 0 };
+    }
+  }
+
   const matches = new Map<number, RecipientMatch>();
-  for (const address of notification.receipt.recipients) {
+  for (const address of recipients) {
     const match = await resolveRecipient(address);
     if (match && !matches.has(match.teamId)) matches.set(match.teamId, match);
   }
   if (matches.size === 0) {
-    logger.info({ sesId, recipients: notification.receipt.recipients }, "[Inbound]: No team for these recipients, dropped");
+    logger.info({ sesId, recipients }, "[Inbound]: No team for these recipients, dropped");
     return { stored: 0, reports: 0 };
   }
 
@@ -334,7 +345,8 @@ function slugify(name: string) {
 export async function ensureInboundSlug(teamId: number) {
   const team = await db.team.findUniqueOrThrow({ where: { id: teamId }, select: { name: true, inboundSlug: true } });
   if (team.inboundSlug) return team.inboundSlug;
-  const base = slugify(team.name);
+  const slugified = slugify(team.name);
+  const base = slugified === INBOUND_CANARY_SLUG ? `${slugified}-team` : slugified;
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = attempt === 0 ? base : `${base}-${randomBytes(2).toString("hex")}`;
     try {

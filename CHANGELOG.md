@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] - 2026-10-21
+
+### Added
+- **Receiving on the stats page**: emails received, DMARC reports read and the messages they covered over the last 30 days, with a daily chart
+- **Receiving health check** at `/api/health/inbound` for status pages. A test email is sent to a hosted address every 10 minutes, so the check covers the whole receiving path, along with the receipt rule and the processing queue
+
+### Fixed
+- The website no longer stops responding to taps on phones while the homepage loads. Code samples are now highlighted on the server instead of in the browser
+
+---
+
 ## [0.9.0] - 2026-10-20
 
 ### Added
@@ -1044,7 +1055,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ByteSendApp/ByteSend/compare/v0.6.0...v0.7.0

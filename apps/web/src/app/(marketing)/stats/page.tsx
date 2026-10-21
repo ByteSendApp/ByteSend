@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Open stats – ByteSend",
-  description: "Live, aggregate numbers from ByteSend: emails sent, delivery rate, deliverability health and uptime.",
+  description: "Live, aggregate numbers from ByteSend: emails sent and received, delivery rate, deliverability health and uptime.",
   alternates: { canonical: "https://bytesend.cloud/stats" },
 };
 
@@ -47,23 +47,25 @@ function StatTile({ value, label, hint }: { value: string; label: string; hint?:
   );
 }
 
-function VolumeChart({ days }: { days: PublicStatsDay[] }) {
-  const max = Math.max(1, ...days.map((day) => day.sent));
+function VolumeChart({ days, metric = "sent" }: { days: PublicStatsDay[]; metric?: "sent" | "received" }) {
+  const gradientId = `stats-bar-${metric}`;
+  const max = Math.max(1, ...days.map((day) => day[metric]));
   const width = 600;
   const height = 160;
   const gap = 4;
   const barWidth = (width - gap * (days.length - 1)) / days.length;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" preserveAspectRatio="none" role="img" aria-label="Emails sent per day over the last 30 days">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" preserveAspectRatio="none" role="img" aria-label={`Emails ${metric} per day over the last 30 days`}>
       <defs>
-        <linearGradient id="stats-bar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1fb5ff" />
-          <stop offset="100%" stopColor="#0057ff" />
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={metric === "sent" ? "#1fb5ff" : "#85fcff"} />
+          <stop offset="100%" stopColor={metric === "sent" ? "#0057ff" : "#00c3d6"} />
         </linearGradient>
       </defs>
       {days.map((day, index) => {
-        const barHeight = day.sent === 0 ? 2 : Math.max(3, (day.sent / max) * height);
+        const value = day[metric];
+        const barHeight = value === 0 ? 2 : Math.max(3, (value / max) * height);
         return (
           <rect
             key={day.date}
@@ -72,10 +74,10 @@ function VolumeChart({ days }: { days: PublicStatsDay[] }) {
             width={barWidth}
             height={barHeight}
             rx={2}
-            fill={day.sent === 0 ? "currentColor" : "url(#stats-bar)"}
-            className={day.sent === 0 ? "text-border" : undefined}
+            fill={value === 0 ? "currentColor" : `url(#${gradientId})`}
+            className={value === 0 ? "text-border" : undefined}
           >
-            <title>{`${formatDay(day.date)}: ${full.format(day.sent)} sent`}</title>
+            <title>{`${formatDay(day.date)}: ${full.format(value)} ${metric}`}</title>
           </rect>
         );
       })}
@@ -166,6 +168,28 @@ export default async function StatsPage() {
           </div>
         </Reveal>
 
+        <Reveal>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold tracking-tight">Receiving</h2>
+            <span className="text-xs text-muted-foreground">Last {window.days} days (UTC)</span>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Mail arriving at ByteSend inboxes, and the DMARC reports we read for teams&apos; domains.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
+            <StatTile value={formatCount(stats.inbound.received)} label="Emails received" hint={`Last ${window.days} days`} />
+            <StatTile value={formatCount(stats.inbound.dmarcReports)} label="DMARC reports read" hint={`Last ${window.days} days`} />
+            <StatTile value={formatCount(stats.inbound.dmarcMessages)} label="Messages covered by reports" hint="Checked against SPF and DKIM" />
+          </div>
+          <div className="mt-4 rounded-lg border border-border bg-card p-5">
+            <VolumeChart days={stats.daily} metric="received" />
+            <div className="mt-3 flex justify-between text-xs text-muted-foreground">
+              <span>{formatDay(stats.daily[0]!.date)}</span>
+              <span>{formatDay(stats.daily[stats.daily.length - 1]!.date)}</span>
+            </div>
+          </div>
+        </Reveal>
+
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <Reveal>
             <h2 className="text-lg font-semibold tracking-tight">Deliverability health</h2>
@@ -212,7 +236,8 @@ export default async function StatsPage() {
 
         <p className="border-t border-border pt-8 text-xs leading-relaxed text-muted-foreground">
           Figures combine transactional and marketing email across all ByteSend Cloud teams. Self-hosted instances are not
-          included. Rates are calculated against emails sent in the window; days are in UTC.
+          included. Rates are calculated against emails sent in the window; days are in UTC. Received email counts mail kept
+          in team inboxes; DMARC reports aren&apos;t counted as received email.
         </p>
       </div>
     </main>

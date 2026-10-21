@@ -1,17 +1,11 @@
-"use client";
-
 import React from "react";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { highlightCode, type HighlightLang } from "~/lib/highlighter";
-import { useTheme } from "@bytesend/ui";
 import { Button } from "@bytesend/ui/src/button";
 import { LangToggle } from "~/components/marketing/CodeLangToggle";
 import { CheckIcon } from "~/components/marketing/HomeIcons";
 
-export function DevSection() {
-    const { resolvedTheme } = useTheme();
-
+export async function DevSection() {
     const APP_URL = "/login";
     const containerId = "dev-lang-snippets";
 
@@ -143,6 +137,15 @@ puts res.body`;
         { key: "rb", label: "Ruby", kind: "rb", shikiLang: "ruby", code: RUBY_SNIPPET, file: "send_email.rb" },
     ];
 
+    const highlighted = await Promise.all(
+        languages.map((lang) =>
+            highlightCode(lang.code, {
+                lang: lang.shikiLang,
+                themes: { dark: "catppuccin-mocha", light: "catppuccin-latte" },
+            }).catch(() => ""),
+        ),
+    );
+
     return (
         <section id="developers" className="scroll-mt-16 border-t border-border bg-muted/30 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -212,7 +215,7 @@ puts res.body`;
                                 <div className="px-5 pt-3 text-[11px] text-muted-foreground font-mono bg-background/95 border-b border-border/70">
                                     {lang.file}
                                 </div>
-                                <HighlightedSnippet code={lang.code} lang={lang.shikiLang} theme={resolvedTheme} />
+                                <CodeSnippet code={lang.code} html={highlighted[idx] ?? ""} />
                             </div>
                         ))}
                     </div>
@@ -222,41 +225,8 @@ puts res.body`;
     );
 }
 
-function HighlightedSnippet({ code, lang, theme }: { code: string; lang: HighlightLang; theme?: string }) {
-    const [html, setHtml] = useState("");
-    const [loading, setLoading] = useState(true);
-    const shikiTheme = theme === "light" ? "catppuccin-latte" : "catppuccin-mocha";
-
-    useEffect(() => {
-        let mounted = true;
-
-        async function highlight() {
-            try {
-                const highlighted = await highlightCode(code, { lang, theme: shikiTheme });
-
-                if (mounted) {
-                    setHtml(highlighted);
-                }
-            } catch {
-                if (mounted) {
-                    setHtml("");
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        setLoading(true);
-        void highlight();
-
-        return () => {
-            mounted = false;
-        };
-    }, [code, lang, shikiTheme]);
-
-    if (loading || !html) {
+function CodeSnippet({ code, html }: { code: string; html: string }) {
+    if (!html) {
         return (
             <pre className="overflow-x-auto bg-background px-5 py-5 text-[13px] leading-[1.7] text-foreground/85">
                 <code>{code}</code>

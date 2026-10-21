@@ -32,7 +32,8 @@ WORKDIR /app
 COPY .gitignore .gitignore
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY .pnpmfile.cjs .pnpmfile.cjs
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
 
 # Build arguments — placed after install to preserve dep cache when these change
 ARG APP_VERSION=unknown

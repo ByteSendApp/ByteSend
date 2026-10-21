@@ -79,7 +79,7 @@ export function DmarcSetup({ setup, isLoading }: { setup?: Setup; isLoading: boo
             ) : null}
             {!domain.address ? (
               <p className="text-muted-foreground">
-                Set up receiving on a subdomain of {domain.orgDomain} in the <Link href="/inbox?tab=addresses" className="text-foreground underline">Inbox</Link> to get a report
+                Set up receiving on {domain.orgDomain} or one of its subdomains in the <Link href="/inbox?tab=addresses" className="text-foreground underline">Inbox</Link> to get a report
                 address.
               </p>
             ) : (

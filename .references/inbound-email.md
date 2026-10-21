@@ -4,16 +4,16 @@ Last reviewed: 2026-10-20
 
 ## Pipeline
 
-1. Mail arrives at `inbound-smtp.<INBOUND_REGION>.amazonaws.com` (the MX for the hosted domain and every customer receiving subdomain).
+1. Mail arrives at `inbound-smtp.<INBOUND_REGION>.amazonaws.com` (the MX for the hosted domain and every customer receiving domain or subdomain).
 2. The active SES receipt rule set `bytesend-inbound`, rule `bytesend-store-and-notify`, matches every recipient. It writes the raw MIME to `s3://<INBOUND_S3_BUCKET>/raw/<sesMessageId>` and publishes to `INBOUND_SNS_TOPIC_ARN`. Spam and virus scanning are on.
 3. SNS posts to `/api/inbound_callback`. The route only trusts `INBOUND_SNS_TOPIC_ARN` (403 otherwise), confirms subscriptions itself from that ARN, and queues `Received` notifications on `inbound-email` (job id = SES message id, 5 attempts, exponential backoff).
 4. `processInbound` (`apps/web/src/server/service/inbound-service.ts`):
-   - resolves each recipient to a team: `slug(+tag)@INBOUND_HOSTED_DOMAIN`, or `*@<inboundSubdomain>.<domain>` for domains with `inboundEnabled`. Unknown recipients are dropped silently;
+   - resolves each recipient to a team: `slug(+tag)@INBOUND_HOSTED_DOMAIN`, or `*@<inboundSubdomain>.<domain>` for domains with `inboundEnabled`, or `*@<domain>` when `inboundSubdomain` is `@` (receiving on the domain itself). A subdomain setup wins over a root setup with the same name. Unknown recipients are dropped silently;
    - skips duplicates (`sesMessageId` is `<sesId>:<teamId>`), and drops mail over the plan's `inboundEmailsPerMonth`;
    - parses with mailparser, stores attachments at `attachments/<teamId>/<inboundId>/<attId>`, links replies through `In-Reply-To`/`References` to `Email.sesEmailId`;
    - runs forwarding rules (never when the virus verdict is `fail`), then emits `email.received`.
 5. The `inbound-cleanup` job runs daily at 03:40 UTC and deletes rows past `expiresAt` (30 days) with their raw message and attachments.
-6. Mail to `<slug>+dmarc@<hosted>` or `dmarc@<receiving subdomain>` skips the inbox and the allowance. `dmarc-service.ts` reads it only when SES's SPF or DKIM verdict passed, unpacks `.xml`, `.gz` and `.zip` attachments (each capped at 25 MB inflated), and stores reports for domains the team owns, at most 2,000 a day per team. The raw message is deleted straight away. Reports are kept 90 days and removed by the same cleanup job.
+6. Mail to `<slug>+dmarc@<hosted>` or `dmarc@<receiving domain or subdomain>` skips the inbox and the allowance. `dmarc-service.ts` reads it only when SES's SPF or DKIM verdict passed, unpacks `.xml`, `.gz` and `.zip` attachments (each capped at 25 MB inflated), and stores reports for domains the team owns, at most 2,000 a day per team. The raw message is deleted straight away. Reports are kept 90 days and removed by the same cleanup job.
 
 Attachment links are `/api/inbound/attachments/<emailId>/<attId>?expires&sig`, HMAC-SHA256 with `NEXTAUTH_SECRET`, valid for one hour, always served as downloads with `nosniff`.
 
@@ -55,13 +55,13 @@ Use one region that supports SES receiving (for example `us-east-1`, `us-west-2`
    *._report._dmarc.<INBOUND_HOSTED_DOMAIN>  TXT  "v=DMARC1"
    ```
 
-   Addresses on a customer's own receiving subdomain (`dmarc@reply.acme.com`) need nothing extra.
+   Addresses on a customer's own receiving domain or subdomain (`dmarc@reply.acme.com`, `dmarc@acme.com`) need nothing extra.
 
 7. **Receipt rule**: Admin → SES regions → Receiving → **Create receiving rule**. It creates or updates the rule and makes the rule set active, and is safe to run again. Only one receipt rule set can be active per account and region, so this replaces any other active set there.
 
 ## Customer domains
 
-`enableReceiving` (`inbound-domain-service.ts`) needs a verified sending domain and a single-label subdomain. If the domain sends from `INBOUND_REGION`, its existing identity covers the subdomain and the customer adds only the MX. Otherwise the app creates a separate identity for `<sub>.<domain>` in `INBOUND_REGION` with a new DKIM key under the selector `bytesend-inbound`, and the customer also adds that TXT record. `checkReceiving` looks up the MX and the identity's status. Disabling deletes the separate identity.
+`enableReceiving` (`inbound-domain-service.ts`) needs a verified sending domain and either a single-label subdomain or `@` for the domain itself. `@` takes over all of the domain's mail, so it needs `confirmRoot`, and the UI shows the domain's current MX hosts (`currentMailHosts`) first. If the domain sends from `INBOUND_REGION`, its existing identity covers the receiving host and the customer adds only the MX. Otherwise the app creates a separate identity for the receiving host in `INBOUND_REGION` (reusing an already-verified one for `@`) with a new DKIM key under the selector `bytesend-inbound`, and the customer also adds that TXT record. `checkReceiving` looks up the MX and the identity's status. Disabling deletes the separate identity.
 
 ## Limits
 

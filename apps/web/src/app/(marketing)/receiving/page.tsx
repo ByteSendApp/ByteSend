@@ -25,7 +25,7 @@ const STEPS = [
   {
     icon: AtSign,
     title: "Pick an address",
-    text: "Use your team's hosted address straight away, or receive on a subdomain of your own domain like reply.yourapp.com with one MX record.",
+    text: "Use your team's hosted address straight away, or receive on your own domain, either a subdomain like reply.yourapp.com or the domain itself, with one MX record.",
   },
   {
     icon: ShieldCheck,
@@ -101,7 +101,7 @@ for (const file of attachments) {
 ];
 
 const DETAILS = [
-  { title: "+tags on every address", text: "acme+orders@ and acme+invoices@ both arrive, so you can tell senders apart without new addresses." },
+  { title: "Any address you like", text: "A hosted address with no setup, a subdomain like reply.yourapp.com, or your domain itself like hey@yourapp.com. +tags such as acme+orders@ work everywhere." },
   { title: "Authentication results", text: "Every message shows whether SPF, DKIM and DMARC passed, plus spam and virus verdicts." },
   { title: "Signed webhooks", text: "Each delivery is signed and retried until your endpoint accepts it." },
   { title: "Kept for 30 days", text: "Messages and attachments stay in your inbox and API for 30 days, then they're deleted." },
@@ -194,7 +194,12 @@ export default async function ReceivingPage() {
       </Section>
 
       <Section>
-        <SectionHeader eyebrow="The details" title="Everything you'd want from an inbox API" align="left" />
+        <SectionHeader
+          eyebrow="The details"
+          title="Everything you'd want from an inbox API"
+          description="Great for app mail and a few personal addresses. It isn't a replacement for Google Workspace or Microsoft 365 mailboxes."
+          align="left"
+        />
         <HairlineGrid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {DETAILS.map((detail) => (
             <div key={detail.title} className="p-6">

@@ -29,6 +29,16 @@ export function inboundMxHost(region: string = env.INBOUND_REGION) {
   return `inbound-smtp.${region}.amazonaws.com`;
 }
 
+export async function getReceivingRuleState(region: string = env.INBOUND_REGION) {
+  const active = await getClassicClient(region).send(new DescribeActiveReceiptRuleSetCommand({}));
+  const rule = active.Rules?.find((r) => r.Name === INBOUND_RULE);
+  return {
+    ruleSetActive: active.Metadata?.Name === INBOUND_RULE_SET,
+    ruleEnabled: Boolean(rule?.Enabled),
+    notifiesTopic: Boolean(rule?.Actions?.some((action) => action.S3Action?.TopicArn)),
+  };
+}
+
 export async function ensureReceivingRules({
   region = env.INBOUND_REGION,
   bucket = env.INBOUND_S3_BUCKET,

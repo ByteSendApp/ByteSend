@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, mockStore, mockEmit, mockSendEmail, mockIngestDmarc, env } = vi.hoisted(() => ({
+const { mockDb, mockStore, mockEmit, mockSendEmail, mockIngestDmarc, mockRecordCanary, env } = vi.hoisted(() => ({
   mockDb: {
     team: { findUnique: vi.fn(), findUniqueOrThrow: vi.fn(), update: vi.fn() },
     domain: { findFirst: vi.fn(), findUnique: vi.fn() },
@@ -12,6 +12,7 @@ const { mockDb, mockStore, mockEmit, mockSendEmail, mockIngestDmarc, env } = vi.
   mockEmit: vi.fn(),
   mockSendEmail: vi.fn(),
   mockIngestDmarc: vi.fn(),
+  mockRecordCanary: vi.fn(),
   env: {
     INBOUND_HOSTED_DOMAIN: "in.bytesend.test",
     INBOUND_REGION: "us-east-1",
@@ -28,6 +29,10 @@ vi.mock("./inbound-storage", () => ({ getInboundStore: () => mockStore }));
 vi.mock("./webhook-service", () => ({ WebhookService: { emit: mockEmit } }));
 vi.mock("./email-service", () => ({ sendEmail: mockSendEmail }));
 vi.mock("../aws/ses-receiving", () => ({ INBOUND_RAW_PREFIX: "raw/" }));
+vi.mock("./inbound-canary", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./inbound-canary")>()),
+  recordInboundCanary: mockRecordCanary,
+}));
 vi.mock("./dmarc-service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./dmarc-service")>()),
   ingestDmarcMessage: mockIngestDmarc,
@@ -192,6 +197,14 @@ describe("processInbound", () => {
     mockDb.inboundEmail.findUnique.mockResolvedValue({ id: "inb_existing" });
     await expect(processInbound(notification("acme@in.bytesend.test", mime({ to: "acme@in.bytesend.test" })))).resolves.toEqual({ stored: 0, reports: 0 });
     expect(mockDb.inboundEmail.create).not.toHaveBeenCalled();
+  });
+
+  it("records the status canary without storing it anywhere", async () => {
+    const result = await processInbound(notification("status-canary@in.bytesend.test", mime({ to: "status-canary@in.bytesend.test" })));
+    expect(result).toEqual({ stored: 0, reports: 0 });
+    expect(mockRecordCanary).toHaveBeenCalledTimes(1);
+    expect(mockDb.inboundEmail.create).not.toHaveBeenCalled();
+    expect(mockDb.team.findUnique).not.toHaveBeenCalled();
   });
 
   it("sends mail for the DMARC address to the report parser, not the inbox", async () => {

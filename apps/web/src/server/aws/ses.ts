@@ -165,32 +165,41 @@ export async function deleteDomain(
   sesTenantId?: string
 ) {
   const sesClient = getSesClient(region);
+  const isNotFound = (error: unknown) => (error as { name?: string })?.name === "NotFoundException";
 
   if (sesTenantId) {
-    const tenantResourceAssociationCommand =
-      new DeleteTenantResourceAssociationCommand({
-        TenantName: sesTenantId,
-        ResourceArn: await getIdentityArn(domain, region),
-      });
-
-    const tenantResourceAssociationResponse = await sesClient.send(
-      tenantResourceAssociationCommand
-    );
-
-    if (tenantResourceAssociationResponse.$metadata.httpStatusCode !== 200) {
-      logger.error(
-        { tenantResourceAssociationResponse },
-        "Failed to delete tenant resource association"
+    try {
+      const tenantResourceAssociationResponse = await sesClient.send(
+        new DeleteTenantResourceAssociationCommand({
+          TenantName: sesTenantId,
+          ResourceArn: await getIdentityArn(domain, region),
+        })
       );
-      throw new Error("Failed to delete tenant resource association");
+
+      if (tenantResourceAssociationResponse.$metadata.httpStatusCode !== 200) {
+        logger.error(
+          { tenantResourceAssociationResponse },
+          "Failed to delete tenant resource association"
+        );
+        throw new Error("Failed to delete tenant resource association");
+      }
+    } catch (error) {
+      if (!isNotFound(error)) throw error;
     }
   }
 
-  const command = new DeleteEmailIdentityCommand({
-    EmailIdentity: domain,
-  });
-  const response = await sesClient.send(command);
-  return response.$metadata.httpStatusCode === 200;
+  try {
+    const response = await sesClient.send(
+      new DeleteEmailIdentityCommand({ EmailIdentity: domain })
+    );
+    return response.$metadata.httpStatusCode === 200;
+  } catch (error) {
+    if (isNotFound(error)) {
+      logger.info({ domain, region }, "SES identity already gone; treating as deleted");
+      return true;
+    }
+    throw error;
+  }
 }
 
 export async function getDomainIdentity(domain: string, region: string) {

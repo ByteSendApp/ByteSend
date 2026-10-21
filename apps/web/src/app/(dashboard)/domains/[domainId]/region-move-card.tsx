@@ -146,7 +146,11 @@ export function RegionMoveCard({ domain }: { domain: DomainResponse }) {
                 ? ` The previous region (${domain.retiredRegion}) is retired after ${format(
                     new Date(new Date(domain.retiredRegionAt).getTime() + 24 * 60 * 60 * 1000),
                     "MMM d, HH:mm",
-                  )}; you can remove its old DKIM record after that.`
+                  )}; ${
+                    domain.inboundEnabled && !domain.inboundDkimSelector
+                      ? "keep its old DKIM record, because the mail you receive still uses it."
+                      : "you can remove its old DKIM record after that."
+                  }`
                 : ""}
             </p>
           </div>

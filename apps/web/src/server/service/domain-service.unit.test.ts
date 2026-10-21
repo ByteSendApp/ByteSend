@@ -338,7 +338,9 @@ describe("domain-service", () => {
     ]);
 
     expect(mockSendMail).toHaveBeenCalledTimes(2);
-    expect(mockDb.domain.update).toHaveBeenCalledTimes(2);
+    const updates = mockDb.domain.update.mock.calls.map(([args]) => args.data);
+    expect(updates.filter((data) => "status" in data)).toHaveLength(2);
+    expect(updates.filter((data) => "dnsCheckedAt" in data)).toHaveLength(2);
   });
 
   it("logs and continues when sending the status email fails", async () => {

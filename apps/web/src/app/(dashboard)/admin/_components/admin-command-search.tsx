@@ -55,11 +55,11 @@ export function AdminCommandSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-7 items-center gap-2 rounded-md border border-border bg-muted/40 px-2 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-64"
+        className="flex h-7 shrink-0 items-center gap-2 rounded-md border border-border bg-muted/40 px-2 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-64"
       >
-        <Search className="size-3.5" />
-        <span className="hidden flex-1 text-left sm:inline">Search users, teams, domains…</span>
-        <kbd className="hidden rounded border border-border bg-background px-1 font-mono text-[10px] sm:inline">⌘K</kbd>
+        <Search className="size-3.5 shrink-0" />
+        <span className="hidden min-w-0 flex-1 truncate whitespace-nowrap text-left sm:inline">Search users, teams, domains…</span>
+        <kbd className="hidden shrink-0 rounded border border-border bg-background px-1 font-mono text-[10px] sm:inline">⌘K</kbd>
       </button>
 
       <Dialog

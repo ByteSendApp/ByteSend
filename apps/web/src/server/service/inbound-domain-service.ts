@@ -3,6 +3,8 @@ import { TRPCError } from "@trpc/server";
 import type { Domain } from "@prisma/client";
 import { env } from "~/env";
 import { db } from "../db";
+import * as ses from "../aws/ses";
+import { logger } from "../logger/log";
 import { createReceivingIdentity, deleteReceivingIdentity, inboundMxHost, isIdentityVerified } from "../aws/ses-receiving";
 
 const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -25,6 +27,10 @@ export const RECEIVING_DOMAIN_SELECT = {
   inboundDkimSelector: true,
   inboundPublicKey: true,
 } as const;
+
+export function receivesThroughKeptIdentity(domain: Pick<Domain, "region" | "inboundEnabled" | "inboundDkimSelector">) {
+  return domain.inboundEnabled && !domain.inboundDkimSelector && domain.region !== env.INBOUND_REGION;
+}
 
 export function receivingFqdn(domain: Pick<Domain, "name" | "inboundSubdomain">) {
   return domain.inboundSubdomain ? `${domain.inboundSubdomain}.${domain.name}` : null;
@@ -101,10 +107,21 @@ export async function checkReceiving(teamId: number, domainId: number) {
 }
 
 export async function disableReceiving(teamId: number, domainId: number) {
-  const domain = await db.domain.findFirst({ where: { id: domainId, teamId }, select: RECEIVING_DOMAIN_SELECT });
+  const domain = await db.domain.findFirst({
+    where: { id: domainId, teamId },
+    select: { ...RECEIVING_DOMAIN_SELECT, pendingRegion: true, retiredRegion: true, sesTenantId: true },
+  });
   if (!domain) throw new TRPCError({ code: "NOT_FOUND", message: "Domain not found" });
   const fqdn = receivingFqdn(domain);
   if (fqdn && domain.inboundDkimSelector) await deleteReceivingIdentity(fqdn);
+  const keptIdentityStillNeeded = domain.retiredRegion === env.INBOUND_REGION || domain.pendingRegion === env.INBOUND_REGION;
+  if (receivesThroughKeptIdentity(domain) && !keptIdentityStillNeeded) {
+    try {
+      await ses.deleteDomain(domain.name, env.INBOUND_REGION, domain.sesTenantId ?? undefined);
+    } catch (error) {
+      logger.error({ err: error, domainId: domain.id }, "[InboundDomain]: Failed to delete the identity kept for receiving");
+    }
+  }
   return db.domain.update({
     where: { id: domain.id },
     data: {

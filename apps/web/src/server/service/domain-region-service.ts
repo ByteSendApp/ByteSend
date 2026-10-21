@@ -5,6 +5,8 @@ import { logger } from "~/server/logger/log";
 import { ByteSendApiError } from "../public-api/api-error";
 import type { DomainDnsRecord } from "~/types/domain";
 import { SesSettingsService } from "./ses-settings-service";
+import { env } from "~/env";
+import { receivesThroughKeptIdentity } from "./inbound-domain-service";
 import {
   checkDkimDnsRecord,
   checkMxDnsRecord,
@@ -145,7 +147,9 @@ export class DomainRegionService {
     const dnsPrecheck: { dkim: DnsCheckResult; mx: DnsCheckResult } = { dkim: dkimDns, mx: mxDns };
 
     const dkimStatus = parseDomainStatus(identity.DkimAttributes?.Status?.toString());
-    const mailFromStatus = parseDomainStatus(identity.MailFromAttributes?.MailFromDomainStatus?.toString());
+    const sesMailFromStatus = parseDomainStatus(identity.MailFromAttributes?.MailFromDomainStatus?.toString());
+    const mailFromStatus =
+      sesMailFromStatus === DomainStatus.SUCCESS && mxDns !== "found" ? DomainStatus.PENDING : sesMailFromStatus;
     const identityVerified = parseDomainStatus(identity.VerificationStatus?.toString()) === DomainStatus.SUCCESS;
 
     if (identityVerified && dkimStatus === DomainStatus.SUCCESS && mailFromStatus === DomainStatus.SUCCESS) {
@@ -189,7 +193,12 @@ export class DomainRegionService {
     if (!domain.retiredRegion || !domain.retiredRegionAt) return false;
     if (now - domain.retiredRegionAt.getTime() < RETIRE_OLD_REGION_AFTER_MS) return false;
 
-    if (domain.retiredRegion !== domain.region) {
+    const keepForReceiving = domain.retiredRegion === env.INBOUND_REGION && receivesThroughKeptIdentity(domain);
+    if (keepForReceiving) {
+      logger.info({ domainId: domain.id, region: domain.retiredRegion }, "[DomainRegionService]: Kept the old identity because the domain receives mail through it");
+    }
+
+    if (domain.retiredRegion !== domain.region && !keepForReceiving) {
       try {
         await ses.deleteDomain(domain.name, domain.retiredRegion, domain.sesTenantId ?? undefined);
       } catch (error) {

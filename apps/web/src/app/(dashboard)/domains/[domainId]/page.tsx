@@ -80,8 +80,20 @@ export default function DomainItemPage({
     verifyQuery.mutate(
       { id: Number(domainId) },
       {
-        onSettled: () => {
-          domainQuery.refetch();
+        onSuccess: async () => {
+          const { data } = await domainQuery.refetch();
+          if (!data || data.isVerifying) return;
+          const issues = Array.isArray(data.dnsIssues) ? (data.dnsIssues as string[]) : [];
+          if (data.status !== DomainStatus.SUCCESS) {
+            toast.error("Some records still aren't right. Check the table below.");
+          } else if (issues.length) {
+            toast.warning(`Verified with SES, but ${issues.length === 1 ? "1 DNS record needs" : `${issues.length} DNS records need`} fixing.`);
+          } else {
+            toast.success("All records check out.");
+          }
+        },
+        onError: (error) => {
+          toast.error(error.message || "Couldn't check the records. Try again.");
         },
       },
     );

@@ -4,7 +4,7 @@
   "private": true,
   "engines": {
     "pnpm": ">=9.0.0",
-    "node": ">=20.19.0"
+    "node": ">=22.23.4"
   },
   "scripts": {
     "build": "turbo build",

@@ -51,7 +51,7 @@ const COLUMNS: Array<{ title: string; links: FooterLink[] }> = [
   {
     title: "Company",
     links: [
-      { label: "Discord", href: "https://discord.gg/C2Q4GHXKQA" },
+      { label: "Discord", href: "https://discord.gg/xsp3zW8WZC" },
       { label: "Security", href: "/security", cloudOnly: true },
       { label: "Legal", href: "/legal", cloudOnly: true },
       { label: "Privacy", href: "/privacy", cloudOnly: true },
@@ -68,7 +68,7 @@ const VISIBLE_COLUMNS = COLUMNS.map((column) => ({
 
 const SOCIALS = [
   { label: "GitHub", href: "https://github.com/ByteSendApp/ByteSend", Icon: FaGithub },
-  { label: "Discord", href: "https://discord.gg/C2Q4GHXKQA", Icon: FaDiscord },
+  { label: "Discord", href: "https://discord.gg/xsp3zW8WZC", Icon: FaDiscord },
   { label: "X", href: "https://x.com/TryByteSend", Icon: FaXTwitter },
   { label: "Bluesky", href: "https://bsky.app/profile/bytesend.cloud", Icon: SiBluesky },
 ];

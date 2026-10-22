@@ -465,7 +465,7 @@ function HelpMenu() {
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem asChild>
-          <Link href="https://discord.gg/C2Q4GHXKQA" target="_blank">
+          <Link href="https://discord.gg/xsp3zW8WZC" target="_blank">
             <SiDiscord className="size-4" />
             Discord community
           </Link>

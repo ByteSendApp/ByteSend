@@ -68,7 +68,7 @@ export function DmarcReports({ days, domain }: { days: DmarcRange; domain: strin
       </Panel>
 
       <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent className="overflow-y-auto no-scrollbar sm:max-w-2xl">
+        <SheetContent className="w-full max-w-full overflow-x-hidden overflow-y-auto no-scrollbar sm:max-w-2xl">
           <SheetTitle className="sr-only">DMARC report</SheetTitle>
           <SheetDescription className="sr-only">Every source and result in one DMARC report.</SheetDescription>
           {selected ? <ReportDetails id={selected} /> : null}
@@ -80,21 +80,83 @@ export function DmarcReports({ days, domain }: { days: DmarcRange; domain: strin
 
 type AuthResult = { domain: string; selector?: string | null; scope?: string | null; result: string };
 
-function AuthResults({ results }: { results: unknown }) {
+function AuthResults({ label, results }: { label: string; results: unknown }) {
   const list = (results as AuthResult[]) ?? [];
-  if (list.length === 0) return <span className="text-muted-foreground">none</span>;
   return (
-    <span className="flex flex-col gap-0.5">
-      {list.map((r, i) => (
-        <span key={i} className="flex items-center gap-1.5">
-          <Badge variant={r.result === "pass" ? "success" : r.result === "none" ? "neutral" : "danger"}>{r.result || "?"}</Badge>
-          <span className="truncate font-mono text-xs">
-            {r.domain}
-            {r.selector ? ` (${r.selector})` : ""}
-          </span>
-        </span>
-      ))}
-    </span>
+    <div className="min-w-0">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      {list.length === 0 ? (
+        <p className="text-[13px] text-muted-foreground">None</p>
+      ) : (
+        <ul className="mt-1 space-y-1">
+          {list.map((r, i) => (
+            <li key={i} className="flex min-w-0 items-start gap-1.5">
+              <Badge variant={r.result === "pass" ? "success" : r.result === "none" ? "neutral" : "danger"}>{r.result || "?"}</Badge>
+              <span className="min-w-0 font-mono text-xs leading-5 [overflow-wrap:anywhere]">
+                {r.domain}
+                {r.selector ? <span className="text-muted-foreground"> · {r.selector}</span> : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+type SourceRecord = {
+  id: string;
+  sourceIp: string;
+  sourceHost: string | null;
+  count: number;
+  disposition: string;
+  dkim: string;
+  spf: string;
+  headerFrom: string;
+  envelopeFrom: string | null;
+  dkimResults: unknown;
+  spfResults: unknown;
+  viaByteSend: boolean;
+};
+
+function SourceCard({ record }: { record: SourceRecord }) {
+  const passed = record.dkim === "pass" || record.spf === "pass";
+  return (
+    <section className="min-w-0 space-y-3 rounded-lg border border-border bg-card p-4">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={passed ? "success" : "danger"}>{passed ? "Passed DMARC" : "Failed DMARC"}</Badge>
+            {record.viaByteSend ? <Badge variant="brand">ByteSend</Badge> : null}
+            {record.disposition !== "none" ? <Badge variant="warning">{record.disposition}</Badge> : null}
+          </div>
+          <p className="mt-2 font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{record.sourceHost ?? record.sourceIp}</p>
+          {record.sourceHost ? <p className="font-mono text-xs text-muted-foreground">{record.sourceIp}</p> : null}
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-base font-semibold tabular-nums text-foreground">{record.count.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">{record.count === 1 ? "message" : "messages"}</p>
+        </div>
+      </div>
+
+      <dl className="grid grid-cols-1 gap-x-4 gap-y-2 border-t border-border/70 pt-3 text-[13px] sm:grid-cols-2">
+        <div className="min-w-0">
+          <dt className="text-xs text-muted-foreground">From</dt>
+          <dd className="[overflow-wrap:anywhere]">{record.headerFrom}</dd>
+        </div>
+        {record.envelopeFrom ? (
+          <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">Envelope from</dt>
+            <dd className="[overflow-wrap:anywhere]">{record.envelopeFrom}</dd>
+          </div>
+        ) : null}
+      </dl>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <AuthResults label={`DKIM: ${record.dkim}`} results={record.dkimResults} />
+        <AuthResults label={`SPF: ${record.spf}`} results={record.spfResults} />
+      </div>
+    </section>
   );
 }
 
@@ -105,10 +167,10 @@ function ReportDetails({ id }: { id: string }) {
   const policy = report.policy as { p?: string | null; sp?: string | null; pct?: string | null; adkim?: string | null; aspf?: string | null };
 
   return (
-    <div className="space-y-5 p-1">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">{report.orgName}</h2>
-        <p className="text-[13px] text-muted-foreground">
+    <div className="min-w-0 space-y-5 p-1">
+      <div className="min-w-0 pr-8">
+        <h2 className="text-base font-semibold text-foreground [overflow-wrap:anywhere]">{report.orgName}</h2>
+        <p className="text-[13px] text-muted-foreground [overflow-wrap:anywhere]">
           {report.domain} · {period(report.beginAt, report.endAt)}
         </p>
       </div>
@@ -121,7 +183,7 @@ function ReportDetails({ id }: { id: string }) {
             {
               label: "Published policy",
               value: (
-                <span className="font-mono text-xs font-normal">
+                <span className="font-mono text-xs font-normal [overflow-wrap:anywhere]">
                   p={policy.p ?? "?"}
                   {policy.sp ? ` sp=${policy.sp}` : ""} pct={policy.pct ?? "100"} adkim={policy.adkim ?? "r"} aspf={policy.aspf ?? "r"}
                 </span>
@@ -134,38 +196,12 @@ function ReportDetails({ id }: { id: string }) {
       </Panel>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Sources</h3>
+        <div>
+          <h3 className="text-sm font-medium text-foreground">Sources</h3>
+          <p className="text-xs text-muted-foreground">A source passes DMARC when DKIM or SPF passes for your domain.</p>
+        </div>
         {report.records.map((record) => (
-          <Panel key={record.id} flush>
-            <KeyValueList
-              items={[
-                {
-                  label: "Source",
-                  value: (
-                    <span className="flex items-center justify-end gap-1.5">
-                      {record.viaByteSend ? <Badge variant="brand">ByteSend</Badge> : null}
-                      <span className="font-mono text-xs font-normal">{record.sourceHost ? `${record.sourceHost} (${record.sourceIp})` : record.sourceIp}</span>
-                    </span>
-                  ),
-                },
-                { label: "Messages", value: record.count.toLocaleString() },
-                {
-                  label: "Result",
-                  value: (
-                    <span className="flex flex-wrap justify-end gap-1">
-                      <Badge variant={record.dkim === "pass" ? "success" : "danger"}>DKIM {record.dkim}</Badge>
-                      <Badge variant={record.spf === "pass" ? "success" : "danger"}>SPF {record.spf}</Badge>
-                      {record.disposition !== "none" ? <Badge variant="warning">{record.disposition}</Badge> : null}
-                    </span>
-                  ),
-                },
-                { label: "From", value: record.headerFrom },
-                ...(record.envelopeFrom ? [{ label: "Envelope from", value: record.envelopeFrom }] : []),
-                { label: "DKIM signatures", value: <AuthResults results={record.dkimResults} /> },
-                { label: "SPF checks", value: <AuthResults results={record.spfResults} /> },
-              ]}
-            />
-          </Panel>
+          <SourceCard key={record.id} record={record} />
         ))}
       </div>
     </div>

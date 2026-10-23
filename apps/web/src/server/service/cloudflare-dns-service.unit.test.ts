@@ -3,12 +3,15 @@ import type { Domain } from "@prisma/client";
 
 vi.mock("../logger/log", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("./domain-service", () => ({
-  buildDnsRecords: (domain: Domain) => [
-    { type: "MX", name: "mail", value: `feedback-smtp.${domain.region}.amazonses.com`, priority: "10" },
-    { type: "TXT", name: "bytesend._domainkey", value: `p=${domain.publicKey}` },
-    { type: "TXT", name: "mail", value: "v=spf1 include:amazonses.com ~all" },
-    { type: "TXT", name: "_dmarc", value: "v=DMARC1; p=none;" },
-  ],
+  buildDnsRecords: (domain: Domain) => {
+    const suffix = domain.subdomain ? `.${domain.subdomain}` : "";
+    return [
+      { type: "MX", name: `mail${suffix}`, value: `feedback-smtp.${domain.region}.amazonses.com`, priority: "10" },
+      { type: "TXT", name: `bytesend._domainkey${suffix}`, value: `p=${domain.publicKey}` },
+      { type: "TXT", name: `mail${suffix}`, value: "v=spf1 include:amazonses.com ~all" },
+      { type: "TXT", name: "_dmarc", value: "v=DMARC1; p=none;" },
+    ];
+  },
 }));
 vi.mock("./inbound-domain-service", () => ({ receivingRecords: () => [] }));
 
@@ -34,6 +37,16 @@ describe("desiredRecords", () => {
       "MX mail.acme.com",
       "TXT bytesend._domainkey.acme.com",
       "TXT mail.acme.com",
+      "TXT _dmarc.acme.com",
+    ]);
+  });
+
+  it("names a subdomain's records once, under the root zone", () => {
+    const sub = { ...domain, name: "trans.acme.com", subdomain: "trans" } as Domain;
+    expect(desiredRecords(sub).map((r) => `${r.type} ${r.name}`)).toEqual([
+      "MX mail.trans.acme.com",
+      "TXT bytesend._domainkey.trans.acme.com",
+      "TXT mail.trans.acme.com",
       "TXT _dmarc.acme.com",
     ]);
   });

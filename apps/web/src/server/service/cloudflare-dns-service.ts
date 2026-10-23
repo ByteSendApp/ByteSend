@@ -61,7 +61,7 @@ export function desiredRecords(domain: Domain): DesiredRecord[] {
   const receiving = domain.inboundEnabled
     ? receivingRecords(domain).map((record): DesiredRecord => ({
         type: record.type,
-        name: record.name === ROOT_RECEIVING ? domain.name : `${record.name}.${domain.name}`,
+        name: record.name === ROOT_RECEIVING ? zone : `${record.name}.${zone}`,
         content: record.value,
         priority: record.priority,
         kind: record.type === "MX" ? "mx" : "dkim",

@@ -43,7 +43,13 @@ export class TeamService {
     const redis = getRedis();
     const raw = await redis.get(TeamService.cacheKey(teamId));
     if (raw) {
-      return JSON.parse(raw) as Team;
+      const cached = JSON.parse(raw) as Team;
+      return {
+        ...cached,
+        createdAt: new Date(cached.createdAt),
+        updatedAt: new Date(cached.updatedAt),
+        sendingApprovedAt: cached.sendingApprovedAt ? new Date(cached.sendingApprovedAt) : null,
+      };
     }
     const fresh = await TeamService.refreshTeamCache(teamId);
     if (!fresh) {

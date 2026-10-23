@@ -228,8 +228,7 @@ async function recheckDnsHealth(domain: Domain) {
 export async function checkDomainDnsHealth(
   domain: Pick<Domain, "name" | "subdomain" | "dkimSelector" | "publicKey" | "region">,
 ): Promise<string[]> {
-  const subdomainSuffix = domain.subdomain ? `.${domain.subdomain}` : "";
-  const mailDomain = `mail${subdomainSuffix}.${domain.name}`;
+  const mailDomain = `mail.${domain.name}`;
   const dkimSelector = domain.dkimSelector ?? "bytesend";
 
   const [dkim, spf, mx] = await Promise.all([
@@ -703,8 +702,7 @@ export async function refreshDomainVerification(
 
   const verificationState = await getDomainVerificationState(domain.id);
   const previousStatus = domain.status;
-  const subdomainSuffix = domain.subdomain ? `.${domain.subdomain}` : "";
-  const mailDomain = `mail${subdomainSuffix}.${domain.name}`;
+  const mailDomain = `mail.${domain.name}`;
   const dkimSelector = domain.dkimSelector ?? "bytesend";
 
   const [domainIdentity, dkimDns, spfDns, mxDns] = await Promise.all([

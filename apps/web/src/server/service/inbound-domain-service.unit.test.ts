@@ -43,6 +43,13 @@ describe("receiving addresses", () => {
       { type: "TXT", name: "bytesend-inbound._domainkey", value: "p=KEY" },
     ]);
   });
+
+  it("names records from the root domain when the sending domain is a subdomain", () => {
+    const sub = { ...base, name: "trans.acme.com", subdomain: "trans", inboundDkimSelector: "bytesend-inbound", inboundPublicKey: "KEY" };
+    expect(receivingFqdn({ ...sub, inboundSubdomain: "reply" })).toBe("reply.trans.acme.com");
+    expect(receivingRecords({ ...sub, inboundSubdomain: "reply" }).map((r) => r.name)).toEqual(["reply.trans", "bytesend-inbound._domainkey.reply.trans"]);
+    expect(receivingRecords({ ...sub, inboundSubdomain: "@" }).map((r) => r.name)).toEqual(["trans", "bytesend-inbound._domainkey.trans"]);
+  });
 });
 
 describe("enableReceiving", () => {

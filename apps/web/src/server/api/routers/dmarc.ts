@@ -45,10 +45,16 @@ export const dmarcRouter = createTRPCRouter({
     const orgDomains = [...new Set(domains.map((d) => tldts.getDomain(d.name) ?? d.name))];
     const checks = await Promise.all(
       orgDomains.map(async (orgDomain) => {
-        const address = addresses.byOrgDomain.get(orgDomain) ?? addresses.hosted;
-        const check = await checkDmarcRecord(orgDomain, address);
+        const preferred = addresses.byOrgDomain.get(orgDomain) ?? addresses.hosted;
+        const check = await checkDmarcRecord(orgDomain, preferred);
+        const usesHosted =
+          !check.reportsToUs &&
+          Boolean(addresses.hosted && check.record?.toLowerCase().includes(`mailto:${addresses.hosted.toLowerCase()}`));
+        const address = usesHosted ? addresses.hosted : preferred;
         return {
           ...check,
+          reportsToUs: check.reportsToUs || usesHosted,
+          suggested: usesHosted ? check.record : check.suggested,
           address,
           sendingDomains: domains.filter((d) => (tldts.getDomain(d.name) ?? d.name) === orgDomain).map((d) => d.name),
         };

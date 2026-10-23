@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Receiving DNS records for a sending domain that is a subdomain are now named from the root domain, the same as the sending records, so they can be copied straight into your DNS provider
 - The DMARC page accepts the hosted report address (`you+dmarc@in.bytesend.cloud`) as well as the one on your receiving domain, instead of saying the address wasn't added
 - The DMARC report panel no longer runs off the side of the screen on mobile. Each source is now a card with a clear pass or fail result
+- Every email now includes a plain-text version. Emails sent through the API or SMTP with only HTML went out without one, which spam filters count against them. The text version is made from the HTML, keeping tables readable and leaving out images
 
 ---
 

@@ -409,8 +409,8 @@ async function executeEmail(job: QueueEmailJob) {
 
   const text = email.text
     ? email.text
-    : email.campaignId && email.html
-      ? htmlToText(email.html)
+    : email.html
+      ? htmlToText(email.html, { selectors: [{ selector: "img", format: "skip" }, { selector: "table", format: "dataTable" }] })
       : undefined;
 
   let inReplyToMessageId: string | undefined = undefined;

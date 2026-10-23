@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.9.4] - 2026-10-23
 
 ### Fixed
 - The receiving health check's test email is sent every 10 minutes again. Before, it only went out once after each restart, so the check reported receiving as degraded when it was working
+- Emails from free teams no longer fail with "createdAt.getTime is not a function". The cached team came back with its dates as text, which broke the new-account sending limit check
+- Domains that are themselves a subdomain (like `sub.example.com`) no longer show false "DNS records changed" warnings. The DNS check looked for the subdomain twice, for example `mail.sub1.sub2.example.com`
+- Receiving DNS records for a sending domain that is a subdomain are now named from the root domain, the same as the sending records, so they can be copied straight into your DNS provider
+- The DMARC page accepts the hosted report address (`you+dmarc@in.bytesend.cloud`) as well as the one on your receiving domain, instead of saying the address wasn't added
+- The DMARC report panel no longer runs off the side of the screen on mobile. Each source is now a card with a clear pass or fail result
 
 ---
 
@@ -1089,7 +1094,8 @@ Initial public beta release of ByteSend: an all-in-one email infrastructure plat
 
 ---
 
-[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.4...HEAD
+[0.9.4]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/ByteSendApp/ByteSend/compare/v0.9.0...v0.9.1

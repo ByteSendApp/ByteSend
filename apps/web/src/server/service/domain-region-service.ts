@@ -142,7 +142,7 @@ export class DomainRegionService {
     const [identity, dkimDns, mxDns] = await Promise.all([
       ses.getDomainIdentity(domain.name, domain.pendingRegion),
       checkDkimDnsRecord(domain.pendingDkimSelector, domain.name, domain.pendingPublicKey),
-      checkMxDnsRecord(`${mailDomainLabel(domain)}.${domain.name}`, domain.pendingRegion),
+      checkMxDnsRecord(`mail.${domain.name}`, domain.pendingRegion),
     ]);
     const dnsPrecheck: { dkim: DnsCheckResult; mx: DnsCheckResult } = { dkim: dkimDns, mx: mxDns };
 

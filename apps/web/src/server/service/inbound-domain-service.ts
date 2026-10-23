@@ -12,12 +12,13 @@ const INBOUND_DKIM_SELECTOR = "bytesend-inbound";
 
 type ReceivingDomain = Pick<
   Domain,
-  "id" | "name" | "region" | "status" | "inboundEnabled" | "inboundSubdomain" | "inboundStatus" | "inboundCheckedAt" | "inboundDkimSelector" | "inboundPublicKey"
+  "id" | "name" | "subdomain" | "region" | "status" | "inboundEnabled" | "inboundSubdomain" | "inboundStatus" | "inboundCheckedAt" | "inboundDkimSelector" | "inboundPublicKey"
 >;
 
 export const RECEIVING_DOMAIN_SELECT = {
   id: true,
   name: true,
+  subdomain: true,
   region: true,
   status: true,
   inboundEnabled: true,
@@ -43,17 +44,17 @@ export function receivingFqdn(domain: Pick<Domain, "name" | "inboundSubdomain">)
   return isRootReceiving(domain) ? domain.name : `${domain.inboundSubdomain}.${domain.name}`;
 }
 
-export function receivingRecords(domain: ReceivingDomain) {
+export function receivingRecords(domain: Pick<ReceivingDomain, "subdomain" | "inboundSubdomain" | "inboundDkimSelector" | "inboundPublicKey">) {
   if (!domain.inboundSubdomain) return [];
+  const host = isRootReceiving(domain) ? "" : domain.inboundSubdomain;
+  const relativeToZone = (...labels: string[]) => [...labels, domain.subdomain].filter(Boolean).join(".") || ROOT_RECEIVING;
   const records: Array<{ type: "MX" | "TXT"; name: string; value: string; priority?: number }> = [
-    { type: "MX", name: isRootReceiving(domain) ? ROOT_RECEIVING : domain.inboundSubdomain, value: inboundMxHost(), priority: 10 },
+    { type: "MX", name: relativeToZone(host), value: inboundMxHost(), priority: 10 },
   ];
   if (domain.inboundDkimSelector && domain.inboundPublicKey) {
     records.push({
       type: "TXT",
-      name: isRootReceiving(domain)
-        ? `${domain.inboundDkimSelector}._domainkey`
-        : `${domain.inboundDkimSelector}._domainkey.${domain.inboundSubdomain}`,
+      name: relativeToZone(`${domain.inboundDkimSelector}._domainkey`, host),
       value: `p=${domain.inboundPublicKey}`,
     });
   }
